@@ -1,0 +1,24 @@
+// tasks.json
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "prepack-and-pack-extension",
+        "type": "shell",
+        "command": "npm",
+        "args": [
+          "run",
+          "prepack-extension",
+          ";",
+          "npm",
+          "run",
+          "pack-extension"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      }
+    ]
+  }
+  

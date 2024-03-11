@@ -1,0 +1,29 @@
+{
+  "name": "bugmagnet",
+  "version": "2.0.0",
+  "scripts": {
+    "lint": "eslint src test",
+    "pretest": "npm run lint && rimraf testem/compiled",
+    "test": "testem ci -R dot",
+    "pretest-browser": "npm run pretest",
+    "test-browser": "testem",
+    "pretest-chrome": "npm run pretest",
+    "test-chrome": "testem -l Chrome",
+    "sourcemap": "sourcemap-lookup",
+    "prepack-extension": "rimraf pack && copyfiles -u 1 template/**/* pack",
+    "pack-extension": "webpack --config webpack.config.js"
+  },
+  "devDependencies": {
+    "copyfiles": "^2.4.1",
+    "eslint": "^4.11.0",
+    "eslint-config-crockford": "^2.0.0",
+    "eslint-config-defaults": "^9.0.0",
+    "fs-readdir-recursive": "^1.1.0",
+    "jasmine": "^2.8.0",
+    "rimraf": "^3.0.2",
+    "sourcemap-lookup": "0.0.3",
+    "testem": "^1.18.4",
+    "webpack": "^3.8.1",
+    "webpack-dev-middleware": "^1.12.0"
+  }
+}

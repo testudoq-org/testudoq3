@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch with Pack",
+        "type": "chrome",
+        "request": "launch",
+        "preLaunchTask": "prepack-and-pack-extension",
+        "url": "https://xanpho.x10.bz/simple-input.html",
+        "webRoot": "${workspaceFolder}",
+        "sourceMapPathOverrides": {
+          "webpack:///template/*": "${webRoot}/template/*",
+          "webpack:///src/lib/*": "${webRoot}/src/lib/*",
+          "webpack:///src/main/*": "${webRoot}/src/main/*"
+        },
+        "sourceMaps": true,
+        "trace": true,
+        "timeout": 30000,
+        "runtimeArgs": [
+          "--disable-extensions-except=${workspaceFolder}/pack",
+          "--load-extension=${workspaceFolder}/pack",
+          "--user-data-dir=${env:CHROME_PROFILE_PATH}"
+        ],
+        "outFiles": [
+          "${workspaceFolder}/pack/**/*.js"
+        ],
+        "userDataDir": false,
+        "skipFiles": [
+          "${workspaceFolder}/node_modules/**",
+          "${workspaceFolder}/**/*.min.js"
+        ]
+      }
+    ]
+  }
+  

@@ -1,0 +1,21 @@
+{
+	"name": "Bug Magnet",
+	"description": "Right-click context menu to help with exploratory testing",
+	"version": "3.0",
+	"permissions": ["contextMenus", "storage", "activeTab"],
+  "optional_permissions": [ "clipboardRead"],
+	"background": {
+		"scripts": ["extension.js"]
+	},
+	"manifest_version": 2,
+	"icons": {
+		"128": "magnet.png",
+		"16": "magnet-16.png"
+	},
+  "homepage_url": "https://bugmagnet.org",
+  "author": "Gojko Adzic https://gojko.net",
+	"options_ui": {
+		"page": "options.html",
+		"chrome_style": true
+	}
+}
