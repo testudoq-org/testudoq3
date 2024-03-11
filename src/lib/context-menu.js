@@ -1,6 +1,8 @@
+// context-menu.js
 const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
 	copyRequestHandler = require('./copy-request-handler');
+
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
 	'use strict';
 	let handlerType = 'injectValue';
@@ -17,7 +19,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 				},
 				toValue = function (itemMenuValue) {
 					if (typeof (itemMenuValue) === 'string') {
-						return { '_type': 'literal', 'value': itemMenuValue};
+						return { '_type': 'literal', 'value': itemMenuValue };
 					}
 					return itemMenuValue;
 				},
@@ -63,7 +65,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 			menuBuilder.menuItem('Help/Support', rootMenu, () => browserInterface.openUrl('https://bugmagnet.org/contributing.html'));
 		},
 		rebuildMenu = function (options) {
-			const rootMenu =  menuBuilder.rootMenu('Bug Magnet'),
+			const rootMenu = menuBuilder.rootMenu('Bug Magnet'),
 				additionalMenus = options && options.additionalMenus,
 				skipStandard = options && options.skipStandard;
 			if (!skipStandard) {
@@ -81,10 +83,12 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 					.then(rebuildMenu);
 			});
 		};
+
+	// Initialize the context menu when the file is imported
 	self.init = function () {
 		return browserInterface.getOptionsAsync()
 			.then(rebuildMenu)
-			.then(wireStorageListener);
+			.then(wireStorageListener)
+			.then(() => console.log('Context menu initialized successfully.'));
 	};
 };
-
