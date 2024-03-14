@@ -33,6 +33,8 @@ After installation, simply right-click on any editable item on the page to revea
 - [Customize Menus in Testudoq](https://tbc.org/customising.html)
 - [Developer Guide](CONTRIBUTING.md)
 - [Resources About Edge Cases in Testudoq Menus](https://tbc.org/resources.html)
+- [Heuristic Test Strategy Mode](https://xmind.app/m/sB6M/) 
+- [The Rapid Software Testing Approaches](https://developsense.com/rst-approach)   
 
 ## Getting Started
 
