@@ -1,35 +1,66 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "Launch with Pack",
-        "type": "chrome",
-        "request": "launch",
-        "preLaunchTask": "prepack-and-pack-extension",
-        "url": "https://xanpho.x10.bz/simple-input.html",
-        "webRoot": "${workspaceFolder}",
-        "sourceMapPathOverrides": {
-          "webpack:///template/*": "${webRoot}/template/*",
-          "webpack:///src/lib/*": "${webRoot}/src/lib/*",
-          "webpack:///src/main/*": "${webRoot}/src/main/*"
-        },
-        "sourceMaps": true,
-        "trace": true,
-        "timeout": 30000,
-        "runtimeArgs": [
-          "--disable-extensions-except=${workspaceFolder}/pack",
-          "--load-extension=${workspaceFolder}/pack",
-          "--user-data-dir=${env:CHROME_PROFILE_PATH}"
-        ],
-        "outFiles": [
-          "${workspaceFolder}/pack/**/*.js"
-        ],
-        "userDataDir": false,
-        "skipFiles": [
-          "${workspaceFolder}/node_modules/**",
-          "${workspaceFolder}/**/*.min.js"
-        ]
-      }
-    ]
-  }
-  
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Firefox Extension Pack",
+      "type": "firefox",
+      "request": "launch",
+      "reAttach": true,
+      "url": "https://xanpho.x10.bz/simple-input.html",
+      "webRoot": "${workspaceFolder}",
+      "sourceMapPathOverrides": {
+        "webpack:///template/*": "${webRoot}/template/*",
+        "webpack:///src/lib/*": "${webRoot}/src/lib/*",
+        "webpack:///src/main/*": "${webRoot}/src/main/*"
+      },
+      "sourceMaps": true,
+      "trace": true,
+      "timeout": 30000,
+      "firefoxExecutable": "D:\\Program Files\\Mozilla Firefox\\firefox.exe", // Specify the path to your Firefox executable
+      "runtimeArgs": [
+        "--disable-extensions-except=${workspaceFolder}/pack",
+        "--load-extension=${workspaceFolder}/pack",
+        "--user-data-dir=${env:CHROME_PROFILE_PATH}",
+        "-start-debugger-server", // Start the Firefox debugger server
+        "-jsdebugger", // Enable the JavaScript debugger
+        "-foreground" // Keep Firefox in the foreground
+      ],
+      "outFiles": [
+        "${workspaceFolder}/pack/**/*.js"
+      ],
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**",
+        "${workspaceFolder}/**/*.min.js"
+      ]
+    },
+    {
+      "name": "Launch Chrome Extension Pack",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "prepack-and-pack-extension",
+      "url": "https://xanpho.x10.bz/simple-input.html",
+      "webRoot": "${workspaceFolder}",
+      "sourceMapPathOverrides": {
+        "webpack:///template/*": "${webRoot}/template/*",
+        "webpack:///src/lib/*": "${webRoot}/src/lib/*",
+        "webpack:///src/main/*": "${webRoot}/src/main/*"
+      },
+      "sourceMaps": true,
+      "trace": true,
+      "timeout": 30000,
+      "runtimeArgs": [
+        "--disable-extensions-except=${workspaceFolder}/pack",
+        "--load-extension=${workspaceFolder}/pack",
+        "--user-data-dir=${env:CHROME_PROFILE_PATH}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/pack/**/*.js"
+      ],
+      "userDataDir": false,
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**",
+        "${workspaceFolder}/**/*.min.js"
+      ]
+    }
+  ]
+}
