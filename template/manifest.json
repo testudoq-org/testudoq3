@@ -2,45 +2,35 @@
 	"name": "Testudoq",
 	"description": "Testudoq is a versatile extension designed to empower testing by offering a sophisticated right-click context menu tailored for session-based and exploratory testing. In the realm of software testing, session-based testing involves structured yet flexible test sessions, typically following a time-boxed approach, wherein testers execute predefined test charters and document observations. Testudoq streamlines this process by facilitating the creation, management, and execution of test charters directly from the browser context menu. Additionally, Testudoq provides robust support for exploratory testing, an unscripted, intuitive approach where testers explore the software application, investigating its functionality, identifying issues, and improvising tests on-the-fly. Through its intuitive interface, Testudoq equips testers with quick access to essential testing functionalities, aiding in the capture and annotation of testing notes, screenshots, or other relevant artifacts. By enabling seamless integration of session-based and exploratory testing methodologies, Testudoq caters to the diverse needs of testers, optimizing their workflow and enhancing the overall testing experience. Whether you're following structured sessions or conducting exploratory tests, Testudoq empowers testers to efficiently navigate, document, and analyze software behavior, contributing to the robustness and quality of software products.",
 	"version": "0.0.1",
-	"host_permissions": [
-		"http://*/*",
-		"https://*/*"
-	],
-	"permissions": [
-		"contextMenus",
-		"storage",
-		"tabs",
-		"activeTab",
-		"scripting",
-		"clipboardWrite",
-		"clipboardRead"
-	],
+	"permissions": ["debugger","contextMenus", "storage", "tabs", "activeTab", "scripting","clipboardWrite", "clipboardRead"],
 	"background": {
-		"service_worker": "background.js"
+	  "service_worker": "background.js",
+	  "type": "module"
 	},
-	"content_security_policy": {
-		"extension_pages": "script-src 'self'; object-src 'self';"
-	},
-	"content_scripts": [
-		{
-			"all_frames": true,
-			"matches": ["<all_urls>"],
-			"js": [
-				"inject-value.js",
-				"paste.js"
-			],
-			"run_at": "document_end"
-		}
-	],
 	"manifest_version": 3,
 	"icons": {
-		"128": "testudo.png",
-		"16": "testudo-16.png"
+	  "128": "testudo.png",
+	  "16": "testudo-16.png"
 	},
 	"homepage_url": "https://tbc.org",
 	"author": "Ste Stew",
 	"options_ui": {
-		"page": "options.html",
-		"open_in_tab": true
-	}
-}
+	  "page": "options.html",
+	  "open_in_tab": true
+	},
+	"content_security_policy": {
+	  "extension_pages": "script-src 'self'; object-src 'self';"
+	},
+	"content_scripts": [
+	  {
+		"all_frames": true,
+		"matches": ["<all_urls>"],
+		"js": [
+		  "inject-value.js",
+		  "paste.js"
+		],
+		"run_at": "document_end"
+	  }
+	]
+  }
+  

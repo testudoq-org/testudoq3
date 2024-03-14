@@ -6,7 +6,8 @@
     "es6": true
   },
   "parserOptions": {
-    "ecmaVersion": 6
+    "ecmaVersion": 8,
+    "sourceType": "module"
   },
   "rules": {
     "semi": ["error", "always"],
@@ -17,7 +18,8 @@
     "one-var": "error",
     "prefer-const": "error",
     "no-var": "error",
-    "no-plusplus": ["off"],
-    "quotes": ["error", "single", {"avoidEscape": true, "allowTemplateLiterals": true}]
+    "no-plusplus": "off",
+    "quotes": ["error", "single", {"avoidEscape": true, "allowTemplateLiterals": true}],
+    "arrow-spacing": "warn" 
   }
 }

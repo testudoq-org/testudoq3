@@ -1,12 +1,11 @@
-/*global chrome*/
+/* global chrome */
 const executeRequest = require('../lib/inject-value-to-active-element');
 
-const listener = function (request /*, sender, sendResponse */) {
-	'use strict';
-	console.log('Received request:', request);
-	executeRequest(request);
-	chrome.runtime.onMessage.removeListener(listener);
-	console.log('Listener removed');
+const listener = function (request /* , sender, sendResponse */) {
+  console.log('Received request:', request);
+  executeRequest(request);
+  chrome.runtime.onMessage.removeListener(listener);
+  console.log('Listener removed');
 };
 
 console.log('Adding listener');

@@ -1,126 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>BugMagnet Extension Options</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-		body: { padding: 10px;  }
-		.file-selector {
-			display: none;
-		}
-		.sourceCell {
-			max-width: 200px;
-			white-space: nowrap;
-			overflow: hidden;
-		}
-		#main {
-			height: 400px;
-			min-height: 300px;
-		}
-		#main th, #main td {
-			text-align: left;
-		}
-		#main table {
-			width: 100%;
-		}
-		.status {
-			color: red;
-		}
-		.tab {
-			display: none;
-		}
-		#sourceLocal:checked ~ [role="local-file"] {
-			display: block;
-		}
-		#sourceConfig:checked ~ [role="text-config"] {
-			display: block;
-		}
-		#sourceRemote:checked ~ [role="remote-config"] {
-			display: block;
-		}
-
-		textarea[role=custom-config-text] {
-			width: 100%;
-		}
-		.container {
-			max-height: 200px;
-			height: 200px;
-			overflow: scroll;
-		}
-		[role="main-screen"] div {
-			margin-bottom: 10px;
-		}
-		
+    body { padding: 10px; }
+    .file-selector { display: none; }
+    .sourceCell { max-width: 200px; white-space: nowrap; overflow: hidden; }
+    #main { height: 400px; min-height: 300px; }
+    #main th, #main td { text-align: left; }
+    #main table { width: 100%; }
+    .status { color: red; }
+    .tab { display: none; }
+    #sourceLocal:checked ~ .local-file { display: block; }
+    #sourceConfig:checked ~ .text-config { display: block; }
+    #sourceRemote:checked ~ .remote-config { display: block; }
+    textarea { width: 100%; }
+    .container { max-height: 200px; height: 200px; overflow: scroll; }
+    .main-screen div { margin-bottom: 10px; }
   </style>
 </head>
 <body>
-	<div id="main">
-		<div role="status" class="status"></div>
-		<div role="main-screen">
-			<div>
-				<form action="#">
-				<label><input type="checkbox" role="option-skipStandard"> Hide standard menus</label>
-				</form>
-			</div>
-			<div>
-				<form action="#">
-					<button role="add">Add Configuration File</button>
-					<button role="close">Close</button>
-				</form>
-			</div>
-			<div role="no-custom">
-				There are no custom configuration files loaded.
-			</div>
-			<div role="yes-custom">
-				Custom configuration files currently loaded:
-				<div class="container">
-					<table>
-						<thead>
-							<tr><th>Name</th><th>Source</th><th></th></tr>
-						</thead>
-						<tbody>
-							<tr role="template">
-								<td role="name"></td>
-								<td role="source" class="sourceCell"></td>
-								<td><button role="remove">Remove</button></td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-		<div role="file-loader">
-			<form action="#">
-				<input type="radio" value="local" name="source" id="sourceLocal" checked="checked"><label for="sourceLocal">Local file</label>
-				<input type="radio" value="remote" name="source" id="sourceRemote"><label for="sourceRemote">Remote URL</label>
-				<input type="radio" value="source" name="source" id="sourceConfig"><label for="sourceConfig">Paste configuration</label>
-				<div>
-				<label>Descriptive submenu label (required): <input type="text" role="submenu-name" required="true" /></label>
-				</div>
-				<div class="tab" role="local-file">
-					<button role="select-file-cover" class="select-file-cover">
-						Select File
-					</button>
-					<button role="back">Cancel</button>
-					<input type="file" role="file-selector" class="file-selector"/>						
-				</div>
-				<div class="tab" role="text-config">
-					<textarea role="custom-config-text" placeholder="paste configuration JSON"></textarea>
-					<div>
-						<button role="add-custom-config">Save</button>
-						<button role="back">Cancel</button>
-					</div>
-				</div>
-				<div class="tab" role="remote-config">
-					URL: <input role="remote-config-url" placeholder="JSON file URL"/>
-					<div>
-						<button role="add-remote-config">Load</button>
-						<button role="back">Cancel</button>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
+  <div id="main" role="main">
+    <div class="status" aria-live="polite"></div>
+    <div class="main-screen">
+      <form>
+        <label>
+          <input type="checkbox" id="option-skipStandard">
+          Hide standard menus
+        </label>
+      </form>
+
+      <form>
+        <label for="submenu-name">Submenu label (required):</label>
+        <input type="text" id="submenu-name" name="submenu-name" required>
+
+        <fieldset>
+          <legend>Source Options</legend>
+          <label>
+            <input type="radio" name="source" id="sourceLocal" checked>
+            Local file
+          </label>
+          <label>
+            <input type="radio" name="source" id="sourceRemote">
+            Remote URL
+          </label>
+          <label>
+            <input type="radio" name="source" id="sourceConfig">
+            Paste configuration
+          </label>
+        </fieldset>
+
+        <div class="tab local-file">
+          <label for="file-selector" class="select-file-cover">Select File</label>
+          <input type="file" id="file-selector" class="file-selector" accept=".json">
+          <button type="button">Cancel</button>
+        </div>
+        <div class="tab text-config">
+          <textarea placeholder="Paste configuration JSON"></textarea>
+          <button type="button">Save</button>
+          <button type="button">Cancel</button>
+        </div>
+        <div class="tab remote-config">
+          <label for="remote-config-url">URL:</label>
+          <input type="url" id="remote-config-url" placeholder="JSON file URL">
+          <button type="button">Load</button>
+          <button type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="options.js"></script>
 </body>
