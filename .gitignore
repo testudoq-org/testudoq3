@@ -7,6 +7,6 @@ SpecRunner.html
 .DS_Store
 pack
 testem/compiled
-*.crx
-*.pem
-*.zip
+pack.crx
+pack.pem
+testudoq*.zip
