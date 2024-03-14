@@ -37,19 +37,14 @@ module.exports = function ChromeBrowserInterface(chrome) {
 	self.closeWindow = function () {
 		window.close();
 	};
-	self.readFile = function (fileInfo) {
-		return new Promise((resolve, reject) => {
-			const oFReader = new FileReader();
-			oFReader.onload = function (oFREvent) {
-				try {
-					resolve(oFREvent.target.result);
-				} catch (e) {
-					reject(e);
-				}
-			};
-			oFReader.onerror = reject;
-			oFReader.readAsText(fileInfo, 'UTF-8');
-		});
+	self.readFile = async function (fileInfo) {
+		const reader = new FileReader(),
+			promise = new Promise((resolve, reject) => {
+				reader.onload = () => resolve(reader.result);
+				reader.onerror = reject;
+			});
+		reader.readAsText(fileInfo, 'UTF-8');
+		return promise;
 	};
 	self.executeScript = function (tabId, source) {
 		return new Promise((resolve, reject) => {
@@ -95,16 +90,10 @@ module.exports = function ChromeBrowserInterface(chrome) {
 	self.removePermissions = function (permissionsArray) {
 		return new Promise((resolve) => chrome.permissions.remove({ permissions: permissionsArray }, resolve));
 	};
-	self.copyToClipboard = async (text) => {
-		console.log('Attempting to copy text to clipboard:', text);
-		try {
-			await navigator.clipboard.writeText(text.ChromeBrowserInterface.toString());
-			console.log('Text copied to clipboard');
-		} catch (error) {
-			console.error('Failed to copy text to clipboard:', error.message);
-			throw new Error('Unable to copy text to clipboard');
-		}
-	};
+	self.copyToClipboard = (text) => navigator.clipboard.writeText(text).catch((err) => {
+		console.error('Failed to copy text to clipboard:', err.message);
+		throw new Error('Unable to copy text to clipboard');
+	});
 	self.showMessage = function (text) {
 		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 			const currentTabId = tabs[0].id;

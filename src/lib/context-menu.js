@@ -3,12 +3,12 @@ const injectValueRequestHandler = require('./inject-value-request-handler'),
 	copyRequestHandler = require('./copy-request-handler');
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
 	const handlerType = 'injectValue',
-	 handlerMenus = {
+		handlerMenus = {
 			injectValue: 'injectValue',
 			paste: 'paste',
 			copy: 'copy'
 		},
-	 handlers = {
+		handlers = {
 			injectValue: injectValueRequestHandler,
 			paste: pasteRequestHandler,
 			copy: copyRequestHandler
