@@ -2,7 +2,13 @@
 
 ![Testudoq](screenshots/chrome-medium-tile.png)
 
-Testudoq is an exploratory testing assistant available for Chrome and Firefox. It enhances the testing experience by providing convenient access to common boundaries and edge cases through the context menu (right-click) for editable elements. This allows testers to have problematic values easily accessible during exploratory testing sessions.
+Testudoq serves as a powerful companion for exploratory testing sessions, offering seamless integration with popular browsers like Chrome and Firefox. Its primary function is to enrich the testing experience by granting testers instant access to critical boundaries and edge cases directly from the context menu (right-click) for editable elements within the application under test.
+
+By seamlessly integrating Testudoq into their exploratory testing sessions, testers can leverage its intuitive interface to swiftly identify and manipulate problematic values. This immediate access to boundary conditions empowers testers to thoroughly explore the software's behavior, uncovering potential defects and vulnerabilities more efficiently.
+
+Aligned with session-based testing principles advocated by Rapid Software Testing (RST), Testudoq facilitates rapid and adaptive test design and execution. Testers can dynamically adjust their testing approach based on real-time observations, leveraging Testudoq's capabilities to delve deeper into the application's functionality and resilience under various conditions.
+
+Furthermore, Testudoq's compatibility with session-based testing methodologies ensures that testers can easily incorporate it into their testing sessions, enhancing collaboration and maximizing the effectiveness of their testing efforts. By streamlining the exploration process and providing instant access to critical test scenarios, Testudoq empowers testers to deliver high-quality software within tight timelines and dynamic project environments.
 
 ## Features
 

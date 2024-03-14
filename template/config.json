@@ -10,7 +10,7 @@
     "Hindi": "एक जल्दी भूरी लोमड़ी आलसी कुत्ते पर कूदता",
     "Unicode symbols (non letters)": "Iñtërnâtiônàlizætiøn☃💪"
   },
-  "Names": { 
+  "Names": {
     "Latin charset": [
       "John O'Grady",
       "Peter de Montfort",
@@ -58,20 +58,40 @@
       "Jeff Sample"
     ],
     "Unicode case folding": "ᴮᴵᴳᴮᴵᴿᴰ",
-    "James Bond (with middle names)": "James Dr No From Russia with Love Goldfinger Thunderball You Only Live Twice On Her Majesty’s Secret Service Diamonds Are Forever Live and Let Die The Man with the Golden Gun The Spy Who Loved Me Moonraker For Your Eyes Only Octopussy A View to a Kill The Living Daylights Licence to Kill Golden Eye Tomorrow Never Dies The World Is Not Enough Die Another Day Casino Royale Bond"
+    "James Bond (with middle names)": "James Dr No Bond",
+    "Benevolent dictator for life": "Saurabh Shukla",
+    "Thai male names": "ชื่อชาย",
+    "Thai female names": "ชื่อหญิง"
   },
-  "Post Codes": {
+  "Post/Zip Codes": {
     "Alphanumeric (GB)": "EC11AA",
     "With spaces (GB)": "EC1 1AA",
     "4 digits (Aarau, CH)": "5004",
-    "3 digits (Kvivik, FO)":"340",
-    "10 digits (Tehran, IR)": "1193653471"
+    "3 digits (Kvivik, FO)": "340",
+    "10 digits (Tehran, IR)": "1193653471",
+    "New Zealand": {
+      "Auckland": "1010",
+      "Wellington": "6011",
+      "Christchurch": "8011",
+      "Hamilton": "3204",
+      "Dunedin": "9016"
+    }
   },
   "Cities": {
     "Scandinavian letters": "Ærøskøbing",
     "Welsh": "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch",
     "Single letter - Norwegian": "Å",
     "Single letter - France": "Y"
+  },
+  "NZ Places": {
+    "Taumatawhaka": "Taumatawhakatangihangakoauauotamateaturipukakapiki-maungahoronukupokaiwhenuakitnatahu",
+    "Whakatane": "Whakatāne",
+    "Rotorua": "Rotorua",
+    "Auckland": "Tāmaki Makaurau",
+    "Wellington": "Te Whanganui-a-Tara",
+    "Christchurch": "Ōtautahi",
+    "Hamilton": "Kirikiriroa",
+    "Dunedin": "Ōtepoti"
   },
   "E-mail addresses": {
     "Valid" :{
@@ -90,7 +110,12 @@
       "2 char TLD": "email@domain.co.jp",
       "Dash in address": "firstname-lastname@domain.com",
       "Intranet": "name@localhost",
-      "Non-ascii Email" : "nathan@学生优惠.com"
+      "Non-ascii Email" : "nathan@学生优惠.com",
+      "New Zealand Prefixes": {
+        "Government": "john.smith@msd.govt.nz",
+        "Organization": "info@organization.org.nz",
+        "Commercial": "sales@company.co.nz"
+      }
     },
     "Invalid": {
       "No @ or domain": "plainaddress",
@@ -109,8 +134,7 @@
       "Invalid IP format": "email@111.222.333.44444",
       "Multiple dots in the domain": "email@domain..com"
     }
-  },
-  "URLs": {
+  },"URLs": {
     "Valid": [
       "www.mysite.com",
       "mysite.com",
@@ -118,7 +142,15 @@
       "https://www.mysite.com",
       "http://www.mysite.com:80",
       "ftp://mysite.com",
-      "https://www.xn--80ak6aa92e.com/"
+      "https://www.xn--80ak6aa92e.com/",
+      "http://subdomain.mysite.com",
+      "http://www.mysite.co.nz",
+      "https://subdomain.mysite.co.nz",
+      "https://www.mysite.co.nz/page",
+      "https://www.mysite.co.nz/page?param=value",
+      "https://www.mysite.co.nz/#section",
+      "https://www.mysite.co.nz/page?param=value#section",
+      "https://www.mysite.co.nz:8080"
     ],
     "Invalid": [
       "http//www.mysite.com",
@@ -126,68 +158,227 @@
       "://www.mysite.com",
       "foo://www.mysite.com",
       "http://:",
-      "mysite"
+      "mysite",
+      "http://www.mysite",
+      "http://www.mysite.",
+      "http://.mysite.com",
+      "http://www.-mysite.com",
+      "http://www.mysite-.com",
+      "http://www.mysite.com.",
+      "http://www.mysite-.com/page",
+      "http://www.mysite.com:/",
+      "http://www.mysite.com:abc",
+      "http://www.mysite.com:80abc",
+      "http://www.mysite.com:8080abc"
     ]
-  },
-  "Numbers": [
+  },"Numbers": [
     "0",
     "32767", "32768", "32769",
     "65535", "65536", "65537",
     "2147483647", "2147483648", "2147483649",
     "4294967295", "4294967296", "4294967297",
     "1E-16", "-1", "0.0001",
-    "1,234,567", "1.234.567,89"
+    "1,234,567", "1.234.567,89",
+    "1234567890123456789012345678901234567890",
+    "-1234567890123456789012345678901234567890"
   ],
-  "Amounts": ["5000", "$5,000", "$5 000", "$5,000.00"],
+  "Amounts": ["5000", "$5,000", "$5 000", "$5,000.00", "€5,000.00", "¥5,000.00"],
   "Currencies": {
     "No decimals": "JPY",
-    "3 Decimals": "KWD"
+    "3 Decimals": "KWD",
+    "Multiple currencies": ["USD", "EUR", "GBP", "AUD"]
   },
-  "Payment cards": {
-     "Authorize.net": {
+  "Payment US cards": {
+    "Authorize.net": {
+        "Credit Card": {
+            "Valid": {
+                "American Express": "370000000000002",
+                "Discover": "6011000000000012",
+                "JCB": "3088000000000017",
+                "Diners Club/ Carte Blanch": "38000000000006",
+                "Visa": "4007000000027",
+                "MasterCard": "5424000000000015"
+            },
+            "Invalid": {
+                "Invalid Number": "1234567890123456",
+                "Expired Card": "4111111111111111",
+                "Declined Card": "4222222222222",
+                "Incorrect CVV": "5431111111111111"
+            },
+            "Declined": {
+                "Card Expired": "4000000000000069",
+                "Insufficient Funds": "4000000000009995",
+                "Card Declined": "4000000000000002"
+            },
+            "Out of Money": {
+                "Out of Funds": "4000000000009995",
+                "Over Limit": "4000000000009996"
+            },
+            "Other": {
+                "Cancelled Card": "4100000000000019",
+                "Lost Card": "4111111111111111",
+                "Stolen Card": "4000000000000127"
+            }
+        }
+    },
+    "New Zealand": {
+        "Credit Card": {
+            "Valid": {
+                "NZ Bank Card": "5402000000000000",
+                "KiwiCard": "5610591081018250"
+            },
+            "Invalid": {
+                "Invalid Number": "1234567890123456",
+                "Expired Card": "4111111111111111",
+                "Declined Card": "4222222222222",
+                "Incorrect CVV": "5431111111111111"
+            },
+            "Declined": {
+                "Card Expired": "4000000000000069",
+                "Insufficient Funds": "4000000000009995",
+                "Card Declined": "4000000000000002"
+            },
+            "Out of Money": {
+                "Out of Funds": "4000000000009995",
+                "Over Limit": "4000000000009996"
+            },
+            "Other": {
+                "Cancelled Card": "4100000000000019",
+                "Lost Card": "4111111111111111",
+                "Stolen Card": "4000000000000127"
+            }
+        }
+    }
+},
+  "Zip Code": {
+    "Declined": "46282",
+    "AVS Invalid": "46203",
+    "AVS Unavailable": "46207",
+    "Non US Bank": "46204",
+    "NZ Bank": "1010",
+    "Wellington": "6011",
+    "Auckland Central": "1010",
+    "Christchurch Central": "8011"
+  },
+  "CVV": {
+    "Successful": "900",
+    "Does Not Match": "901",
+    "Not Processed": "46207",
+    "NZ CVV": "123"
+  },
+  "Payment Xtra cards": {
+    "Authorize.net": {
       "Credit Card": {
-        "American Express": "370000000000002",
-        "Discover": "6011000000000012",
-        "JCB": "3088000000000017",
-        "Diners Club/ Carte Blanch":"38000000000006",
-        "Visa":"4007000000027",
-        "MasterCard":"5424000000000015"
-      },
-      "Zip Code": {
-        "Declined": "46282",
-        "AVS Invalid": "46203",
-        "AVS Unavailable": "46207",
-        "Non US Bank": "46204"
-      },
-      "CVV": {
-        "Successful": "900",
-        "Does Not Match": "901",
-        "Not Processed": "46207"
+        "Valid": {
+          "American Express": "370000000000002",
+          "Discover": "6011000000000012",
+          "JCB": "3088000000000017",
+          "Diners Club/ Carte Blanch": "38000000000006",
+          "Visa": "4007000000027",
+          "MasterCard": "5424000000000015"
+        },
+        "Invalid": {
+          "Invalid Number": "1234567890123456",
+          "Expired Card": "4111111111111111",
+          "Declined Card": "4222222222222",
+          "Incorrect CVV": "5431111111111111"
+        },
+        "Declined": {
+          "Card Expired": "4000000000000069",
+          "Insufficient Funds": "4000000000009995",
+          "Card Declined": "4000000000000002"
+        },
+        "Out of Money": {
+          "Out of Funds": "4000000000009995",
+          "Over Limit": "4000000000009996"
+        },
+        "Other": {
+          "Cancelled Card": "4100000000000019",
+          "Lost Card": "4111111111111111",
+          "Stolen Card": "4000000000000127"
+        }
       }
     },
-    "Braintree": {
-      "Valid Credit Card": {
-        "American Express": "378282246310005",
-        "Discover": "6011111111111117",
-        "MasterCard": "5555555555554444",
-        "Visa":"4111111111111111"
-      },
-      "Invalid Credit Card": {
-        "Visa": "4000111111111115",
-        "MasterCard": "5105105105105100",
-        "American Express": "378734493671000",
-        "JCB": "3566002020360505"
-      }
-    },
-    "Cybersource": {
+    "New Zealand": {
       "Credit Card": {
-        "Visa":"4111111111111111",
-        "MasterCard":"5555555555554444",
-        "American Express":"378282246310005",
-        "Discover":"6011111111111117",
-        "JCB": "3566111111111113"
+        "Valid": {
+          "NZ Bank Card": "5402000000000000",
+          "KiwiCard": "5610591081018250"
+        },
+        "Invalid": {
+          "Invalid Number": "1234567890123456",
+          "Expired Card": "4111111111111111",
+          "Declined Card": "4222222222222",
+          "Incorrect CVV": "5431111111111111"
+        },
+        "Declined": {
+          "Card Expired": "4000000000000069",
+          "Insufficient Funds": "4000000000009995",
+          "Card Declined": "4000000000000002"
+        },
+        "Out of Money": {
+          "Out of Funds": "4000000000009995",
+          "Over Limit": "4000000000009996"
+        },
+        "Other": {
+          "Cancelled Card": "4100000000000019",
+          "Lost Card": "4111111111111111",
+          "Stolen Card": "4000000000000127"
+        }
       }
-    },       
+    }
+  },
+"Braintree": {
+  "Valid Credit Card": {
+    "American Express": "378282246310005",
+    "Discover": "6011111111111117",
+    "MasterCard": "5555555555554444",
+    "Visa": "4111111111111111"
+  },
+  "Invalid Credit Card": {
+    "Visa": "4000111111111115",
+    "MasterCard": "5105105105105100",
+    "American Express": "378734493671000",
+    "JCB": "3566002020360505"
+  },
+  "Additional Valid Cards": {
+    "Visa": "4005519200000004",
+    "MasterCard": "5454545454545454",
+    "American Express": "378734493671000",
+    "Discover": "6011000990139424",
+    "JCB": "3530111333300000"
+  },
+  "Additional Invalid Cards": {
+    "Visa": "4111111111111112",
+    "MasterCard": "5105105105105101",
+    "American Express": "371449635398431",
+    "Discover": "6011000400000000",
+    "JCB": "3566002020360506"
+  }
+},
+"Cybersource": {
+  "Credit Card": {
+    "Visa": "4111111111111111",
+    "MasterCard": "5555555555554444",
+    "American Express": "378282246310005",
+    "Discover": "6011111111111117",
+    "JCB": "3566111111111113",
+    "Additional Valid Cards": {
+      "Visa": "4005519200000004",
+      "MasterCard": "5454545454545454",
+      "American Express": "371449635398431",
+      "Discover": "6011000990139424",
+      "JCB": "3530111333300000"
+    },
+    "Additional Invalid Cards": {
+      "Visa": "4111111111111112",
+      "MasterCard": "5105105105105100",
+      "American Express": "378734493671000",
+      "Discover": "6011000400000000",
+      "JCB": "3566002020360506"
+    }
+  }
+},       
     "Payflow Pro": {
       "Credit Card": {
         "American Express": "378282246310005",
@@ -281,8 +472,7 @@
         "Do Not Honor":"349",
         "Generic Decline":"350"
       }
-    }
-  },
+    },
   "Text size": {
     "With spaces": {
       "128b": { "_type": "size", "size": "128", "template": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
@@ -311,83 +501,99 @@
   },
   "Whitespace": {
     "Tabs and newlines": "Contains\tTabs\nAnd\tNewlines",
-    "Leading spaces": "  leading spaces",
-    "Mixing tabs and spaces": "\t leading tabs and spaces",
-    "spaces on both sides":" Space on both sides ",
-    "Just whitespace": "\t \t\n \n "
+    "Leading spaces": "  Leading spaces",
+    "Trailing spaces": "Trailing spaces  ",
+    "Mixing tabs and spaces": "\t Leading tabs and spaces",
+    "Spaces on both sides": " Space on both sides ",
+    "Just whitespace": "\t \t\n \n ",
+    "Multiple spaces": "Multiple    spaces",
+    "Consecutive newlines": "Consecutive\n\nnewlines",
+    "Tab in the middle": "Tab\tin\tthe\tmiddle",
+    "Leading and trailing tabs": "\t\tLeading and trailing tabs\t\t"
   },
   "Format exploits": {
     "SQL Injection": "Robert'); DROP TABLE Students;--",
-    "JS Script Injection": "Nice site,  I think I'll take it. <script>alert('Executing JS')</script>",
+    "JS Script Injection": "Nice site, I think I'll take it. <script>alert('Executing JS')</script>",
     "JS String (XSS) Injection - single quote": "'-prompt()-'",
     "JS String (XSS) Injection - double quote": "\"-prompt()-\"",
     "HTML parsing": "<blink>Hello there</blink>",
-    "Broken HTML": "<i><b>Bold</i></b>"
+    "Broken HTML": "<i><b>Bold</i></b>",
+    "XPath Injection": "' or 1=1 or 'a'='a",
+    "LDAP Injection": "*)(objectClass=*",
+    "XML External Entity (XXE) Injection": "<?xml version='1.0' encoding='ISO-8859-1'?><!DOCTYPE foo [<!ELEMENT foo ANY><!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><foo>&xxe;</foo>",
+    "Command Injection": ";ls -la",
+    "Path Traversal": "../../../../../../../../../etc/passwd",
+    "Server-Side Includes (SSI) Injection": "<!--#exec cmd=\"/bin/cat /etc/passwd\"-->"
   },
   "Unicode": {
     "Direction": {
       "Right-to-left override": "1234\u202E1234",
       "Left-to-right override": "אבגד\u202Dאבגד",
       "RTL without override": "אבגד",
-      "curseword with direction switch for profanity filters": "\u202ekcuf\u202D you"
+      "Curseword with direction switch for profanity filters": "\u202ekcuf\u202D you"
     },
     "Looking like latin": {
-      "fake apple.com": "https://аррӏе.com",
-      "with cyrilic a": "https://аpple.com",
-      "single-charset": "https://еріс.com/"
+      "Fake apple.com with cyrillic characters": "https://аррӏе.com",
+      "With cyrillic 'a'": "https://аpple.com",
+      "Single-charset": "https://еріс.com/"
     },
     "Confusable": {
-      "colon": "\uFF1A\u02D0\u02F8\u0589\u1361\u16EC\u205A\u2236\u2806\uFE13\uFE55",
-      "semi-colon": "\uFF1B\u037E\uFE14\uFE54",
-      "equals": "\uFF1D\u2550\u268C\uFE66",
-      "dollar sign": "\uFF04\uFE69",
-      "plus": "\uFF0B\u16ED\uFE62",
-      "comma": "\uFF0C\u02CF\u16E7\u201A",
-      "a": "\u00AA\u1D43\u1D45\u2090\u24D0\uFF41"
+      "Colon variants": "\uFF1A\u02D0\u02F8\u0589\u1361\u16EC\u205A\u2236\u2806\uFE13\uFE55",
+      "Semi-colon variants": "\uFF1B\u037E\uFE14\uFE54",
+      "Equals sign variants": "\uFF1D\u2550\u268C\uFE66",
+      "Dollar sign variants": "\uFF04\uFE69",
+      "Plus sign variants": "\uFF0B\u16ED\uFE62",
+      "Comma variants": "\uFF0C\u02CF\u16E7\u201A",
+      "Latin 'a' variants": "\u00AA\u1D43\u1D45\u2090\u24D0\uFF41"
     },
     "Case transforms": {
-      "Small sharp S": "\u00DF",
-      "Turkish Is": "\u0069\u0049\u0130\u0131"
+      "Small sharp S (ß)": "\u00DF",
+      "Turkish 'I' (İ)": "\u0069\u0049\u0130\u0131"
     },
     "Length": {
-      "Very long": "\uFDFD",
-      "two rows": "N\u036BO\u036C",
-      "Letter + Diacritic": "a\u0341",
-      "Symbol + Symbol combiner": "\u2190\u20DD",
+      "Very long character": "\uFDFD",
+      "Two-row character": "N\u036BO\u036C",
+      "Letter with diacritic": "a\u0341",
+      "Symbol with symbol combiner": "\u2190\u20DD",
       "Cantillation marks": "\u059F\u05A8\u05AAA",
-      "Nonsense": {
-        "Letter + Symbol combiner": "A\u20DD",
-        "Symbol + Diacritic": "\u2190\u0341",
-        "only diacritic": "\u0341",
-        "only symbol combiner": "\u0341",
-        "only cantillation mark": "\u059F"
+      "Nonsense characters": {
+        "Letter with symbol combiner": "A\u20DD",
+        "Symbol with diacritic": "\u2190\u0341",
+        "Only diacritic": "\u0341",
+        "Only symbol combiner": "\u20DD",
+        "Only cantillation mark": "\u059F"
       },
       "Text with invisible spaces": {
         "Mongolian Vowel Separator": "two\u180Ewords",
         "Zero-width joiner": "two\u200Dwords",
         "Zero-width non-joiner": "two\u200Cwords"
-      }      
+      }
+    }
+  },
+  "Emoji": {
+    "plain": "\uD83D\uDC69",
+    "+variation selector": "\ud83d\udc69\ud83c\udfff", 
+    "+zero-width space combo": "\uD83D\uDC69\u200d\ud83c\udf73",
+    "+zero-width space combo + variation selector": "\ud83d\udc69\ud83c\udfff\u200d\ud83c\udf73"
+  },
+  "Variations": {
+    "Regional Indicators": { 
+      "US Flag": "\ud83c\uddfa\ud83c\uddf8",
+      "Chinese Flag": "\ud83c\udde8\ud83c\uddf3",
+      "Scottish Flag": "\ud83c\udf08\ud83c\uddec\ud83c\uddf1",
+      "Indian Flag": "\ud83c\uddee\ud83c\uddf3",
+      "Moldovan Flag": "\ud83c\uddf2\ud83c\udde9",
+      "Philippine Flag": "\ud83c\uddf5\ud83c\udded",
+      "New Zealand Flag": "\ud83c\uddf3\ud83c\uddff",
+      "Invalid Combination": "\ud83c\uddfa\ud83c\uddf3"
     },
-    "Emoji": {
-      "plain": "\uD83D\uDC69",
-      "+variation selector": "\ud83d\udc69\ud83c\udfff", 
-      "+zws combo": "\uD83D\uDC69\u200d\ud83c\udf73",
-      "+zws combo + variation selector": "\ud83d\udc69\ud83c\udfff\u200d\ud83c\udf73"
-    },
-    "Variations": {
-      "regional indicators" :{ 
-        "US Flag": "\ud83c\uddfa\ud83c\uddf8",
-        "Chinese Flag": "\ud83c\udde8\ud83c\uddf3",
-        "invalid combination": "\ud83c\uddfa\ud83c\uddf3"
-      },
-      "variation selectors": {
-        "VS16 (emoji style)": "\u2764\uFE0F",
-        "VS15 (text style)": "\u2764\uFE0E",
-        "nonsense": {
-          "just the variation selector": "\uFE0F",
-          "VS16 + invalid char": "A\uFE0F",
-          "VS15 + smiley": "\uD83D\uDE01\uFE0E"
-        }
+    "Variation Selectors": {
+      "VS16 (Emoji Style)": "\u2764\uFE0F",
+      "VS15 (Text Style)": "\u2764\uFE0E",
+      "Nonsense": {
+        "Just the variation selector": "\uFE0F",
+        "VS16 + invalid character": "A\uFE0F",
+        "VS15 + smiley": "\uD83D\uDE01\uFE0E"
       }
     }
   }
