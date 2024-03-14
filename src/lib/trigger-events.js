@@ -5,15 +5,8 @@
  * @param {Array<string>} eventArray - An array of event names to trigger.
  */
 module.exports = function triggerEvents(element, eventArray) {
-	/**
-	 * Trigger each event in the event array on the given element.
-	 */
+	const event = new CustomEvent('', { bubbles: true, cancelable: false });
 	eventArray.forEach((eventName) => {
-		// Create a new 'HTMLEvents' event
-		const evt = document.createEvent('HTMLEvents');
-		// Initialize the event with the given name, and set bubbling and cancelability to false
-		evt.initEvent(eventName, true, false);
-		// Dispatch the event on the given element
-		element.dispatchEvent(evt);
+		element.dispatchEvent(new Event(eventName, event));
 	});
 };
