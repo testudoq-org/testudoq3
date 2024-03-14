@@ -1,53 +1,52 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "prepack-and-pack-extension",
-        "type": "shell",
-        "command": "npm",
-        "args": [
-          "run",
-          "prepack-extension",
-          ";",
-          "npm",
-          "run",
-          "pack-extension"
-        ],
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        }
-      },
-      {
-        "label": "printWebRootAndBuildExtension",
-        "command": "echo",
-        "args": [
-          "WebRoot Value: ${workspaceFolder}"
-        ],
-        "type": "shell",
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "dependsOn": "buildExtension"
-      },
-      {
-        "label": "buildExtension",
-        "type": "npm",
-        "script": "build-extension",
-        "problemMatcher": [],
-        "detail": "rimraf pack && ncp template pack && webpack --config webpack.config.js"
-      },
-      {
-        "label": "Build Extension for Firefox",
-        "type": "shell",
-        "command": "web-ext",
-        "args": ["build"],
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        }
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "prepack-and-pack-extension",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "prepack-extension",
+        ";",
+        "npm",
+        "run",
+        "pack-extension"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
       }
-    ]
-  }
-  
+    },
+    {
+      "label": "printWebRootAndBuildExtension",
+      "command": "echo",
+      "args": [
+        "WebRoot Value: ${workspaceFolder}"
+      ],
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": "buildExtension"
+    },
+    {
+      "label": "buildExtension",
+      "type": "npm",
+      "script": "build-extension",
+      "problemMatcher": [],
+      "detail": "rimraf pack && ncp template pack && webpack --config webpack.config.js"
+    },
+    {
+      "label": "Build Extension for Firefox",
+      "type": "shell",
+      "command": "web-ext",
+      "args": ["build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
