@@ -12,7 +12,8 @@
     "sourcemap": "sourcemap-lookup",
     "prepack-extension": "rimraf pack && copyfiles -u 1 template/**/* pack",
     "pack-extension": "webpack --config webpack.config.js",
-    "build-extension": "npm run prepack-extension && cross-env DELAY=2 node -e \"setTimeout(() => {}, process.env.DELAY * 1000)\" && npm run pack-extension"
+    "build-extension": "npm run prepack-extension && cross-env DELAY=2 node -e \"setTimeout(() => {}, process.env.DELAY * 1000)\" && npm run pack-extension",
+    "ff-build": "web-ext build"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
