@@ -1,7 +1,7 @@
 /*global describe, it, expect, beforeEach, jasmine*/
 const FakeChromeApi = require('./utils/fake-chrome-api'),
 	ChromeMenuBuilder = require('../src/lib/chrome-menu-builder');
-describe('BugMagnet.ChromeMenuBuilder', function () {
+describe('testudoq.ChromeMenuBuilder', function () {
 	'use strict';
 	let underTest, chrome, index = 0, clickHandler;
 	const lastMenu = function () {

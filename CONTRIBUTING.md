@@ -1,74 +1,100 @@
-# Contributing to Bug Magnet
+# Contributing to Testudoq
 
-BugMagnet uses WebPack for packaging, Jasmine for tests (executed via Testem) and ESLint for linting. All the main scripts are in `package.json`
+Testudoq utilizes WebPack for packaging, Jasmine for tests (executed via Testem), and ESLint for linting. The primary scripts are defined in `package.json`.
 
-## Set up a local development environment
+## Setting up a Local Development Environment
+
+To set up your local development environment, run the following command:
 
 ```bash
 npm i
 ```
 
-## Package the extension
+## Packaging the Extension
+
+To package the extension, execute:
 
 ```bash
 npm run pack-extension
 ```
 
-This will create and copy the files in the `pack` dir. You can then zip that up and distribute as an extension, or just load into a browser as an unpacked extension. (check out how to do this in [Chrome](https://developer.chrome.com/extensions/getstarted#unpacked) or [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox)).
+This will generate and copy the necessary files into the `pack` directory. You can then zip it up for distribution as an extension or load it into a browser as an unpacked extension. Check out how to do this in [Chrome](https://developer.chrome.com/extensions/getstarted#unpacked) or [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox).
 
-## Run dev tests
+If you encounter an issue where 'ncp' is not recognized, resolve it by running:
+
+```bash
+npm install --save ncp
+```
+
+## Running Development Tests
+
+To run development tests, use the command:
 
 ```bash
 npm t
 ```
 
-### Run a subset of tests
+If you encounter the warning "React version was set to "detect" in eslint-plugin-react settings, but the "react" package is not installed," address it by running the following commands:
 
 ```bash
-npm t --bugmagnet:test_filter=<prefix of the test file name>
+npm install react-dom
+npm install eslint-plugin-jest --save-dev  # Resolve jest/expect-expect issue
+npm install jest --save-dev
+npm install cross-env --save-dev
 ```
 
-for example
+## Running a Subset of Tests
+
+To run a subset of tests, specify the prefix of the test file name using the command:
 
 ```bash
-npm t --bugmagnet:test_filter=execute-request
+npm t --Testudoq:test_filter=<prefix of the test file name>
 ```
 
-### Find out the actual source code from a test failure report
+For example:
+
+```bash
+npm t --Testudoq:test_filter=execute-request
+```
+
+## Finding the Source Code from a Test Failure Report
+
+In case of a test failure, find the actual error line using:
 
 ```bash
 npm run sourcemap <packed URL without the origin and starting />
 ```
 
-For example, given this test report:
+For instance:
 
 ```bash
-11) [Chrome 61.0] executeRequest size generator sets the field content to a text of specified size by multiplying the template
-     TypeError: handler is not a function
-
-     TypeError: handler is not a function
-         at UserContext.<anonymous> (http://localhost:7357/testem/compiled/common/execute-request-spec.js:165:4)
-         at attempt (http://localhost:7357/jasmine/jasmine.js:4289:46)
-         at QueueRunner.run (http://localhost:7357/jasmine/jasmine.js:4217:20)
-         at QueueRunner.execute (http://localhost:7357/jasmine/jasmine.js:4199:10)
-         at Spec.queueRunnerFactory (http://localhost:7357/jasmine/jasmine.js:909:35)
-         at Spec.execute (http://localhost:7357/jasmine/jasmine.js:526:10)
-         at UserContext.fn (http://localhost:7357/jasmine/jasmine.js:5340:37)
-         at attempt (http://localhost:7357/jasmine/jasmine.js:4297:26)
-         at QueueRunner.run (http://localhost:7357/jasmine/jasmine.js:4217:20)
-         at QueueRunner.execute (http://localhost:7357/jasmine/jasmine.js:4199:10)
-```
-
-you can find out the actual error line using
-
-```
 npm run sourcemap testem/compiled/common/execute-request-spec.js:165:4
 ```
 
-### Run tests in an open browser session (for debugging)
+## Running Tests in an Open Browser Session (for Debugging)
 
-```
+To continuously watch the source and test folders and re-run tests as files change, use the following command:
+
+```bash
 npm run test-browser
 ```
 
-This will automatically watch the source and test folders and re-run tests as the files change. The `--bugmagnet:test_filter` trick also works here to restrict the test run to only a subset.
+This command supports the `--Testudoq:test_filter` option to restrict the test run to a subset.
+
+## Environment Variables for Windows and macOS/Linux
+
+For Windows, set the following environment variables:
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("EDGE_PROFILE_PATH", "C:\Users\[value]\AppData\Local\Microsoft\Edge\User Data\[Profile]", [System.EnvironmentVariableTarget]::User)
+[System.Environment]::SetEnvironmentVariable("CHROME_PROFILE_PATH", "C:\Users\[value]\AppData\Local\Google\Chrome\User Data\[Profile]", [System.EnvironmentVariableTarget]::User)
+```
+
+For macOS/Linux, use:
+
+```bash
+export EDGE_PROFILE_PATH="/path/to/profile"
+export CHROME_DEFAULT_PROFILE_PATH="/path/to/default/profile"
+```
+
+This guide provides a step-by-step approach for contributors to set up, test, and debug the Testudoq extension. If you have any specific questions or would like further clarification on any aspect, feel free to reach out!

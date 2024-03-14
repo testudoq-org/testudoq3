@@ -2,89 +2,72 @@ const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
 	copyRequestHandler = require('./copy-request-handler');
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	'use strict';
-	let handlerType = 'injectValue';
-	const self = this,
-		handlerMenus = {},
+	const handlerType = 'injectValue',
+		handlerMenus = {
+			injectValue: 'injectValue',
+			paste: 'paste',
+			copy: 'copy'
+		},
 		handlers = {
 			injectValue: injectValueRequestHandler,
 			paste: pasteRequestHandler,
 			copy: copyRequestHandler
-		},
-		onClick = function (tabId, itemMenuValue) {
-			const falsyButNotEmpty = function (v) {
-					return !v && typeof (v) !== 'string';
-				},
-				toValue = function (itemMenuValue) {
-					if (typeof (itemMenuValue) === 'string') {
-						return { '_type': 'literal', 'value': itemMenuValue};
-					}
-					return itemMenuValue;
-				},
-				requestValue = toValue(itemMenuValue);
-			if (falsyButNotEmpty(requestValue)) {
-				return;
-			};
-			return handlers[handlerType](browserInterface, tabId, requestValue);
-		},
-		turnOnPasting = function () {
-			return browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite'])
-				.then(() => handlerType = 'paste')
-				.catch(() => {
-					browserInterface.showMessage('Could not access clipboard');
-					menuBuilder.selectChoice(handlerMenus.injectValue);
-				});
-		},
-		turnOffPasting = function () {
-			handlerType = 'injectValue';
-			return browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
-		},
-		turnOnCopy = function () {
-			handlerType = 'copy';
-		},
-		loadAdditionalMenus = function (additionalMenus, rootMenu) {
-			if (additionalMenus && Array.isArray(additionalMenus) && additionalMenus.length) {
-				additionalMenus.forEach(function (configItem) {
-					const object = {};
-					object[configItem.name] = configItem.config;
-					processMenuObject(object, menuBuilder, rootMenu, onClick);
-				});
-			}
-		},
-		addGenericMenus = function (rootMenu) {
-			menuBuilder.separator(rootMenu);
-			if (pasteSupported) {
-				const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
-				handlerMenus.injectValue = menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true);
-				handlerMenus.paste = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting);
-				handlerMenus.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy);
-			}
-			menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
-			menuBuilder.menuItem('Help/Support', rootMenu, () => browserInterface.openUrl('https://bugmagnet.org/contributing.html'));
-		},
-		rebuildMenu = function (options) {
-			const rootMenu =  menuBuilder.rootMenu('Bug Magnet'),
-				additionalMenus = options && options.additionalMenus,
-				skipStandard = options && options.skipStandard;
-			if (!skipStandard) {
-				processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
-			}
-			if (additionalMenus) {
-				loadAdditionalMenus(additionalMenus, rootMenu);
-			}
-			addGenericMenus(rootMenu);
-		},
-		wireStorageListener = function () {
-			browserInterface.addStorageListener(function () {
-				return menuBuilder.removeAll()
-					.then(browserInterface.getOptionsAsync)
-					.then(rebuildMenu);
-			});
 		};
-	self.init = function () {
-		return browserInterface.getOptionsAsync()
-			.then(rebuildMenu)
-			.then(wireStorageListener);
+
+	function onClick(tabId, itemMenuValue) {
+		if (!itemMenuValue) {
+			return;
+		}
+		const requestValue = typeof itemMenuValue === 'string' ? { '_type': 'literal', 'value': itemMenuValue } : itemMenuValue;
+		return handlers[handlerType](browserInterface, tabId, requestValue);
+	}
+
+	function turnOnPasting() {
+		return browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite'])
+			.then(() => handlerType = handlerMenus.paste)
+			.catch(browserInterface.showMessage.bind(null, 'Could not access clipboard'));
+	}
+
+	function turnOffPasting() {
+		handlerType = handlerMenus.injectValue;
+		return browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
+	}
+
+	function turnOnCopy() {
+		handlerType = handlerMenus.copy;
+	}
+
+	function loadAdditionalMenus(additionalMenus, rootMenu) {
+		if (additionalMenus) {
+			additionalMenus.forEach(configItem => processMenuObject({ [configItem.name]: configItem.config }, menuBuilder, rootMenu, onClick));
+		}
+	}
+
+	function addGenericMenus(rootMenu) {
+		if (pasteSupported) {
+			const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+			menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerMenus.injectValue);
+			menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerMenus.paste);
+			menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerMenus.copy);
+		}
+		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
+		menuBuilder.menuItem('Help/Support', rootMenu, () => browserInterface.openUrl('https://xanpho.x10.bz/simple-input.html'));
+	}
+
+	function rebuildMenu(options) {
+		const rootMenu = menuBuilder.rootMenu('Testudoq');
+		if (!options || !options.skipStandard) {
+			processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
+		}
+		loadAdditionalMenus(options && options.additionalMenus, rootMenu);
+		addGenericMenus(rootMenu);
+	}
+
+	function wireStorageListener() {
+		browserInterface.addStorageListener(() => menuBuilder.removeAll().then(browserInterface.getOptionsAsync).then(rebuildMenu));
+	}
+
+	this.init = function () {
+		return browserInterface.getOptionsAsync().then(rebuildMenu).then(wireStorageListener);
 	};
 };
-

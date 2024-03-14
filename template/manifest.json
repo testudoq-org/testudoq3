@@ -1,21 +1,45 @@
 {
-	"name": "Bug Magnet",
-	"description": "Right-click context menu to help with exploratory testing",
-	"version": "3.0",
-	"permissions": ["contextMenus", "storage", "activeTab"],
-  "optional_permissions": [ "clipboardRead"],
+	"name": "Testudoq",
+	"description": "Testudoq stands out as a versatile extension, meticulously crafted to elevate the testing process by introducing a sophisticated right-click context menu specifically tailored for both session-based and exploratory testing methodologies.  In the realm of software testing, session-based testing represents a meticulous yet flexible approach. It entails structured test sessions typically conducted within a predefined time frame. Testers follow test charters, executing predefined tasks while documenting their observations. Testudoq revolutionizes this process by seamlessly integrating into the browser context menu, thereby simplifying the creation, management, and execution of test charters.Moreover, Testudoq isn't limited to structured testing alone. It extends robust support for exploratory testing, an organic and intuitive approach where testers immerse themselves in the software application, probing its functionality, spotting issues, and improvising tests on the go. Through its user-friendly interface, Testudoq grants testers swift access to essential testing functionalities, facilitating the capture and annotation of testing notes, screenshots, and other pertinent artifacts. By offering a seamless fusion of session-based and exploratory testing methodologies, Testudoq caters to the diverse needs of testers, optimizing their workflow and enriching the overall testing experience. Whether adhering to structured sessions or delving into exploratory endeavors, Testudoq empowers testers to navigate, document, and scrutinize software behavior with efficiency, ultimately contributing to the resilience and quality of software products..","version": "0.0.1",
+	"permissions": [
+		"debugger",
+		"contextMenus",
+		"storage",
+		"tabs",
+		"activeTab",
+		"scripting",
+		"clipboardWrite",
+		"clipboardRead"
+	],
 	"background": {
-		"scripts": ["extension.js"]
+		"service_worker": "background.js",
+		"type": "module"
 	},
-	"manifest_version": 2,
+	"manifest_version": 3,
 	"icons": {
-		"128": "magnet.png",
-		"16": "magnet-16.png"
+		"128": "testudo.png",
+		"16": "testudo-16.png"
 	},
-  "homepage_url": "https://bugmagnet.org",
-  "author": "Gojko Adzic https://gojko.net",
+	"homepage_url": "https://tbc.org",
+	"author": "Ste Stew",
 	"options_ui": {
 		"page": "options.html",
-		"chrome_style": true
-	}
+		"open_in_tab": true
+	},
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'self';"
+	},
+	"content_scripts": [
+		{
+			"all_frames": true,
+			"matches": [
+				"<all_urls>"
+			],
+			"js": [
+				"inject-value.js",
+				"paste.js"
+			],
+			"run_at": "document_end"
+		}
+	]
 }

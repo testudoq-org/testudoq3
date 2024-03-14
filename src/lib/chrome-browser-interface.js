@@ -1,5 +1,5 @@
 module.exports = function ChromeBrowserInterface(chrome) {
-	'use strict';
+
 	const self = this;
 	self.saveOptions = function (options) {
 		chrome.storage.sync.set(options);
@@ -27,7 +27,7 @@ module.exports = function ChromeBrowserInterface(chrome) {
 		});
 	};
 	self.getRemoteFile = function (url) {
-		return fetch(url, {mode: 'cors'}).then(function (response) {
+		return fetch(url, { mode: 'cors' }).then(function (response) {
 			if (response.ok) {
 				return response.text();
 			}
@@ -37,59 +37,71 @@ module.exports = function ChromeBrowserInterface(chrome) {
 	self.closeWindow = function () {
 		window.close();
 	};
-	self.readFile = function (fileInfo) {
-		return new Promise((resolve, reject) => {
-			const oFReader = new FileReader();
-			oFReader.onload = function (oFREvent) {
-				try {
-					resolve(oFREvent.target.result);
-				} catch (e) {
-					reject(e);
-				}
-			};
-			oFReader.onerror = reject;
-			oFReader.readAsText(fileInfo, 'UTF-8');
-		});
+	self.readFile = async function (fileInfo) {
+		const reader = new FileReader(),
+			promise = new Promise((resolve, reject) => {
+				reader.onload = () => resolve(reader.result);
+				reader.onerror = reject;
+			});
+		reader.readAsText(fileInfo, 'UTF-8');
+		return promise;
 	};
 	self.executeScript = function (tabId, source) {
-		return new Promise((resolve) => {
-			return chrome.tabs.executeScript(tabId, {file: source}, resolve);
+		return new Promise((resolve, reject) => {
+			chrome.scripting.executeScript({
+				target: { tabId: tabId },
+				files: [source]
+			}, (injectionResults) => {
+				if (chrome.runtime.lastError) {
+					reject(new Error(chrome.runtime.lastError.message));
+				} else {
+					resolve(injectionResults);
+				}
+			});
 		});
-	};
-	self.sendMessage = function (tabId, message) {
-		return chrome.tabs.sendMessage(tabId, message);
 	};
 
-	self.requestPermissions = function (permissionsArray) {
-		return new Promise((resolve, reject) => {
-			try {
-				chrome.permissions.request({permissions: permissionsArray}, function (granted) {
-					if (granted) {
-						resolve();
-					} else {
-						reject();
-					}
-				});
-			} catch (e) {
-				console.log(e);
-				reject(e);
+	self.sendMessage = function (tabId, message) {
+		if (tabId === null || tabId === undefined) {
+			throw new Error('tabId is null or undefined');
+		}
+		if (message === null || message === undefined) {
+			throw new Error('message is null or undefined');
+		}
+		return chrome.tabs.sendMessage(tabId, message)
+			.catch((err) => {
+				throw new Error(`Failed to send message to tab ${tabId}: ${err.message}`);
+			});
+	};
+	self.requestPermissions = async (permissionsArray) => {
+		if (!permissionsArray) {
+			throw new Error('permissionsArray is null or undefined');
+		}
+
+		try {
+			const result = await chrome.permissions.request({ permissions: permissionsArray });
+			if (!result) {
+				throw new Error('Permission request failed');
 			}
-		});
+		} catch (error) {
+			throw new Error(`Failed to request permissions: ${error.message}`);
+		}
 	};
 	self.removePermissions = function (permissionsArray) {
-		return new Promise((resolve) => chrome.permissions.remove({permissions: permissionsArray}, resolve));
+		return new Promise((resolve) => chrome.permissions.remove({ permissions: permissionsArray }, resolve));
 	};
-	self.copyToClipboard = function (text) {
-		const handler = function (e) {
-			e.clipboardData.setData('text/plain', text);
-			e.preventDefault();
-		};
-		document.addEventListener('copy', handler);
-	//	document.execCommand('copy');
-		document.removeEventListener('copy', handler);
-	};
+	self.copyToClipboard = (text) => navigator.clipboard.writeText(text).catch((err) => {
+		console.error('Failed to copy text to clipboard:', err.message);
+		throw new Error('Unable to copy text to clipboard');
+	});
 	self.showMessage = function (text) {
-		chrome.tabs.executeScript(null, {code: `alert("${text}")`});
+		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+			const currentTabId = tabs[0].id;
+			chrome.scripting.executeScript({
+				target: { tabId: currentTabId },
+				func: (message) => alert(message),
+				args: [text]
+			});
+		});
 	};
 };
-
