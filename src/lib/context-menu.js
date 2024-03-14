@@ -1,79 +1,94 @@
 const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
 	copyRequestHandler = require('./copy-request-handler');
-
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-
 	let handlerType = 'injectValue';
-	const handlers = {
-		injectValue: injectValueRequestHandler,
-		paste: pasteRequestHandler,
-		copy: copyRequestHandler
-	},
-
-		onClick = (info, tab) => {
-			const tabId = tab.id,
-				itemMenuValue = info.menuItemId,
-				requestValue = { '_type': 'literal', 'value': itemMenuValue };
-
-			if (!itemMenuValue) {
+	const self = this,
+		handlerMenus = {},
+		handlers = {
+			injectValue: injectValueRequestHandler,
+			paste: pasteRequestHandler,
+			copy: copyRequestHandler
+		},
+		onClick = function (tabId, itemMenuValue) {
+			console.log('onClick: itemMenuValue:', itemMenuValue);
+			const falsyButNotEmpty = function (v) {
+					console.log('falsyButNotEmpty: v:', v);
+					return !v && typeof (v) !== 'string';
+				},
+				toValue = function (itemMenuValue) {
+					console.log('toValue: itemMenuValue:', itemMenuValue);
+					if (typeof (itemMenuValue) === 'string') {
+						console.log('toValue: itemMenuValue is string');
+						return { '_type': 'literal', 'value': itemMenuValue};
+					}
+					console.log('toValue: itemMenuValue is not string');
+					return itemMenuValue;
+				},
+				requestValue = toValue(itemMenuValue);
+			console.log('onClick: requestValue:', requestValue);
+			if (falsyButNotEmpty(requestValue)) {
 				return;
-			}
-
-			const handler = handlers[handlerType];
-			if (handler) {
-				return handler(browserInterface, tabId, requestValue);
-			} else {
-				throw new Error(`Invalid handler type: ${handlerType}`);
+			};
+			return handlers[handlerType](browserInterface, tabId, requestValue);
+		},
+		turnOnPasting = function () {
+			return browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite'])
+				.then(() => handlerType = 'paste')
+				.catch(() => {
+					browserInterface.showMessage('Could not access clipboard');
+					menuBuilder.selectChoice(handlerMenus.injectValue);
+				});
+		},
+		turnOffPasting = function () {
+			handlerType = 'injectValue';
+			return browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
+		},
+		turnOnCopy = function () {
+			handlerType = 'copy';
+		},
+		loadAdditionalMenus = function (additionalMenus, rootMenu) {
+			if (additionalMenus && Array.isArray(additionalMenus) && additionalMenus.length) {
+				additionalMenus.forEach(function (configItem) {
+					const object = {};
+					object[configItem.name] = configItem.config;
+					processMenuObject(object, menuBuilder, rootMenu, onClick);
+				});
 			}
 		},
-
-		loadMenus = (options) => {
-			const rootMenu = menuBuilder.rootMenu('Bug Magnet'),
-				{ additionalMenus, skipStandard } = options || {};
+		addGenericMenus = function (rootMenu) {
+			menuBuilder.separator(rootMenu);
+			if (pasteSupported) {
+				const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+				handlerMenus.injectValue = menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true);
+				handlerMenus.paste = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting);
+				handlerMenus.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy);
+			}
+			menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
+			menuBuilder.menuItem('Help/Support', rootMenu, () => browserInterface.openUrl('https://xanpho.x10.bz/simple-input.html'));
+		},
+		rebuildMenu = function (options) {
+			const rootMenu =  menuBuilder.rootMenu('Testudoq'),
+				additionalMenus = options && options.additionalMenus,
+				skipStandard = options && options.skipStandard;
 			if (!skipStandard) {
 				processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
 			}
 			if (additionalMenus) {
-				additionalMenus.forEach((config) => {
-					processMenuObject(config, menuBuilder, rootMenu, onClick);
-				});
+				loadAdditionalMenus(additionalMenus, rootMenu);
 			}
-			addOperationalModes(rootMenu);
-			addHelpMenu(rootMenu);
+			addGenericMenus(rootMenu);
 		},
-
-		addOperationalModes = (rootMenu) => {
-			if (pasteSupported) {
-				const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
-				menuBuilder.choice('Inject value', modeMenu, () => handlerType = 'injectValue', true);
-				menuBuilder.choice('Simulate pasting', modeMenu, requestPastePermission);
-				menuBuilder.choice('Copy to clipboard', modeMenu, () => handlerType = 'copy');
-			}
-		},
-
-		requestPastePermission = () => {
-			handlerType = 'paste';
-			return browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite'])
-				.catch(() => {
-					browserInterface.showMessage('Could not access clipboard');
-				});
-		},
-
-		addHelpMenu = (rootMenu) => {
-			menuBuilder.menuItem('Help/Support', rootMenu, () => browserInterface.openUrl('https://bugmagnet.org/contributing.html'));
-		},
-
-		wireStorageListener = () => {
-			browserInterface.addStorageListener(() => {
-				menuBuilder.removeAll().then(browserInterface.getOptionsAsync).then(loadMenus);
+		wireStorageListener = function () {
+			browserInterface.addStorageListener(function () {
+				return menuBuilder.removeAll()
+					.then(browserInterface.getOptionsAsync)
+					.then(rebuildMenu);
 			});
-		},
-
-		init = () => {
-			chrome.contextMenus.onClicked.addListener(onClick);
-			browserInterface.getOptionsAsync().then(loadMenus).then(wireStorageListener);
 		};
-
-	return { init };
+	self.init = function () {
+		return browserInterface.getOptionsAsync()
+			.then(rebuildMenu)
+			.then(wireStorageListener);
+	};
 };

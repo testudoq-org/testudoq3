@@ -10,12 +10,16 @@
 async function handlePaste() {
 	try {
 		// Read text from clipboard using the Clipboard API.
-		// The readText() method returns a promise that resolves with the text data from the clipboard.
-		const textFromClipboard = await navigator.clipboard.readText();
+		const textFromClipboard = await navigator.clipboard.readText(),
 
-		// Process the pasted text as needed.
-		// In this example, we are just logging the pasted text to the console.
-		console.log('Pasted text:', textFromClipboard);
+			// Process the pasted text as needed.
+			// In this example, let's assume the pasted text is structured as "Menu: Submenu".
+			// We'll split the text to extract only the submenu item.
+			parts = textFromClipboard.split(':'),
+			submenuText = parts.length > 1 ? parts[1].trim() : textFromClipboard;
+
+		// Log the extracted submenu text to the console.
+		console.log('Pasted submenu text:', submenuText);
 	} catch (error) {
 		// If there is an error reading the text from the clipboard,
 		// log the error to the console.
@@ -23,6 +27,6 @@ async function handlePaste() {
 	}
 }
 
-// Add an event listener to trigger handlePaste when the DOM content is loaded
 document.addEventListener('DOMContentLoaded', handlePaste);
+
 

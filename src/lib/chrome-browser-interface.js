@@ -95,13 +95,17 @@ module.exports = function ChromeBrowserInterface(chrome) {
 	self.removePermissions = function (permissionsArray) {
 		return new Promise((resolve) => chrome.permissions.remove({ permissions: permissionsArray }, resolve));
 	};
-	self.copyToClipboard = function (text) {
-		navigator.clipboard.writeText(text).then(function () {
-			console.log('Text successfully copied to clipboard');
-		}).catch(function (err) {
-			console.error('Unable to copy text to clipboard', err);
-		});
-	}; self.showMessage = function (text) {
+	self.copyToClipboard = async (text) => {
+		console.log('Attempting to copy text to clipboard:', text);
+		try {
+			await navigator.clipboard.writeText(text.ChromeBrowserInterface.toString());
+			console.log('Text copied to clipboard');
+		} catch (error) {
+			console.error('Failed to copy text to clipboard:', error.message);
+			throw new Error('Unable to copy text to clipboard');
+		}
+	};
+	self.showMessage = function (text) {
 		chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 			const currentTabId = tabs[0].id;
 			chrome.scripting.executeScript({
