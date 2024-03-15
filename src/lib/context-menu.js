@@ -93,7 +93,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		if (additionalMenus) {
 			additionalMenus.forEach(configItem => processMenuObject({ [configItem.name]: configItem.config }, menuBuilder, rootMenu, onClick));
 		}
-	}
+	};
 
 	/**
 	 * Add generic menus to the root menu.
@@ -106,6 +106,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	 * @param {Object} rootMenu - The root menu to attach the menus to.
 	 */
 	function addGenericMenus(rootMenu) {
+		menuBuilder.separator(rootMenu);
 		if (pasteSupported) {
 			const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
 			menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerMenus.injectValue);
