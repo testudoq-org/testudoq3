@@ -12,8 +12,10 @@
     "sourcemap": "sourcemap-lookup",
     "prepack-extension": "rimraf pack && copyfiles -u 1 template/**/* pack",
     "pack-extension": "webpack --config webpack.config.js",
+    "build-min-obs-extension": "npm run prepack-extension && cross-env DELAY=2 node -e \"setTimeout(() => {}, process.env.DELAY * 1000)\" && npm run pack-extension && npm run post-build-min-obs",
     "build-extension": "npm run prepack-extension && cross-env DELAY=2 node -e \"setTimeout(() => {}, process.env.DELAY * 1000)\" && npm run pack-extension",
-    "ff-build": "web-ext build"
+    "ff-build": "web-ext build",
+    "post-build-min-obs": "node post-build-min-obs"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
@@ -32,12 +34,14 @@
     "jest": "^29.7.0",
     "sourcemap-lookup": "0.0.5",
     "testem": "^3.11.0",
+    "uglify-js": "^3.17.4",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-middleware": "^7.0.0"
   },
   "dependencies": {
     "fs-extra": "^11.2.0",
+    "javascript-obfuscator": "^4.1.0",
     "ncp": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

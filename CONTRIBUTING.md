@@ -4,10 +4,16 @@ Testudoq utilizes WebPack for packaging, Jasmine for tests (executed via Testem)
 
 ## Setting up a Local Development Environment
 
+Ensure that the `js-obfuscator` is installed:
+
+```bash
+npm install --save-dev js-obfuscator
+```
+
 To set up your local development environment, run the following command:
 
 ```bash
-npm i
+npm install
 ```
 
 ## Packaging the Extension
@@ -18,20 +24,51 @@ To package the extension, execute:
 npm run pack-extension
 ```
 
-This will generate and copy the necessary files into the `pack` directory. You can then zip it up for distribution as an extension or load it into a browser as an unpacked extension. Check out how to do this in [Chrome](https://developer.chrome.com/extensions/getstarted#unpacked) or [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox).
+This command generates and copies the necessary files into the `pack` directory. You can then zip it up for distribution as an extension or load it into a browser as an unpacked extension. Learn how to do this in [Chrome](https://developer.chrome.com/extensions/getstarted#unpacked) or [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Temporary_Installation_in_Firefox).
 
-If you encounter an issue where 'ncp' is not recognized, resolve it by running:
+If you encounter an issue where `ncp` is not recognized, resolve it by running:
 
 ```bash
 npm install --save ncp
 ```
+
+## Building the Extension
+
+```bash
+npm run build-extension
+```
+Just build the extension
+
+```bash
+npm build-min-obs-extension
+```
+
+This command packs the extension, builds it, and also obfuscates and minimizes it.
+
+If you get the error message indicates that Node.js cannot find the module 'javascript-obfuscator'. This error typically occurs when the required module is not installed in your project's dependencies.
+
+To resolve this issue, you need to install the 'javascript-obfuscator' module. You can do this by running the following command in your terminal within the project directory:
+
+```
+npm install javascript-obfuscator
+```
+
+Also add uglify.js, you can install UglifyJS using npm, the Node.js package manager. Here's how you can install it:
+
+```bash
+npm install uglify-js --save-dev
+```
+
+This command will install UglifyJS as a development dependency in your project, and it will be available for use in your Node.js scripts. After installing UglifyJS, you can modify your script to include it, as shown in the previous example.
+
+Once the installation is complete, you should be able to run the 'post-build-min-obs.js' script without encountering the module not found error.
 
 ## Running Development Tests
 
 To run development tests, use the command:
 
 ```bash
-npm t
+npm test
 ```
 
 If you encounter the warning "React version was set to "detect" in eslint-plugin-react settings, but the "react" package is not installed," address it by running the following commands:
@@ -48,13 +85,13 @@ npm install cross-env --save-dev
 To run a subset of tests, specify the prefix of the test file name using the command:
 
 ```bash
-npm t --Testudoq:test_filter=<prefix of the test file name>
+npm test --Testudoq:test_filter=<prefix of the test file name>
 ```
 
 For example:
 
 ```bash
-npm t --Testudoq:test_filter=execute-request
+npm test --Testudoq:test_filter=execute-request
 ```
 
 ## Finding the Source Code from a Test Failure Report

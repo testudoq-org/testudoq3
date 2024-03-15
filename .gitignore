@@ -10,3 +10,5 @@ testem/compiled
 pack.crx
 pack.pem
 testudoq*.zip
+dist
+private_key.pem
