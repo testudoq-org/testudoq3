@@ -17,17 +17,28 @@
       font-family: 'Ubuntu', sans-serif;
       font-size: 16px;
       /* Default font size */
+      margin: 0;
+      /* Remove default margin */
+      padding: 0;
+      /* Remove default padding */
+    }
+
+    .bg {
+      position: relative;
+      background-image: url('turtle-background_960_720.png');
+      /* Set your desired background image */
+      background-size: cover;
+      /* Make the background image cover the entire container */
+      background-repeat: no-repeat;
+      background-position: center;
+      /* Center the background image */
+      background-color: rgba(248, 249, 250, 1.0);
+      /* Set your desired background color with full opacity */
+      padding: 1.5rem;
     }
 
     .container-fluid {
       height: 100%;
-    }
-
-    .bg {
-      background-color: #f8f9fa;
-      /* Set your desired background color */
-      height: 100%;
-      padding: 1.5rem;
     }
 
     [role=status] {
