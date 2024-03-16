@@ -10,6 +10,12 @@ Ensure that the `js-obfuscator` is installed:
 npm install --save-dev js-obfuscator
 ```
 
+Ensure that webpack is installed to prevent issues such as the error message "ReferenceError: require is not defined" indicates that the code is being executed in an environment where the require function is not available. 
+
+```bash
+npm install webpack webpack-cli --save-dev
+```
+
 To set up your local development environment, run the following command:
 
 ```bash
