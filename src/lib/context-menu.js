@@ -2,23 +2,9 @@ const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
 	copyRequestHandler = require('./copy-request-handler');
 
-/**
- * Constructor function for ContextMenu.
- *
- * @param {Object} standardConfig - The standard configuration object.
- * @param {Object} browserInterface - The browser interface object.
- * @param {Object} menuBuilder - The menu builder object.
- * @param {Function} processMenuObject - The function to process the menu object.
- * @param {boolean} pasteSupported - Flag indicating if pasting is supported.
- */
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	// Define constant values for different handler types and menus
+	// Define constant values for different handler types
 	const handlerType = 'injectValue',
-		handlerMenus = {
-			injectValue: 'injectValue',
-			paste: 'paste',
-			copy: 'copy'
-		},
 		handlers = {
 			injectValue: injectValueRequestHandler,
 			paste: pasteRequestHandler,
@@ -51,8 +37,10 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	 */
 	function turnOnPasting() {
 		return browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite'])
-			.then(() => handlerType = handlerMenus.paste)
-			.catch(browserInterface.showMessage.bind(null, 'Could not access clipboard'));
+			.then(() => handlerType = 'paste')
+			.catch(() => {
+				browserInterface.showMessage('Could not access clipboard');
+			});
 	}
 
 	/**
@@ -64,7 +52,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	 * @return {Promise} A promise that resolves when pasting is turned off.
 	 */
 	function turnOffPasting() {
-		handlerType = handlerMenus.injectValue;
+		handlerType = 'injectValue';
 		return browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
 	}
 
@@ -75,7 +63,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	 * ready to copy a value from the page.
 	 */
 	function turnOnCopy() {
-		handlerType = handlerMenus.copy;
+		handlerType = 'copy';
 	}
 
 	/**
@@ -93,7 +81,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		if (additionalMenus) {
 			additionalMenus.forEach(configItem => processMenuObject({ [configItem.name]: configItem.config }, menuBuilder, rootMenu, onClick));
 		}
-	};
+	}
 
 	/**
 	 * Add generic menus to the root menu.
@@ -106,15 +94,34 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	 * @param {Object} rootMenu - The root menu to attach the menus to.
 	 */
 	function addGenericMenus(rootMenu) {
+		console.log('addGenericMenus - start');
+		console.log('rootMenu:', rootMenu);
 		menuBuilder.separator(rootMenu);
+		console.log('add separator');
 		if (pasteSupported) {
+			console.log('pasteSupported:', pasteSupported);
 			const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
-			menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerMenus.injectValue);
-			menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerMenus.paste);
-			menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerMenus.copy);
+			console.log('modeMenu:', modeMenu);
+			menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerType);
+			console.log('add choice: Inject value');
+			menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
+			console.log('add choice: Simulate pasting');
+			menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
+			console.log('add choice: Copy to clipboard');
 		}
+		console.log('add menuItem: Customize menus');
 		menuBuilder.menuItem('Customize menus', rootMenu, browserInterface.openSettings);
-		menuBuilder.menuItem('Help/Support', rootMenu, () => browserInterface.openUrl('https://xanpho.x10.bz/simple-input.html'));
+		console.log('add menuItem: Help/Support');
+		menuBuilder.menuItem('Help/Support', rootMenu, () => {
+			console.log('open help/support url');
+			if (!browserInterface) {
+				console.log('browserInterface is undefined or null');
+				throw new TypeError('browserInterface cannot be null or undefined');
+			}
+			console.log('launch help/support url');
+			browserInterface.openUrl('https://xanpho.x10.bz/testudoq-help.html');
+		});
+		console.log('addGenericMenus - end');
 	}
 
 	/**
