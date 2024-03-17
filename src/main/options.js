@@ -51,7 +51,6 @@ document.getElementById('addConfigFileButton').addEventListener('click', functio
 });
 
 // Add event listener to close the configuration options
-// Add event listener to close the configuration options
 document.getElementById('closeButton').addEventListener('click', function () {
 	console.log('Close button clicked.');
 	const configOptions = document.getElementById('configOptions');
@@ -63,6 +62,10 @@ document.getElementById('closeButton').addEventListener('click', function () {
 	}
 });
 
+// Add event listener to close the options page
+document.getElementById('closeExtension').addEventListener('click', function () {
+	window.close(); // Close the current window or tab
+});
 
 // Function to rebuild the menu
 const rebuildMenu = function () {

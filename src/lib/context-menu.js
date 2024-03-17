@@ -98,29 +98,45 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		console.log('rootMenu:', rootMenu);
 		menuBuilder.separator(rootMenu);
 		console.log('add separator');
+		console.log('pasteSupported:', pasteSupported);
 		if (pasteSupported) {
-			console.log('pasteSupported:', pasteSupported);
+			console.log('Creating "Operational mode" sub-menu');
 			const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
-			console.log('modeMenu:', modeMenu);
-			menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerType);
-			console.log('add choice: Inject value');
-			menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
-			console.log('add choice: Simulate pasting');
-			menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
-			console.log('add choice: Copy to clipboard');
+			console.log('"Operational mode" sub-menu created');
+			console.log('Adding choice "Inject value" to "Operational mode" sub-menu');
+			const injectValueChoice = menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerType);
+			console.log('Choice "Inject value" added to "Operational mode" sub-menu');
+			console.log('Adding choice "Simulate pasting" to "Operational mode" sub-menu');
+			const pasteChoice = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
+			console.log('Choice "Simulate pasting" added to "Operational mode" sub-menu');
+			console.log('Adding choice "Copy to clipboard" to "Operational mode" sub-menu');
+			const copyChoice = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
+			console.log('Choice "Copy to clipboard" added to "Operational mode" sub-menu');
+			// Store references to the choices in an object for easy access later if needed
+			const handlerChoices = {
+				injectValue: injectValueChoice,
+				paste: pasteChoice,
+				copy: copyChoice
+			};
+			console.log('handlerChoices:', handlerChoices);
 		}
-		console.log('add menuItem: Customize menus');
+
+		console.log('Adding menuItem "Customize menus" to root menu');
 		menuBuilder.menuItem('Customize menus', rootMenu, browserInterface.openSettings);
-		console.log('add menuItem: Help/Support');
+		console.log('menuItem "Customize menus" added to root menu');
+
+		console.log('Adding menuItem "Help/Support" to root menu');
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
-			console.log('open help/support url');
+			console.log('Opening help/support url');
 			if (!browserInterface) {
 				console.log('browserInterface is undefined or null');
 				throw new TypeError('browserInterface cannot be null or undefined');
 			}
-			console.log('launch help/support url');
+			console.log('Launching help/support url');
 			browserInterface.openUrl('https://xanpho.x10.bz/testudoq-help.html');
 		});
+		console.log('menuItem "Help/Support" added to root menu');
+
 		console.log('addGenericMenus - end');
 	}
 
