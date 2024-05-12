@@ -1,12 +1,12 @@
 /*global describe, it, expect, beforeEach, afterEach, jasmine, document */
 const handler = require('../src/lib/inject-value-to-active-element');
 describe('injectValueToAciveElement', () => {
-	'use strict';
+
 	const template = '<input type="text" value="old text"/>' +
-					'<textarea>old text area</textarea>' +
-					'<div contenteditable>old div</div>' +
-					'<span contenteditable>old span</span>' +
-					'<iframe></iframe>';
+		'<textarea>old text area</textarea>' +
+		'<div contenteditable>old div</div>' +
+		'<span contenteditable>old span</span>' +
+		'<iframe></iframe>';
 
 	let testElements, input, textArea, contentEditable, iframe, span;
 	beforeEach(() => {
@@ -24,11 +24,11 @@ describe('injectValueToAciveElement', () => {
 		document.body.removeChild(testElements);
 	});
 	it('does not blow up if a message is passed before an element is actually clicked', () => {
-		expect(() => handler({'_type': 'literal', 'value': 'xxx'})).not.toThrow();
+		expect(() => handler({ '_type': 'literal', 'value': 'xxx' })).not.toThrow();
 	});
 	it('sets the input text value if input element in focus', function () {
 		input.focus();
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 
 		expect(input.value).toBe('xyz');
 	});
@@ -36,19 +36,19 @@ describe('injectValueToAciveElement', () => {
 		const spy = jasmine.createSpy('change');
 		input.focus();
 		input.onchange = spy;
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 		expect(spy).toHaveBeenCalled();
 	});
 	it('dispatches input event on input', function () {
 		const spy = jasmine.createSpy('input');
 		input.focus();
 		input.onchange = spy;
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 		expect(spy).toHaveBeenCalled();
 	});
 	it('sets the text area text value if text area in focus', function () {
 		textArea.focus();
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 
 		expect(textArea.value).toBe('xyz');
 	});
@@ -56,25 +56,25 @@ describe('injectValueToAciveElement', () => {
 		const spy = jasmine.createSpy('change');
 		textArea.focus();
 		textArea.onchange = spy;
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 		expect(spy).toHaveBeenCalled();
 	});
 	it('dispatches input event on textarea', function () {
 		const spy = jasmine.createSpy('input');
 		textArea.focus();
 		textArea.onchange = spy;
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 		expect(spy).toHaveBeenCalled();
 	});
 	it('sets the contenteditable div inner text if a contenteditable div is in focus', function () {
 		contentEditable.focus();
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 
 		expect(contentEditable.innerText).toBe('xyz');
 	});
 	it('spans can also be contenteditable', function () {
 		span.focus();
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 
 		expect(span.innerText).toBe('xyz');
 	});
@@ -86,7 +86,7 @@ describe('injectValueToAciveElement', () => {
 
 		expect(document.activeElement).toBe(iframe);
 
-		handler({'_type': 'literal', 'value': 'xyz'});
+		handler({ '_type': 'literal', 'value': 'xyz' });
 		expect(insideInput.value).toBe('xyz');
 	});
 	describe('size generator', function () {
