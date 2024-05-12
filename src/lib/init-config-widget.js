@@ -15,12 +15,12 @@ module.exports = function initConfigWidget(domElement, browserInterface) {
 
 	// Function to display error messages
 	const showErrorMsg = function (text) {
-			const status = domElement.querySelector('[role=status]');
-			status.textContent = text;
-			setTimeout(function () {
-				status.textContent = '';
-			}, 1500);
-		},
+		const status = domElement.querySelector('[role=status]');
+		status.textContent = text;
+		setTimeout(function () {
+			status.textContent = '';
+		}, 1500);
+	},
 
 		// Function to add a link to a parent element
 		addLink = function (parent, url) {
@@ -110,6 +110,7 @@ module.exports = function initConfigWidget(domElement, browserInterface) {
 		},
 
 		// Function to initialize the screen
+		// Function to initialize the screen
 		initScreen = function () {
 			const submenuField = domElement.querySelector('[role=submenu-name]'),
 				skipStandardCheckbox = domElement.querySelector('[role=option-skipStandard]');
@@ -182,15 +183,18 @@ module.exports = function initConfigWidget(domElement, browserInterface) {
 				}
 			});
 
-			// Remove the template from the DOM
+			// Remove the template from the DOM if it exists
 			template = domElement.querySelector('[role=template]');
-			list = template.parentElement;
-			list.removeChild(template);
+			if (template && template.parentElement) {
+				list = template.parentElement;
+				list.removeChild(template);
+			}
 
 			// Show the main screen and restore options
 			showMainScreen();
 			return restoreOptions();
 		};
+
 
 	// Call the initialization function and return its result
 	return initScreen();

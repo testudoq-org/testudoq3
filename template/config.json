@@ -572,12 +572,11 @@
   },
   "Emoji": {
     "plain": "\uD83D\uDC69",
-    "+variation selector": "\ud83d\udc69\ud83c\udfff", 
-    "+zero-width space combo": "\uD83D\uDC69\u200d\ud83c\udf73",
-    "+zero-width space combo + variation selector": "\ud83d\udc69\ud83c\udfff\u200d\ud83c\udf73"
+    "variation selector": "\ud83d\udc69\ud83c\udfff",
+    "zero-width space combo": "\uD83D\uDC69\u200d\ud83c\udf73",
+    "zero-width space combo and variation selector": "\ud83d\udc69\ud83c\udfff\u200d\ud83c\udf73"
   },
-  "Variations": {
-    "Regional Indicators": { 
+    "World Flags": {
       "US Flag": "\ud83c\uddfa\ud83c\uddf8",
       "Chinese Flag": "\ud83c\udde8\ud83c\uddf3",
       "Scottish Flag": "\ud83c\udf08\ud83c\uddec\ud83c\uddf1",
@@ -596,5 +595,4 @@
         "VS15 + smiley": "\uD83D\uDE01\uFE0E"
       }
     }
-  }
 }
