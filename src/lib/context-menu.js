@@ -1,14 +1,14 @@
-const injectValueRequestHandler = require('./inject-value-request-handler'),
-	pasteRequestHandler = require('./paste-request-handler'),
-	copyRequestHandler = require('./copy-request-handler');
+const injectValueRequestHandler = require('./inject-value-request-handler');
+const pasteRequestHandler = require('./paste-request-handler');
+const copyRequestHandler = require('./copy-request-handler');
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const handlerType = 'injectValue',
-		handlers = {
-			injectValue: injectValueRequestHandler,
-			paste: pasteRequestHandler,
-			copy: copyRequestHandler
-		};
+	let handlerType = 'injectValue';
+	const handlers = {
+		injectValue: injectValueRequestHandler,
+		paste: pasteRequestHandler,
+		copy: copyRequestHandler
+	};
 
 	function onClick(tabId, itemMenuValue) {
 		if (!itemMenuValue) {
@@ -19,16 +19,38 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	}
 
 	function turnOnPasting() {
+		if (!browserInterface) {
+			throw new TypeError('browserInterface cannot be null or undefined');
+		}
 		return browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite'])
-			.then(() => handlerType = 'paste')
-			.catch(() => {
+			.then(() => {
+				if (handlerType !== 'paste') {
+					handlerType = 'paste'; // Modify handlerType here
+				}
+			})
+			.catch((err) => {
 				browserInterface.showMessage('Could not access clipboard');
+				if (err && (err.message || err.stack)) {
+					throw err;
+				}
 			});
 	}
 
 	function turnOffPasting() {
-		handlerType = 'injectValue';
-		return browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
+		if (!browserInterface) {
+			throw new TypeError('browserInterface cannot be null or undefined');
+		}
+		try {
+			browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
+			handlerType = 'injectValue';
+		} catch (err) {
+			// Re-throw the error so that it can be handled externally if desired
+			if (err && (err.message || err.stack)) {
+				throw err;
+			} else {
+				throw new TypeError('Error occurred while removing permissions: ' + err);
+			}
+		}
 	}
 
 	function turnOnCopy() {
@@ -36,15 +58,17 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	}
 
 	function loadAdditionalMenus(additionalMenus, rootMenu) {
-		if (additionalMenus) {
-			additionalMenus.forEach(configItem => processMenuObject({ [configItem.name]: configItem.config }, menuBuilder, rootMenu, onClick));
+		if (!rootMenu || !additionalMenus) {
+			return;
 		}
+		additionalMenus.forEach(configItem => processMenuObject({ [configItem.name]: configItem.config }, menuBuilder, rootMenu, onClick));
 	}
 
 	function addGenericMenus(rootMenu) {
-		console.log('addGenericMenus - start');
+		if (!rootMenu) {
+			return;
+		}
 		menuBuilder.separator(rootMenu);
-		console.log('add separator');
 		const handlerChoices = {};
 		if (pasteSupported !== undefined) {
 			pasteSupported = pasteSupported || true;
@@ -62,7 +86,6 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 			}
 			browserInterface.openUrl('https://xanpho.x10.bz/testudoq-help.html');
 		});
-		console.log('addGenericMenus - end');
 	}
 
 	function rebuildMenu(options) {
@@ -81,4 +104,5 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	this.init = function () {
 		return browserInterface.getOptionsAsync().then(rebuildMenu).then(wireStorageListener);
 	};
+
 };
