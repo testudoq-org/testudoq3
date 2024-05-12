@@ -1,6 +1,7 @@
+// eslint-disable-next-line no-unused-vars
 /* global jasmine, window */
 module.exports = function FakeChromeApi() {
-	'use strict';
+
 	const self = this,
 		event = function (name) {
 			return jasmine.createSpyObj(name, ['addListener', 'removeListener']);
