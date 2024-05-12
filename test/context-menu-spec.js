@@ -1,7 +1,8 @@
+// eslint-disable-next-line no-unused-vars
 /*global describe, window, it, beforeEach, jasmine, expect*/
 const ContextMenu = require('../src/lib/context-menu');
 describe('ContextMenu', function () {
-	'use strict';
+
 	let fakeRoot, standardConfig, browserInterface, underTest, processMenuObject, menuBuilder;
 	beforeEach(function () {
 		standardConfig = {
