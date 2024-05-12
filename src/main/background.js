@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* global chrome, browser */
 const browserAPI = (typeof browser !== 'undefined') ? browser : chrome, // Unified browser API access
 	itemHandlers = {}; // Global variable for itemHandlers
