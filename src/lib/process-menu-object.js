@@ -9,22 +9,6 @@
  */
 module.exports = function processMenuObject(configObject, menuBuilder, parentMenu, onClick) {
 
-
-	/**
-	 * Returns the title for a given key from the config object. If the config
-	 * object is an array, the value at the given key is returned. Otherwise,
-	 * the key itself is returned.
-	 *
-	 * @param {string} key - The key to get the title for.
-	 * @return {string} The title for the key.
-	 */
-	const getTitle = function (key) {
-		if (configObject instanceof Array) {
-			return configObject[key];
-		}
-		return key;
-	};
-
 	// If the config object is falsy, return early.
 	if (!configObject) {
 		return;
@@ -32,19 +16,18 @@ module.exports = function processMenuObject(configObject, menuBuilder, parentMen
 
 	// Process each key and value in the config object.
 	Object.keys(configObject).forEach(function (key) {
-		const value = configObject[key],
-			title = getTitle(key);
+		const value = configObject[key];
 		let result;
 
 		// If the value is a string or an object with a _type property, add a menu item.
-		if (typeof (value) === 'string' || (typeof (value) === 'object' && value.hasOwnProperty('_type'))) {
-			menuBuilder.menuItem(title, parentMenu, onClick, value);
-		}
-		// If the value is an object, add a sub-menu.
-		else if (typeof (value) === 'object') {
-			result = menuBuilder.subMenu(title, parentMenu);
+		if (value !== null && (typeof value === 'string' || (typeof value === 'object' && value.hasOwnProperty('_type')))) {
+			menuBuilder.menuItem(key, parentMenu, onClick, value);
+		} else if (value !== null && typeof value === 'object') {
+			// If the value is an object, add a sub-menu.
+			result = menuBuilder.subMenu(key, parentMenu);
 			processMenuObject(value, menuBuilder, result, onClick);
+		} else {
+			console.error(`Ignoring value for ${key} due to null or undefined pointer.`);
 		}
 	});
 };
-
