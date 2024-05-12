@@ -1,7 +1,7 @@
 /*global describe, it, expect, beforeEach, afterEach, jasmine */
 const initConfigWidget = require('../src/lib/init-config-widget');
 describe('initConfigWidget', function () {
-	'use strict';
+
 	let underTest, browserInterface, mainScreen, addScreen, sectionForCustom, sectionWithoutCustom,
 		configList, statusMessage, submenuName, asyncResult, resolveLoadOptions;
 	const template = `
