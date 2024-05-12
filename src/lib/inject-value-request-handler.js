@@ -8,7 +8,7 @@
  */
 module.exports = function injectValueRequestHandler(browserInterface, tabId, requestValue) {
 	/**
-	 * Executes the 'inject-value.js' script in the given tab, then sends a message 
+	 * Executes the 'inject-value.js' script in the given tab, then sends a message
 	 * with the given request value to the same tab.
 	 */
 	return browserInterface.executeScript(tabId, '/inject-value.js') // Execute script
