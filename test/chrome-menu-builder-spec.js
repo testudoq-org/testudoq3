@@ -2,7 +2,7 @@
 const FakeChromeApi = require('./utils/fake-chrome-api'),
 	ChromeMenuBuilder = require('../src/lib/chrome-menu-builder');
 describe('testudoq.ChromeMenuBuilder', function () {
-	'use strict';
+
 	let underTest, chrome, index = 0, clickHandler;
 	const lastMenu = function () {
 		return chrome.contextMenus.create.calls.argsFor(0)[0];
@@ -70,4 +70,3 @@ describe('testudoq.ChromeMenuBuilder', function () {
 		});
 	});
 });
-
