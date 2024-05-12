@@ -5,8 +5,6 @@
  * @returns {Promise} A promise that resolves when the initialization is complete.
  */
 module.exports = function initConfigWidget(domElement, browserInterface) {
-
-
 	// Variables
 	let template,
 		list,
@@ -15,12 +13,12 @@ module.exports = function initConfigWidget(domElement, browserInterface) {
 
 	// Function to display error messages
 	const showErrorMsg = function (text) {
-		const status = domElement.querySelector('[role=status]');
-		status.textContent = text;
-		setTimeout(function () {
-			status.textContent = '';
-		}, 1500);
-	},
+			const status = domElement.querySelector('[role=status]');
+			status.textContent = text;
+			setTimeout(function () {
+				status.textContent = '';
+			}, 1500);
+		},
 
 		// Function to add a link to a parent element
 		addLink = function (parent, url) {
@@ -110,7 +108,6 @@ module.exports = function initConfigWidget(domElement, browserInterface) {
 		},
 
 		// Function to initialize the screen
-		// Function to initialize the screen
 		initScreen = function () {
 			const submenuField = domElement.querySelector('[role=submenu-name]'),
 				skipStandardCheckbox = domElement.querySelector('[role=option-skipStandard]');
@@ -194,7 +191,6 @@ module.exports = function initConfigWidget(domElement, browserInterface) {
 			showMainScreen();
 			return restoreOptions();
 		};
-
 
 	// Call the initialization function and return its result
 	return initScreen();
