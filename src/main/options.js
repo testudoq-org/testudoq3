@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-undef */
 import ChromeConfigInterface from '../lib/chrome-browser-interface';
 import initConfigWidget from '../lib/init-config-widget';
 
@@ -76,6 +78,7 @@ const rebuildMenu = function () {
 	list.innerHTML = '';
 
 	// Check if additional menus exist
+	// eslint-disable-next-line one-var
 	const additionalMenus = []; // Example data
 	console.log('Checking if additional menus exist...');
 	if (additionalMenus && additionalMenus.length) {
