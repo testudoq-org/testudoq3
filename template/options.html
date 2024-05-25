@@ -8,83 +8,11 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
     rel="stylesheet">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <style>
-    body,
-    html {
-      height: 100%;
-      font-family: 'Ubuntu', sans-serif;
-      font-size: 16px;
-      /* Default font size */
-      margin: 0;
-      /* Remove default margin */
-      padding: 0;
-      /* Remove default padding */
-    }
-
-    .bg {
-      position: relative;
-      background-image: url('turtle-background_960_720.png');
-      /* Set your desired background image */
-      background-size: cover;
-      /* Make the background image cover the entire container */
-      background-repeat: no-repeat;
-      background-position: center;
-      /* Center the background image */
-      background-color: rgba(248, 249, 250, 1.0);
-      /* Set your desired background color with full opacity */
-      padding: 1.5rem;
-    }
-
-    .container-fluid {
-      height: 100%;
-    }
-
-    [role=status] {
-      color: #d9534f;
-    }
-
-    [role=main-screen] div {
-      margin-bottom: 1.5rem;
-    }
-
-    [role=custom-config-text] {
-      width: 100%;
-      resize: vertical;
-    }
-
-    .container {
-      max-height: 200px;
-      overflow: auto;
-    }
-
-    .tab {
-      display: none;
-    }
-
-    [role=select-file-cover]:hover {
-      cursor: pointer;
-    }
-
-    /* show tab based on radio button selection */
-    input[type=radio]:checked~.tab {
-      display: block;
-    }
-
-    /* Increase font size */
-    .increase-font {
-      font-size: 20px;
-    }
-
-    /* Close button style */
-    .close-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 24px;
-      cursor: pointer;
-    }
-  </style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="index.css">
+  <link
+    href="data:text/css,%3Ais(%5Bid*%3D'google_ads_iframe'%5D%2C%5Bid*%3D'taboola-'%5D%2C.taboolaHeight%2C.taboola-placeholder%2C%23credential_picker_container%2C%23credentials-picker-container%2C%23credential_picker_iframe%2C%5Bid*%3D'google-one-tap-iframe'%5D%2C%23google-one-tap-popup-container%2C.google-one-tap-modal-div%2C%23amp_floatingAdDiv%2C%23ez-content-blocker-container)%20%7Bdisplay%3Anone!important%3Bmin-height%3A0!important%3Bheight%3A0!important%3B%7D"
+    rel="stylesheet" type="text/css">
 </head>
 
 <body>
@@ -172,8 +100,108 @@
       </div>
     </div>
   </div>
+
+  <div id="gremlins-generator">
+
+    <body data-new-gr-c-s-check-loaded="8.912.0" data-gr-ext-installed="" cz-shortcut-listen="true">
+      <div class="bookmarklet">
+        <form id="gremlins-form" class="form">
+          <div>
+            <h2>Species</h2>
+            <div>
+              <input id="clicker" name="clicker" type="checkbox" checked="checked">
+              <label for="clicker">Clicker</label>
+            </div>
+            <div>
+              <input id="toucher" name="toucher" type="checkbox" checked="checked">
+              <label for="toucher">Toucher</label>
+            </div>
+            <div>
+              <input id="formFiller" name="formFiller" type="checkbox" checked="checked">
+              <label for="formFiller">Form Filler</label>
+            </div>
+            <div>
+              <input id="scroller" name="scroller" type="checkbox" checked="checked">
+              <label for="scroller">Scroller</label>
+            </div>
+            <div>
+              <input id="typer" name="typer" type="checkbox" checked="checked">
+              <label for="typer">Typer</label>
+            </div>
+          </div>
+          <div>
+            <h2>Mogwais</h2>
+            <div>
+              <input id="alert" name="alert" type="checkbox" checked="checked">
+              <label for="alert">Alert</label>
+            </div>
+            <div>
+              <input id="fps" name="fps" type="checkbox" checked="checked">
+              <label for="fps">Fps</label>
+            </div>
+            <div>
+              <input id="gizmo" name="gizmo" type="checkbox" checked="checked">
+              <label for="gizmo">Gizmo</label>
+            </div>
+          </div>
+          <div>
+            <h2>Strategies</h2>
+            <div>
+              <input id="distribution" name="distribution" type="checkbox" checked="checked">
+              <label for="distribution">Distribution</label>
+            </div>
+            <div>
+              <input id="allTogether" name="allTogether" type="checkbox" checked="checked">
+              <label for="allTogether">All Together</label>
+            </div>
+            <div>
+              <input id="bySpecies" name="bySpecies" type="checkbox" checked="checked">
+              <label for="bySpecies">By Species</label>
+            </div>
+          </div>
+        </form>
+
+        <div class="bookmarklet-container">
+          <p>Drag and drop the link below to your bookmarks toolbar</p>
+          <a id="bookmarklet" title="flutterman.js"
+            href='javascript: (function() { function callback() { gremlins.createHorde({ species: [gremlins.species.clicker(),gremlins.species.toucher(),gremlins.species.formFiller(),gremlins.species.scroller(),gremlins.species.typer()], mogwais: [gremlins.mogwais.alert(),gremlins.mogwais.fps(),gremlins.mogwais.gizmo()], strategies: [gremlins.strategies.distribution(),gremlins.strategies.allTogether(),gremlins.strategies.bySpecies()] }).unleash(); } var s = document.createElement("script"); s.src = "https://unpkg.com/gremlins.js"; if (s.addEventListener) { s.addEventListener("load", callback, false); } else if (s.readyState) { s.onreadystatechange = callback; } document.body.appendChild(s); })()'>gremlins.js</a>
+        </div>
+      </div>
+      <div class="code-container">
+        <h2 class="code-title">Bookmarklet Code</h2>
+        <p id="code" class="code">
+          javascript: (function() {
+          function callback() {
+          gremlins.createHorde({
+          species:
+          [gremlins.species.clicker(),gremlins.species.toucher(),gremlins.species.formFiller(),gremlins.species.scroller(),gremlins.species.typer()],
+          mogwais: [gremlins.mogwais.alert(),gremlins.mogwais.fps(),gremlins.mogwais.gizmo()],
+          strategies:
+          [gremlins.strategies.distribution(),gremlins.strategies.allTogether(),gremlins.strategies.bySpecies()]
+          }).unleash();
+          }
+          var s = document.createElement("script");
+          s.src = "https://unpkg.com/gremlins.js";
+          if (s.addEventListener) {
+          s.addEventListener("load", callback, false);
+          } else if (s.readyState) {
+          s.onreadystatechange = callback;
+          }
+          document.body.appendChild(s);
+          })()</p>
+      </div>
+
+      <script>
+       
+      </script>
+      <script type="text/javascript" src="Gremlins.js%20Bookmarklet_files/gremlins.min.js"></script>
+    </body>
+
+  </div>
+
   <span id="closeExtension" class="close-button">&times;</span>
   <script src="options.js" defer></script>
+  <script src="prompt.js" defer></script>
 </body>
 
 </html>

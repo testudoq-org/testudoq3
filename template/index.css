@@ -1,0 +1,197 @@
+/* Set background color */
+.bg {
+    background-color: #f8f9fa;
+}
+
+/* Common font and size */
+body,
+html {
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 16px;
+}
+
+/* Default font size and margin/padding reset */
+body,
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Gremlins.js styles */
+.vt-augment {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.vt-augment.drawer {
+    display: none;
+    width: 700px;
+    background: white;
+    border: 1px solid #e6e6e6;
+    text-align: left;
+    z-index: 102;
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    box-shadow: -4px 5px 8px -3px rgba(17, 17, 17, .16);
+    animation: slideToRight 0.5s 1 forwards;
+    transform: translateX(100vw);
+}
+
+.vt-augment.drawer[opened] {
+    display: flex;
+    animation: slideFromRight 0.2s 1 forwards;
+}
+
+.vt-augment>.spinner {
+    position: absolute;
+    z-index: 199;
+    top: calc(50% - 50px);
+    left: calc(50% - 50px);
+    border: 8px solid rgba(0, 0, 0, 0.2);
+    border-left-color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes slideFromRight {
+    0% {
+        transform: translateX(100vw);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideToRight {
+    100% {
+        transform: translateX(100vw);
+        display: none;
+    }
+}
+
+@media screen and (max-width: 700px) {
+    .vt-augment.drawer {
+        width: 100%;
+    }
+}
+
+/* Define styles for smaller screens */
+@media screen and (max-width: 768px) {
+    /* Adjust padding and margins for smaller screens */
+    .container-fluid {
+        padding: 1rem;
+    }
+
+    /* Increase font size for better readability on smaller screens */
+    body,
+    html {
+        font-size: 14px;
+    }
+
+    /* Adjust layout for smaller screens */
+    #gremlins-generator {
+        margin-top: 2rem;
+    }
+}
+
+/* Define styles for larger screens */
+@media screen and (min-width: 768px) {
+    /* Increase font size for better readability on larger screens */
+    body,
+    html {
+        font-size: 16px;
+    }
+
+    /* Add background color or border to visually separate sections */
+    #gremlins-generator {
+        background-color: #ffffff;
+        border: 1px solid #e6e6e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+}
+
+
+/* Options page styles */
+.bg {
+    background-image: url('turtle-background_960_720.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 1.5rem;
+}
+
+.container-fluid {
+    height: 100%;
+}
+
+[role=status] {
+    color: #d9534f;
+}
+
+[role=main-screen] div {
+    margin-bottom: 1rem; /* Adjusted margin */
+}
+
+#gremlins-generator {
+    margin-bottom: 0.5rem; /* Adjusted margin */
+}
+
+
+[role=custom-config-text] {
+    width: 100%;
+    resize: vertical;
+}
+
+.container {
+    max-height: 200px;
+    overflow: auto;
+}
+
+.tab {
+    display: none;
+}
+
+[role=select-file-cover]:hover {
+    cursor: pointer;
+}
+
+/* Show tab based on radio button selection */
+input[type=radio]:checked~.tab {
+    display: block;
+}
+
+/* Close button style */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Additional styles for Gremlins.js section */
+#gremlins-generator {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Increase font size for Gremlins.js section */
+.increase-font {
+    font-size: 1.25rem;
+}

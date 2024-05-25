@@ -38,7 +38,9 @@
 			],
 			"js": [
 				"inject-value.js",
-				"paste.js"
+				"paste.js",
+				"prompt.js",
+				"options.js"
 			],
 			"run_at": "document_end"
 		}
