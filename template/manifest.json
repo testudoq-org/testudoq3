@@ -29,10 +29,7 @@
 	},
 	"content_security_policy": {
 		"extension_pages": "script-src 'self'; object-src 'self';",
-		"script-src": [
-			"self",
-			"'unsafe-inline'"
-		],
+		"script-src": ["self", "sha256-73c1f52689f9531a6e0b25d79ebb263134316511ac1f82b8df81ad0f5b46b508", "sha256-85a20320c451de90a2d1ad5925d215adbc37cc0845469339d26ed5d973f4de76","https://unpkg.com", "https://code.jquery.com", "https://maxcdn.bootstrapcdn.com", "'unsafe-inline'", "'unsafe-eval'"],
 		"object-src": [
 			"self"
 		]
