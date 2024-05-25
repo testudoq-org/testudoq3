@@ -1,21 +1,31 @@
-/* Set background color */
-body {
-    background-color: #f8f9fa;
-}
-
-/* Common font and size */
-body,
+/* Set background image on the html element */
 html {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 16px;
+    background-image: url('turtle-background_960_720.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-/* Default font size and margin/padding reset */
+/* Make sure body and html take up full height */
 body,
 html {
     height: 100%;
     margin: 0;
     padding: 0;
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 16px;
+}
+
+/* Ensure the body doesn't override the background */
+body {
+    background: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Ensure body takes full width */
 }
 
 /* Gremlins.js styles */
@@ -70,7 +80,6 @@ html {
     0% {
         transform: translateX(100vw);
     }
-
     100% {
         transform: translateX(0);
     }
@@ -105,6 +114,7 @@ html {
     /* Adjust layout for smaller screens */
     #gremlins-generator {
         margin-top: 2rem;
+        padding: 1rem;
     }
 }
 
@@ -127,10 +137,7 @@ html {
 
 /* Options page styles */
 .bg {
-    background-image: url('turtle-background_960_720.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
+    background: none; /* No background here */
     padding: 1.5rem;
 }
 
@@ -147,46 +154,18 @@ html {
 }
 
 #gremlins-generator {
-    margin-bottom: 0.5rem; /* Adjusted margin */
-}
-
-[role=custom-config-text] {
-    width: 100%;
-    resize: vertical;
-}
-
-.container {
-    max-height: 200px;
-    overflow: auto;
-}
-
-.tab {
-    display: none;
-}
-
-[role=select-file-cover]:hover {
-    cursor: pointer;
-}
-
-/* Show tab based on radio button selection */
-input[type=radio]:checked~.tab {
-    display: block;
-}
-
-/* Close button style */
-.close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-/* Additional styles for Gremlins.js section */
-#gremlins-generator {
-    background-color: #f8f9fa;
+    width: 100%; /* Take full width */
     padding: 1rem;
     margin-bottom: 1rem;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+/* Media query adjustments for smaller screens */
+@media screen and (max-width: 768px) {
+    #gremlins-generator {
+        width: 100%; /* Make it full-width on small screens */
+        padding: 1rem; /* Adjust padding if needed */
+    }
 }
 
 /* Increase font size for Gremlins.js section */

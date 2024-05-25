@@ -9,7 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="index.css">
+  <link rel="stylesheet" type="text/css" href="options.css">
   <link rel="stylesheet" type="text/css"
     href="data:text/css,%3Ais(%5Bid*%3D'google_ads_iframe'%5D%2C%5Bid*%3D'taboola-'%5D%2C.taboolaHeight%2C.taboola-placeholder%2C%23credential_picker_container%2C%23credentials-picker-container%2C%23credential_picker_iframe%2C%5Bid*%3D'google-one-tap-iframe'%5D%2C%23google-one-tap-popup-container%2C.google-one-tap-modal-div%2C%23amp_floatingAdDiv%2C%23ez-content-blocker-container)%20%7Bdisplay%3Anone!important%3Bmin-height%3A0!important%3Bheight%3A0!important%3B%7D">
 </head>
@@ -100,57 +100,59 @@
   <div id="gremlins-generator" class="container">
     <div class="bookmarklet">
       <form id="gremlins-form" class="form">
-        <div>
-          <h2>Species</h2>
-          <div>
-            <input id="clicker" name="clicker" type="checkbox" checked="checked">
-            <label for="clicker">Clicker</label>
+        <div class="row">
+          <div class="col-md-4">
+            <h2>Species</h2>
+            <div>
+              <input id="clicker" name="clicker" type="checkbox" checked="checked">
+              <label for="clicker">Clicker</label>
+            </div>
+            <div>
+              <input id="toucher" name="toucher" type="checkbox" checked="checked">
+              <label for="toucher">Toucher</label>
+            </div>
+            <div>
+              <input id="formFiller" name="formFiller" type="checkbox" checked="checked">
+              <label for="formFiller">Form Filler</label>
+            </div>
+            <div>
+              <input id="scroller" name="scroller" type="checkbox" checked="checked">
+              <label for="scroller">Scroller</label>
+            </div>
+            <div>
+              <input id="typer" name="typer" type="checkbox" checked="checked">
+              <label for="typer">Typer</label>
+            </div>
           </div>
-          <div>
-            <input id="toucher" name="toucher" type="checkbox" checked="checked">
-            <label for="toucher">Toucher</label>
+          <div class="col-md-4">
+            <h2>Mogwais</h2>
+            <div>
+              <input id="alert" name="alert" type="checkbox" checked="checked">
+              <label for="alert">Alert</label>
+            </div>
+            <div>
+              <input id="fps" name="fps" type="checkbox" checked="checked">
+              <label for="fps">Fps</label>
+            </div>
+            <div>
+              <input id="gizmo" name="gizmo" type="checkbox" checked="checked">
+              <label for="gizmo">Gizmo</label>
+            </div>
           </div>
-          <div>
-            <input id="formFiller" name="formFiller" type="checkbox" checked="checked">
-            <label for="formFiller">Form Filler</label>
-          </div>
-          <div>
-            <input id="scroller" name="scroller" type="checkbox" checked="checked">
-            <label for="scroller">Scroller</label>
-          </div>
-          <div>
-            <input id="typer" name="typer" type="checkbox" checked="checked">
-            <label for="typer">Typer</label>
-          </div>
-        </div>
-        <div>
-          <h2>Mogwais</h2>
-          <div>
-            <input id="alert" name="alert" type="checkbox" checked="checked">
-            <label for="alert">Alert</label>
-          </div>
-          <div>
-            <input id="fps" name="fps" type="checkbox" checked="checked">
-            <label for="fps">Fps</label>
-          </div>
-          <div>
-            <input id="gizmo" name="gizmo" type="checkbox" checked="checked">
-            <label for="gizmo">Gizmo</label>
-          </div>
-        </div>
-        <div>
-          <h2>Strategies</h2>
-          <div>
-            <input id="distribution" name="distribution" type="checkbox" checked="checked">
-            <label for="distribution">Distribution</label>
-          </div>
-          <div>
-            <input id="allTogether" name="allTogether" type="checkbox" checked="checked">
-            <label for="allTogether">All Together</label>
-          </div>
-          <div>
-            <input id="bySpecies" name="bySpecies" type="checkbox" checked="checked">
-            <label for="bySpecies">By Species</label>
+          <div class="col-md-4">
+            <h2>Strategies</h2>
+            <div>
+              <input id="distribution" name="distribution" type="checkbox" checked="checked">
+              <label for="distribution">Distribution</label>
+            </div>
+            <div>
+              <input id="allTogether" name="allTogether" type="checkbox" checked="checked">
+              <label for="allTogether">All Together</label>
+            </div>
+            <div>
+              <input id="bySpecies" name="bySpecies" type="checkbox" checked="checked">
+              <label for="bySpecies">By Species</label>
+            </div>
           </div>
         </div>
       </form>
@@ -178,6 +180,9 @@
   <span id="closeExtension" class="close-button">&times;</span>
   <script src="options.js" defer></script>
   <script src="prompt.js" defer></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" defer></script>
+</body>
 </body>
 
 </html>
