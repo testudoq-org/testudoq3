@@ -30,7 +30,7 @@ After installation, simply right-click on any editable item on the page to revea
 - [What's New in the Latest Version?](https://testudo.co.nz/futterman/v0.9.html)
 - [How to Install and Use Testudoq](https://github.com/testudoq-org/testudoq3/blob/main/README.md)
 - [Contribute or Support Development](https://github.com/testudoq-org/testudoq3/blob/main/CONTRIBUTING.md)
-- [Customize Menus in Testudoq](https://testudo.co.nz/futterman/futterman/testudoq-help.html)
+- [Customise Menus in Testudoq](https://testudo.co.nz/futterman/futterman/testudoq-help.html)
 - [Developer Guide](CONTRIBUTING.md)
 - [Resources About Edge Cases in Testudoq Menus](https://testudo.co.nz/futterman/resources.html)
 - [Heuristic Test Strategy Mode](https://xmind.app/m/sB6M/) 
