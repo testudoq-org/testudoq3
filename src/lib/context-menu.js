@@ -60,7 +60,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 			if (!browserInterface) {
 				throw new TypeError('browserInterface cannot be null or undefined');
 			}
-			browserInterface.openUrl('https://xanpho.x10.bz/testudoq-help.html');
+			browserInterface.openUrl('hhttps://testudo.co.nz/futterman/testudoq-help.html');
 		});
 		console.log('addGenericMenus - end');
 	}

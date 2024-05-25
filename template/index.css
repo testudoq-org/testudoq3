@@ -1,5 +1,5 @@
 /* Set background color */
-.bg {
+body {
     background-color: #f8f9fa;
 }
 
@@ -125,7 +125,6 @@ html {
     }
 }
 
-
 /* Options page styles */
 .bg {
     background-image: url('turtle-background_960_720.png');
@@ -150,7 +149,6 @@ html {
 #gremlins-generator {
     margin-bottom: 0.5rem; /* Adjusted margin */
 }
-
 
 [role=custom-config-text] {
     width: 100%;
@@ -194,4 +192,31 @@ input[type=radio]:checked~.tab {
 /* Increase font size for Gremlins.js section */
 .increase-font {
     font-size: 1.25rem;
+}
+
+/* Styles for code container and title */
+.code-container {
+    background-color: #ffffff;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    overflow: auto;
+    max-height: 400px;
+}
+
+.code-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.code {
+    background-color: #f1f1f1;
+    padding: 1rem;
+    border-radius: 8px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    white-space: pre-wrap; /* Ensures the code text wraps */
+    word-wrap: break-word; /* Ensures long words break to avoid overflow */
 }

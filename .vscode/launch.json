@@ -38,7 +38,7 @@
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "prepack-and-pack-extension",
-      "url": "https://xanpho.x10.bz/simple-input.html",
+      "url": "https://testudo.co.nz/sbt/simple-input.html",
       "webRoot": "${workspaceFolder}",
       "sourceMapPathOverrides": {
         "webpack:///template/*": "${webRoot}/template/*",
