@@ -47,7 +47,7 @@ function getFrameLocation() {
 
 // Not a top window
 if (window !== window.top) {
-  window.prompt = function(text, defaultText) {
+  window.prompt = function (text, defaultText) {
     if (document.body.hasAttribute('SideeXPlayingFlag')) {
       return window.top.prompt(text, defaultText)
     } else {
@@ -67,7 +67,7 @@ if (window !== window.top) {
     }
   }
 
-  window.confirm = function(text) {
+  window.confirm = function (text) {
     if (document.body.hasAttribute('SideeXPlayingFlag')) {
       return window.top.confirm(text)
     } else {
@@ -87,7 +87,7 @@ if (window !== window.top) {
     }
   }
 
-  window.alert = function(text) {
+  window.alert = function (text) {
     if (document.body.hasAttribute('SideeXPlayingFlag')) {
       recordedAlert = text
       // Response directly
@@ -119,7 +119,7 @@ if (window !== window.top) {
 } else {
   // top window
 
-  window.prompt = function(text, defaultText) {
+  window.prompt = function (text, defaultText) {
     recordedPrompt = text
     if (document.body.hasAttribute('setPrompt')) {
       document.body.removeAttribute('setPrompt')
@@ -140,7 +140,7 @@ if (window !== window.top) {
       return result
     }
   }
-  window.confirm = function(text) {
+  window.confirm = function (text) {
     recordedConfirmation = text
     if (document.body.hasAttribute('setConfirm')) {
       document.body.removeAttribute('setConfirm')
@@ -161,7 +161,7 @@ if (window !== window.top) {
       return result
     }
   }
-  window.alert = function(text) {
+  window.alert = function (text) {
     recordedAlert = text
     if (document.body.hasAttribute('SideeXPlayingFlag')) {
       // Response directly
@@ -258,7 +258,7 @@ function handler(event) {
             },
             '*'
           )
-        } catch (e) {} // eslint-disable-line no-empty
+        } catch (e) { } // eslint-disable-line no-empty
         break
 
       case 'setNextAlertResult':
@@ -340,6 +340,16 @@ function exposeGremlins() {
   script.addEventListener('load', displayExposedGremlins, false)
   document.body.appendChild(script);
 }
+
+
+window.addEventListener('load', function() {
+  const gremlinsForm = document.getElementById('gremlins-form');
+  if (gremlinsForm) {
+      gremlinsForm.addEventListener('input', setBookmarkletScript);
+  } else {
+      console.error('gremlins-form element not found.');
+  }
+});
 
 document.getElementById('gremlins-form').addEventListener('input', setBookmarkletScript);
 
