@@ -5,13 +5,8 @@
   <meta charset="utf-8">
   <title>Testudoq Extension Options</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="options.css">
-  <link rel="stylesheet" type="text/css"
-    href="data:text/css,%3Ais(%5Bid*%3D'google_ads_iframe'%5D%2C%5Bid*%3D'taboola-'%5D%2C.taboolaHeight%2C.taboola-placeholder%2C%23credential_picker_container%2C%23credentials-picker-container%2C%23credential_picker_iframe%2C%5Bid*%3D'google-one-tap-iframe'%5D%2C%23google-one-tap-popup-container%2C.google-one-tap-modal-div%2C%23amp_floatingAdDiv%2C%23ez-content-blocker-container)%20%7Bdisplay%3Anone!important%3Bmin-height%3A0!important%3Bheight%3A0!important%3B%7D">
+
 </head>
 
 <body class="bg">
@@ -23,23 +18,19 @@
           <div class="form-group">
             <div class="checkbox">
               <label>
-                <input type="checkbox" id="skipStandardCheckbox" role="option-skipStandard"
-                  aria-label="Hide standard menus">
+                <input type="checkbox" id="skipStandardCheckbox" role="option-skipStandard" aria-label="Hide standard menus">
                 Hide standard menus
               </label>
             </div>
           </div>
-          <button type="button" id="addConfigFileButton" role="add" class="btn btn-primary increase-font">Add
-            Configuration File</button>
+          <button type="button" id="addConfigFileButton" role="add" class="btn btn-primary increase-font">Add Configuration File</button>
           <button type="button" id="closeButton" role="close" class="btn btn-default increase-font">Close</button>
-          <div id="noCustomDiv" role="no-custom" aria-live="polite" class="alert alert-info increase-font"
-            style="display: none;">There are no custom configuration files loaded.</div>
+          <div id="noCustomDiv" role="no-custom" aria-live="polite" class="alert alert-info increase-font" style="display: none;">There are no custom configuration files loaded.</div>
           <div id="configOptions" style="display: none;">
             <div class="form-group">
               <div class="radio">
                 <label>
-                  <input type="radio" name="source" id="sourceLocal" value="local" aria-labelledby="localFileLabel"
-                    checked="checked">
+                  <input type="radio" name="source" id="sourceLocal" value="local" aria-labelledby="localFileLabel" checked="checked">
                   <span id="localFileLabel" class="increase-font">Local file</span>
                 </label>
               </div>
@@ -56,36 +47,29 @@
                 </label>
               </div>
               <div class="form-group">
-                <label for="submenuName" class="control-label increase-font">Descriptive submenu label
-                  (required):</label>
-                <input type="text" id="submenuName" class="form-control increase-font" placeholder="Submenu label"
-                  required="true" aria-label="Submenu label">
+                <label for="submenuName" class="control-label increase-font">Descriptive submenu label (required):</label>
+                <input type="text" id="submenuName" class="form-control increase-font" placeholder="Submenu label" required="true" aria-label="Submenu label">
               </div>
               <div class="tab-content">
                 <div role="local-file" class="tab-pane active" aria-label="Local File Tab">
-                  <button type="button" id="selectFileCover" class="btn btn-primary increase-font"
-                    role="select-file-cover">Select File</button>
+                  <button type="button" id="selectFileCover" class="btn btn-primary increase-font" role="select-file-cover">Select File</button>
                   <button type="button" id="back" class="btn btn-default increase-font" role="back">Cancel</button>
                   <input type="file" id="fileSelector" class="sr-only" role="file-selector" aria-label="Select File">
                 </div>
                 <div role="text-config" class="tab-pane" aria-label="Paste Configuration Tab">
-                  <textarea id="customConfigText" class="form-control increase-font"
-                    placeholder="Paste configuration JSON" aria-label="Paste configuration JSON"></textarea>
+                  <textarea id="customConfigText" class="form-control increase-font" placeholder="Paste configuration JSON" aria-label="Paste configuration JSON"></textarea>
                   <div class="text-right">
-                    <button type="button" id="addCustomConfig" class="btn btn-primary increase-font"
-                      role="add-custom-config">Save</button>
+                    <button type="button" id="addCustomConfig" class="btn btn-primary increase-font" role="add-custom-config">Save</button>
                     <button type="button" id="back" class="btn btn-default increase-font" role="back">Cancel</button>
                   </div>
                 </div>
                 <div role="remote-config" class="tab-pane" aria-label="Remote URL Tab">
                   <div class="form-group">
                     <label for="remoteConfigUrl" class="control-label increase-font">URL:</label>
-                    <input type="text" id="remoteConfigUrl" class="form-control increase-font"
-                      placeholder="JSON file URL" aria-label="JSON file URL">
+                    <input type="text" id="remoteConfigUrl" class="form-control increase-font" placeholder="JSON file URL" aria-label="JSON file URL">
                   </div>
                   <div class="text-right">
-                    <button type="button" id="addRemoteConfig" class="btn btn-primary increase-font"
-                      role="add-remote-config">Load</button>
+                    <button type="button" id="addRemoteConfig" class="btn btn-primary increase-font" role="add-remote-config">Load</button>
                     <button type="button" id="back" class="btn btn-default increase-font" role="back">Cancel</button>
                   </div>
                 </div>
@@ -160,36 +144,19 @@
 
     <div class="bookmarklet-container">
       <p>Drag and drop the link below to your bookmarks toolbar</p>
-      <a id="bookmarklet" title="futterman.js"
-        href='javascript: (function() { function callback() { gremlins.createHorde({ species: [gremlins.species.clicker(),gremlins.species.toucher(),gremlins.species.formFiller(),gremlins.species.scroller(),gremlins.species.typer()], mogwais: [gremlins.mogwais.alert(),gremlins.mogwais.fps(),gremlins.mogwais.gizmo()], strategies: [gremlins.strategies.distribution(),gremlins.strategies.allTogether(),gremlins.strategies.bySpecies()] }).unleash(); } var s = document.createElement("script"); s.src = "https://unpkg.com/gremlins.js"; if (s.addEventListener) { s.addEventListener("load", callback, false); } else if (s.readyState) { s.onreadystatechange = callback; } document.body.appendChild(s); })()'>futterman.js</a></a>
+      <a id="bookmarklet" title="futterman.js" href="#">futterman.js</a>
     </div>
 
     <div class="code-container">
-      <h2 class="code-title">Bookmarklet Code</h۲>
-        <pre id="code" class="code"></pre>
+      <h2 class="code-title">Bookmarklet Code</h2>
+      <pre id="code" class="code"></pre>
     </div>
-
-    <script>
-      // Call the setBookmarkletScript function to generate the bookmarklet script
-      setBookmarkletScript();
-    </script>
-
-<script>
-  window.addEventListener('load', function() {
-    document.getElementById('gremlins-form').addEventListener('input', setBookmarkletScript);
-    console.log('gremlins-form element found.');
-  });
-</script>
-
-    <script type="text/javascript" src="/gremlins.min.js"></script>
   </div>
 
   <span id="closeExtension" class="close-button">&times;</span>
-  <script src="options.js" defer></script>
+
+  <script src="gremlins-handler.js" defer></script>
   <script src="prompt.js" defer></script>
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" defer></script>
-</body>
 </body>
 
 </html>

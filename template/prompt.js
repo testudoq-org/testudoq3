@@ -15,343 +15,263 @@
  *
  */
 
-const originalPrompt = window.prompt
-let nextPromptResult = false
-let recordedPrompt = null
+const originalPrompt = window.prompt;
+let nextPromptResult = false,
+	recordedPrompt = null;
 
-const originalConfirmation = window.confirm
-let nextConfirmationResult = false
-let recordedConfirmation = null
+const originalConfirmation = window.confirm;
+let nextConfirmationResult = false,
+	recordedConfirmation = null;
 
-const originalAlert = window.alert
-let recordedAlert = null
+const originalAlert = window.alert;
+let recordedAlert = null;
 
 function getFrameLocation() {
-  let frameLocation = ''
-  let currentWindow = window
-  let currentParentWindow
-  while (currentWindow !== window.top) {
-    currentParentWindow = currentWindow.parent
-    for (let idx = 0; idx < currentParentWindow.frames.length; idx++)
-      if (currentParentWindow.frames[idx] === currentWindow) {
-        frameLocation = ':' + idx + frameLocation
-        currentWindow = currentParentWindow
-        break
-      }
-  }
-  frameLocation = 'root' + frameLocation
-  return frameLocation
+	let frameLocation = '',
+	 currentWindow = window,
+	 currentParentWindow;
+	while (currentWindow !== window.top) {
+		currentParentWindow = currentWindow.parent;
+		for (let idx = 0; idx < currentParentWindow.frames.length; idx++) {
+			if (currentParentWindow.frames[idx] === currentWindow) {
+				frameLocation = ':' + idx + frameLocation;
+				currentWindow = currentParentWindow;
+				break;
+			}
+		}
+	}
+	frameLocation = 'root' + frameLocation;
+	return frameLocation;
 }
 
 //before record prompt
 
 // Not a top window
 if (window !== window.top) {
-  window.prompt = function (text, defaultText) {
-    if (document.body.hasAttribute('SideeXPlayingFlag')) {
-      return window.top.prompt(text, defaultText)
-    } else {
-      let result = originalPrompt(text, defaultText)
-      let frameLocation = getFrameLocation()
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          recordedType: 'prompt',
-          recordedMessage: text,
-          recordedResult: result,
-          frameLocation: frameLocation,
-        },
-        '*'
-      )
-      return result
-    }
-  }
+	window.prompt = function (text, defaultText) {
+		if (document.body.hasAttribute('SideeXPlayingFlag')) {
+			return window.top.prompt(text, defaultText);
+		} else {
+			const result = originalPrompt(text, defaultText),
+			 frameLocation = getFrameLocation();
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					recordedType: 'prompt',
+					recordedMessage: text,
+					recordedResult: result,
+					frameLocation: frameLocation
+				},
+				'*'
+			);
+			return result;
+		}
+	};
 
-  window.confirm = function (text) {
-    if (document.body.hasAttribute('SideeXPlayingFlag')) {
-      return window.top.confirm(text)
-    } else {
-      let result = originalConfirmation(text)
-      let frameLocation = getFrameLocation()
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          recordedType: 'confirm',
-          recordedMessage: text,
-          recordedResult: result,
-          frameLocation: frameLocation,
-        },
-        '*'
-      )
-      return result
-    }
-  }
+	window.confirm = function (text) {
+		if (document.body.hasAttribute('SideeXPlayingFlag')) {
+			return window.top.confirm(text);
+		} else {
+			const result = originalConfirmation(text),
+			 frameLocation = getFrameLocation();
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					recordedType: 'confirm',
+					recordedMessage: text,
+					recordedResult: result,
+					frameLocation: frameLocation
+				},
+				'*'
+			);
+			return result;
+		}
+	};
 
-  window.alert = function (text) {
-    if (document.body.hasAttribute('SideeXPlayingFlag')) {
-      recordedAlert = text
-      // Response directly
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          response: 'alert',
-          value: recordedAlert,
-        },
-        '*'
-      )
-      return
-    } else {
-      let result = originalAlert(text)
-      let frameLocation = getFrameLocation()
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          recordedType: 'alert',
-          recordedMessage: text,
-          recordedResult: result,
-          frameLocation: frameLocation,
-        },
-        '*'
-      )
-      return result
-    }
-  }
+	window.alert = function (text) {
+		if (document.body.hasAttribute('SideeXPlayingFlag')) {
+			recordedAlert = text;
+			// Response directly
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					response: 'alert',
+					value: recordedAlert
+				},
+				'*'
+			);
+			return;
+		} else {
+			const result = originalAlert(text),
+			 frameLocation = getFrameLocation();
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					recordedType: 'alert',
+					recordedMessage: text,
+					recordedResult: result,
+					frameLocation: frameLocation
+				},
+				'*'
+			);
+			return result;
+		}
+	};
 } else {
-  // top window
+	// top window
 
-  window.prompt = function (text, defaultText) {
-    recordedPrompt = text
-    if (document.body.hasAttribute('setPrompt')) {
-      document.body.removeAttribute('setPrompt')
-      return nextPromptResult
-    } else {
-      let result = originalPrompt(text, defaultText)
-      let frameLocation = getFrameLocation()
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          recordedType: 'prompt',
-          recordedMessage: text,
-          recordedResult: result,
-          frameLocation: frameLocation,
-        },
-        '*'
-      )
-      return result
-    }
-  }
-  window.confirm = function (text) {
-    recordedConfirmation = text
-    if (document.body.hasAttribute('setConfirm')) {
-      document.body.removeAttribute('setConfirm')
-      return nextConfirmationResult
-    } else {
-      let result = originalConfirmation(text)
-      let frameLocation = getFrameLocation()
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          recordedType: 'confirm',
-          recordedMessage: text,
-          recordedResult: result,
-          frameLocation: frameLocation,
-        },
-        '*'
-      )
-      return result
-    }
-  }
-  window.alert = function (text) {
-    recordedAlert = text
-    if (document.body.hasAttribute('SideeXPlayingFlag')) {
-      // Response directly
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          response: 'alert',
-          value: recordedAlert,
-        },
-        '*'
-      )
-      return
-    } else {
-      let result = originalAlert(text)
-      let frameLocation = getFrameLocation()
-      window.top.postMessage(
-        {
-          direction: 'from-page-script',
-          recordedType: 'alert',
-          recordedMessage: text,
-          recordedResult: result,
-          frameLocation: frameLocation,
-        },
-        '*'
-      )
-      return result
-    }
-  }
+	window.prompt = function (text, defaultText) {
+		recordedPrompt = text;
+		if (document.body.hasAttribute('setPrompt')) {
+			document.body.removeAttribute('setPrompt');
+			return nextPromptResult;
+		} else {
+			const result = originalPrompt(text, defaultText),
+			 frameLocation = getFrameLocation();
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					recordedType: 'prompt',
+					recordedMessage: text,
+					recordedResult: result,
+					frameLocation: frameLocation
+				},
+				'*'
+			);
+			return result;
+		}
+	};
+	window.confirm = function (text) {
+		recordedConfirmation = text;
+		if (document.body.hasAttribute('setConfirm')) {
+			document.body.removeAttribute('setConfirm');
+			return nextConfirmationResult;
+		} else {
+			const result = originalConfirmation(text),
+			 frameLocation = getFrameLocation();
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					recordedType: 'confirm',
+					recordedMessage: text,
+					recordedResult: result,
+					frameLocation: frameLocation
+				},
+				'*'
+			);
+			return result;
+		}
+	};
+	window.alert = function (text) {
+		recordedAlert = text;
+		if (document.body.hasAttribute('SideeXPlayingFlag')) {
+			// Response directly
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					response: 'alert',
+					value: recordedAlert
+				},
+				'*'
+			);
+			return;
+		} else {
+			const result = originalAlert(text),
+			 frameLocation = getFrameLocation();
+			window.top.postMessage(
+				{
+					direction: 'from-page-script',
+					recordedType: 'alert',
+					recordedMessage: text,
+					recordedResult: result,
+					frameLocation: frameLocation
+				},
+				'*'
+			);
+			return result;
+		}
+	};
 }
 
 //play window methods
 if (window == window.top) {
-  window.addEventListener('message', handler)
+	window.addEventListener('message', handler);
 }
 
 function handler(event) {
-  if (
-    event.source == window &&
+	if (
+		event.source == window &&
     event.data &&
     event.data.direction == 'from-content-script'
-  ) {
-    if (event.data.detach) {
-      window.removeEventListener('message', handler)
-      window.prompt = originalPrompt
-      window.confirm = originalConfirmation
-      window.alert = originalAlert
-      return
-    }
-    let result = undefined
-    switch (event.data.command) {
-      case 'setNextPromptResult':
-        nextPromptResult = event.data.target
-        document.body.setAttribute('setPrompt', true)
-        window.postMessage(
-          {
-            direction: 'from-page-script',
-            response: 'prompt',
-          },
-          '*'
-        )
-        break
-      case 'getPromptMessage':
-        result = recordedPrompt
-        recordedPrompt = null
-        window.postMessage(
-          {
-            direction: 'from-page-script',
-            response: 'prompt',
-            value: result,
-          },
-          '*'
-        )
-        break
-      case 'setNextConfirmationResult':
-        nextConfirmationResult = event.data.target
-        document.body.setAttribute('setConfirm', true)
-        window.postMessage(
-          {
-            direction: 'from-page-script',
-            response: 'confirm',
-          },
-          '*'
-        )
-        break
-      case 'getConfirmationMessage':
-        result = recordedConfirmation
-        recordedConfirmation = null
-        try {
-          window.postMessage(
-            {
-              direction: 'from-page-script',
-              response: 'confirm',
-              value: result,
-            },
-            '*'
-          )
-        } catch (e) { } // eslint-disable-line no-empty
-        break
+	) {
+		if (event.data.detach) {
+			window.removeEventListener('message', handler);
+			window.prompt = originalPrompt;
+			window.confirm = originalConfirmation;
+			window.alert = originalAlert;
+			return;
+		}
+		let result = undefined;
+		switch (event.data.command) {
+		case 'setNextPromptResult':
+			nextPromptResult = event.data.target;
+			document.body.setAttribute('setPrompt', true);
+			window.postMessage(
+				{
+					direction: 'from-page-script',
+					response: 'prompt'
+				},
+				'*'
+			);
+			break;
+		case 'getPromptMessage':
+			result = recordedPrompt;
+			recordedPrompt = null;
+			window.postMessage(
+				{
+					direction: 'from-page-script',
+					response: 'prompt',
+					value: result
+				},
+				'*'
+			);
+			break;
+		case 'setNextConfirmationResult':
+			nextConfirmationResult = event.data.target;
+			document.body.setAttribute('setConfirm', true);
+			window.postMessage(
+				{
+					direction: 'from-page-script',
+					response: 'confirm'
+				},
+				'*'
+			);
+			break;
+		case 'getConfirmationMessage':
+			result = recordedConfirmation;
+			recordedConfirmation = null;
+			try {
+				window.postMessage(
+					{
+						direction: 'from-page-script',
+						response: 'confirm',
+						value: result
+					},
+					'*'
+				);
+			} catch (e) { } // eslint-disable-line no-empty
+			break;
 
-      case 'setNextAlertResult':
-        document.body.setAttribute('setAlert', true)
-        window.postMessage(
-          {
-            direction: 'from-page-script',
-            response: 'alert',
-          },
-          '*'
-        )
-        break
-    }
-  }
+		case 'setNextAlertResult':
+			document.body.setAttribute('setAlert', true);
+			window.postMessage(
+				{
+					direction: 'from-page-script',
+					response: 'alert'
+				},
+				'*'
+			);
+			break;
+		}
+	}
 }
-
-// Generate the bookmarklet script
-// This script is injected in the options.html javascript
-
-function setBookmarkletScript() {
-  const speciesNames = ['clicker', 'toucher', 'formFiller', 'scroller', 'typer'];
-  const mogwaisNames = ['alert', 'fps', 'gizmo'];
-  const strategiesNames = ['distribution', 'allTogether', 'bySpecies'];
-  const species = speciesNames
-    .map(name => {
-      const isActive = document.getElementById(name).checked;
-      return isActive ? `gremlins.species.${name}()` : null;
-    })
-    .filter(value => value)
-    .join(',');
-
-  const mogwais = mogwaisNames
-    .map(name => {
-      const isActive = document.getElementById(name).checked;
-      return isActive ? `gremlins.mogwais.${name}()` : null;
-    })
-    .filter(value => value)
-    .join(',');
-
-  const strategies = strategiesNames
-    .map(name => {
-      const isActive = document.getElementById(name).checked;
-      return isActive ? `gremlins.strategies.${name}()` : null;
-    })
-    .filter(value => value)
-    .join(',');
-
-  const script = `
-javascript: (function() {
-function callback() {
-gremlins.createHorde({
-    species: [${species}],
-    mogwais: [${mogwais}],
-    strategies: [${strategies}]
-}).unleash();
-}
-var s = document.createElement("script");
-s.src = "https://unpkg.com/gremlins.js";
-if (s.addEventListener) {
-s.addEventListener("load", callback, false);
-} else if (s.readyState) {
-s.onreadystatechange = callback;
-}
-document.body.appendChild(s);
-})()`;
-
-  document.getElementById('code').innerHTML = script;
-  document.getElementById('bookmarklet').href = script.replace(/\s\s+/g, ' ');
-}
-
-function displayExposedGremlins() {
-  console.log(`Gremlins is available in your Console. Try gremlins.createHorde().unleash() to unleash the horde !`);
-}
-
-function exposeGremlins() {
-  const script = document.createElement("script");
-  script.type = "text/javascript";
-  script.src = "https://unpkg.com/gremlins.js";
-  script.addEventListener('load', displayExposedGremlins, false)
-  document.body.appendChild(script);
-}
-
-
-window.addEventListener('load', function() {
-  const gremlinsForm = document.getElementById('gremlins-form');
-  if (gremlinsForm) {
-      gremlinsForm.addEventListener('input', setBookmarkletScript);
-  } else {
-      console.error('gremlins-form element not found.');
-  }
-});
-
-document.getElementById('gremlins-form').addEventListener('input', setBookmarkletScript);
-
-exposeGremlins();
-setBookmarkletScript();

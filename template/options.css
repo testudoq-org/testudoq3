@@ -199,3 +199,64 @@ body {
     white-space: pre-wrap; /* Ensures the code text wraps */
     word-wrap: break-word; /* Ensures long words break to avoid overflow */
 }
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .checkbox {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  .radio {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .control-label {
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-control {
+    display: block;
+    width: 100%;
+    height: calc(2.25rem + 2px);
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .form-control::-ms-expand {
+    background-color: transparent;
+    border: none;
+  }
+  
+  .form-control:focus {
+    color: #495057;
+    background-color: #fff;
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  /* Alert Styles */
+  .alert {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+  }
+  .alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+  }
+  

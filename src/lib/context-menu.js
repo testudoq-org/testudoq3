@@ -1,13 +1,15 @@
 const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
-	copyRequestHandler = require('./copy-request-handler');
+	copyRequestHandler = require('./copy-request-handler'),
+	gremlinsAttackHandler = require('./gremlins-attack-handler'); // New handler for gremlins attack
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
 	const handlerType = 'injectValue',
 		handlers = {
 			injectValue: injectValueRequestHandler,
 			paste: pasteRequestHandler,
-			copy: copyRequestHandler
+			copy: copyRequestHandler,
+			gremlinsAttack: gremlinsAttackHandler // Add new handler to handlers object
 		};
 
 	function onClick(tabId, itemMenuValue) {
@@ -55,14 +57,37 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 			handlerChoices.paste = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
 			handlerChoices.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
 		}
-		menuBuilder.menuItem('Customize menus', rootMenu, browserInterface.openSettings);
+		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
+		menuBuilder.menuItem('Trigger Gremlins Attack', rootMenu, (_, tab) => {
+			try {
+				if (!tab || !tab.id) {
+					console.error('Tab object or tab id is missing.');
+					return;
+				}
+
+				// Retrieve the tabId from the tab object
+				const tabId = tab.id;
+
+				// Check if browserInterface is available
+				if (!browserInterface) {
+					console.error('browserInterface is missing.');
+					return;
+				}
+
+				// Call the gremlinsAttack function with the browserInterface and tabId
+				handlers.gremlinsAttack(browserInterface, tabId);
+			} catch (error) {
+				console.error('An error occurred while triggering Gremlins Attack:', error);
+			}
+		});
+		// Add menu item for gremlins attack
+		console.log('addGenericMenus - end');
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
 				throw new TypeError('browserInterface cannot be null or undefined');
 			}
-			browserInterface.openUrl('hhttps://testudo.co.nz/futterman/testudoq-help.html');
+			browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
 		});
-		console.log('addGenericMenus - end');
 	}
 
 	function rebuildMenu(options) {
