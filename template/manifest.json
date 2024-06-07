@@ -61,7 +61,7 @@
 				"paste.js",
 				"prompt.js",
 				"options.js",
-				"gremlins-handler.js",
+				"options-gremlins-handler.js",
 				"gremlins.min.js"
 			],
 			"run_at": "document_end"
