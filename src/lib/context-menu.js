@@ -4,7 +4,7 @@ const injectValueRequestHandler = require('./inject-value-request-handler'),
 	gremlinsAttackHandler = require('./gremlins-attack-handler'); // New handler for gremlins attack
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const handlerType = 'injectValue',
+	let handlerType = 'injectValue',
 		handlers = {
 			injectValue: injectValueRequestHandler,
 			paste: pasteRequestHandler,
@@ -58,6 +58,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 			handlerChoices.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
 		}
 		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
+		// Add menu item for gremlins attack
 		menuBuilder.menuItem('Trigger Gremlins Attack', rootMenu, (_, tab) => {
 			try {
 				if (!tab || !tab.id) {
@@ -80,12 +81,12 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 				console.error('An error occurred while triggering Gremlins Attack:', error);
 			}
 		});
-		// Add menu item for gremlins attack
 		console.log('addGenericMenus - end');
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
 				throw new TypeError('browserInterface cannot be null or undefined');
 			}
+			// Use the browserInterface.openUrl() method to open the URL
 			browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
 		});
 	}

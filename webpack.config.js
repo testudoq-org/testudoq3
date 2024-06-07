@@ -1,28 +1,28 @@
 const path = require('path');
-const recursiveLs = require('fs-readdir-recursive'),
+const recursiveLs = require('fs-readdir-recursive');
 
-	/**
+/**
  * Object to store entry points for webpack.
  * @type {Object.<string, string>}
  */
-	entries = {},
+const entries = {};
 
-	/**
+/**
  * Function to recursively build entry points based on files in a directory.
  * @param {string} dir - The directory to scan for files.
  */
-	buildEntries = (dir) => {
-		try {
-			// Recursively list files in the specified directory
-			recursiveLs(dir).forEach((f) => {
-				// Add each file as an entry point with its full path
-				entries[f] = path.join(dir, f);
-			});
-		} catch (err) {
-			// Handle errors if any occur during directory scanning
-			console.error('Error building entries:', err);
-		}
-	};
+const buildEntries = (dir) => {
+	try {
+		// Recursively list files in the specified directory
+		recursiveLs(dir).forEach((f) => {
+			// Add each file as an entry point with its full path
+			entries[f] = path.join(dir, f);
+		});
+	} catch (err) {
+		// Handle errors if any occur during directory scanning
+		console.error('Error building entries:', err);
+	}
+};
 
 // Call buildEntries function to generate entry points from the 'src/main' directory
 buildEntries(path.resolve(__dirname, 'src', 'main'));
@@ -47,6 +47,10 @@ module.exports = {
 	// Define resolve configurations for resolving module paths
 	resolve: {
 		// Add any resolve configurations if needed
+	},
+	// Disable compression/minimization
+	optimization: {
+		minimize: false // Disables all forms of minimization
 	}
 	// Add any other necessary configurations
 };

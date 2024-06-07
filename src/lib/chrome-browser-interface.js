@@ -50,14 +50,23 @@ module.exports = function ChromeBrowserInterface(chrome) {
 		}
 	};
 	/**
-	 * Opens the specified URL in a new browser tab.
+	 * Opens the specified URL in a new browser tab using chrome.tabs.create.
 	 *
 	 * @param {string} url - The URL to open.
 	 */
 	self.openUrl = function (url) {
-		// Opens the specified URL in a new browser tab.
-		// @param {string} url - The URL to open.
-		window.open(url);
+		// Check if the `chrome` object and `tabs.create` method are available.
+		if (!chrome || !chrome.tabs || !chrome.tabs.create) {
+			throw new Error('chrome.tabs.create is not available');
+		}
+		// Use chrome.tabs.create to open the URL in a new tab.
+		chrome.tabs.create({ url: url }, function (tab) {
+			if (chrome.runtime.lastError) {
+				console.error(`Error opening tab: ${chrome.runtime.lastError.message}`);
+			} else {
+				console.log(`Tab created with id: ${tab.id}`);
+			}
+		});
 	};
 	/**
 	 * Adds a listener to the Chrome browser's storage to be notified when changes occur.
@@ -284,4 +293,6 @@ module.exports = function ChromeBrowserInterface(chrome) {
 			});
 		});
 	};
+
+
 };
