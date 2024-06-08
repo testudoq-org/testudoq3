@@ -158,26 +158,25 @@ module.exports = function ChromeBrowserInterface(chrome) {
 	 * @param {number} tabId - The ID of the tab to execute the script in.
 	 * @param {string} source - The path to the script file to execute.
 	 * @returns {Promise<Object>} A promise that resolves with the results of the script
-	 * 							  execution, or rejects with an error if there is an issue
-	 * 							  executing the script.
+	 *                             execution, or rejects with an error if there is an issue
+	 *                             executing the script.
 	 */
 	self.executeScript = function (tabId, source) {
-		// Create a new promise that resolves with the results of the script execution,
-		// or rejects with an error if there is an issue executing the script.
+		if (tabId === null || tabId === undefined) {
+			return Promise.reject(new Error('tabId is null or undefined'));
+		}
+		if (source === null || source === undefined) {
+			return Promise.reject(new Error('source is null or undefined'));
+		}
+
 		return new Promise((resolve, reject) => {
-			// Use the chrome.scripting.executeScript method to execute the script in the
-			// specified tab. The source parameter specifies the path to the script file to
-			// execute.
 			chrome.scripting.executeScript({
-				target: { tabId: tabId }, // Specify the tab to execute the script in.
-				files: [source] // Specify the path to the script file to execute.
+				target: { tabId: tabId },
+				files: [source]
 			}, (injectionResults) => {
-				// If there is an error executing the script, reject the promise with an
-				// error message.
 				if (chrome.runtime.lastError) {
 					reject(new Error(chrome.runtime.lastError.message));
 				} else {
-					// Resolve the promise with the results of the script execution.
 					resolve(injectionResults);
 				}
 			});
@@ -293,6 +292,5 @@ module.exports = function ChromeBrowserInterface(chrome) {
 			});
 		});
 	};
-
 
 };
