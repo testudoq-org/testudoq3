@@ -1,6 +1,6 @@
 {
 	"name": "Testudoq",
-	"description": "Testudoq stands out as a versatile extension, meticulously crafted to elevate the testing process by introducing a sophisticated right-click context menu specifically tailored for both session-based and exploratory testing methodologies. In the realm of software testing, session-based testing represents a meticulous yet flexible approach. It entails structured test sessions typically conducted within a predefined time frame. Testers follow test charters, executing predefined tasks while documenting their observations. Testudoq revolutionizes this process by seamlessly integrating into the browser context menu, thereby simplifying the creation, management, and execution of test charters. Moreover, Testudoq isn't limited to structured testing alone. It extends robust support for exploratory testing, an organic and intuitive approach where testers immerse themselves in the software application, probing its functionality, spotting issues, and improvising tests on the go. Through its user-friendly interface, Testudoq grants testers swift access to essential testing functionalities, facilitating the capture and annotation of testing notes, screenshots, and other pertinent artifacts. By offering a seamless fusion of session-based and exploratory testing methodologies, Testudoq caters to the diverse needs of testers, optimizing their workflow and enriching the overall testing experience. Whether adhering to structured sessions or delving into exploratory endeavors, Testudoq empowers testers to navigate, document, and scrutinize software behavior with efficiency, ultimately contributing to the resilience and quality of software products. Copyright (c) 2024 Stephen Stewart. All rights reserved. https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
+	"description": "Testudoq stands out as a versatile extension, meticulously crafted to elevate the testing process by introducing a sophisticated right-click context menu specifically tailored for both session-based and exploratory testing methodologies. In the realm of software testing, session-based testing represents a meticulous yet flexible approach. It entails structured test sessions typically conducted within a predefined time frame. Testers follow test charters, executing predefined tasks while documenting their observations. Testudoq revolutionizes this process by seamlessly integrating into the browser context menu, thereby simplifying the creation, management, and execution of test charters. Moreover, Testudoq isn't limited to structured testing alone. It extends robust support for exploratory testing, an organic and intuitive approach where testers immerse themselves in the software application, probing its functionality, spotting issues, and improvising tests on the go. Through its user-friendly interface, Testudoq grants testers swift access to essential testing functionalities, facilitating the capture and annotation of testing notes, screenshots, and other pertinent artifacts. By offering a seamless fusion of session-based and exploratory testing methodologies, Testudoq caters to the diverse needs of testers, optimizing their workflow and enriching the overall testing experience. Whether adhering to structured sessions or delving into exploratory endeavors, Testudoq empowers testers to navigate, document, and scrutinize software behavior with efficiency, ultimately contributing to the resilience and quality of software products. And if you believe that BS, you will believe anything. Oh look a Unicorn, National Animal of Scotland. Copyright (c) 2024 Stephen Stewart. All rights reserved. https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt",
 	"version": "0.0.1",
 	"permissions": [
 		"debugger",
@@ -31,12 +31,13 @@
 		"script-src": [
 		  "self",
 		  "sha256-73c1f52689f9531a6e0b25d79ebb263134316511ac1f82b8df81ad0f5b46b508",
-		  "7a9de3224eb1c54d0091a7d3b8e0c5373520df8e49b0c1354b9b6173cfeb57c5",
+		  "sha256-2567a9de3224eb1c54d0091a7d3b8e0c5373520df8e49b0c1354b9b6173cfeb57c5",
 		  "sha256-ac289545818d0f3543e09f66b4ab5fe328995e9f0b2af09069a1314c5c862c63",
 		  "sha256-90eefa98d4ea85c4444a577050fcfa94316191941842a5491d4e2304686c6223",
 		  "sha256-74252172cba60a0e75f5c1dedfbebb510f67a0431b7b2f8e80757e5531df759e",
 		  "sha256-b2ecc632ea730329b0e2a188da544cbef5d1b2f4489490ba262c322e4ed3067b",
 		  "sha256-cd62f1767438d577783c971398b46a80587b129242ce2546591aef659fce77fa",
+		  "sha256-a851e7e52774a3c6f04ea1e6ef4d2f331063cbd592f8aa5110b075008c8b3acc",
 		  "https://unpkg.com",
 		  "https://code.jquery.com",
 		  "https://maxcdn.bootstrapcdn.com",
@@ -64,9 +65,12 @@
 				"options-gremlins-handler.js",
 				"gremlins.min.js"
 			],
-			"run_at": "document_end"
+			"run_at": "document_end",
+			"content_security_policy": "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://code.jquery.com https://maxcdn.bootstrapcdn.com;"
 		}
-	],
+	],"host_permissions": [
+		"https://unpkg.com/"
+	  ],
 	"web_accessible_resources": [
 		{
 			"resources": ["gremlins.min.js"],
