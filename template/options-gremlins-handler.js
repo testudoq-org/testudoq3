@@ -13,7 +13,7 @@ function setBookmarkletScript() {
 		allTogether = document.getElementById('allTogether').checked,
 		bySpecies = document.getElementById('bySpecies').checked,
 
-	 species = [];
+		species = [];
 	if (clicker) {
 		species.push('gremlins.species.clicker()');
 	}
@@ -75,4 +75,37 @@ function setBookmarkletScript() {
 
 document.addEventListener('DOMContentLoaded', function () {
 	document.getElementById('gremlins-form').addEventListener('input', setBookmarkletScript);
+
+	// Add event listener for the close button
+	document.getElementById('closeButton').addEventListener('click', function () {
+		window.close();
+	});
+
+	// Add event listener for the "Add Configuration File" button
+	document.getElementById('addConfigFileButton').addEventListener('click', function () {
+		// Display a modal or form to input configuration details
+		const configModal = document.createElement('div');
+		configModal.innerHTML = `
+			<h2>Add Configuration File</h2>
+			<label for="configName">Configuration Name:</label>
+			<input type="text" id="configName" required><br>
+			<label for="configSource">Configuration Source:</label>
+			<select id="configSource">
+				<option value="local">Local File</option>
+				<option value="remote">Remote URL</option>
+				<option value="source">Paste Configuration</option>
+			</select><br>
+			<button id="saveConfig">Save</button>
+		`;
+
+		document.body.appendChild(configModal);
+
+		// Add event listener for the "Save" button in the modal
+		document.getElementById('saveConfig').addEventListener('click', function () {
+			const configName = document.getElementById('configName').value,
+				configSource = document.getElementById('configSource').value;
+			// Implement the logic to save the configuration details here
+			// For example, you can store the details in an array or local storage
+		});
+	});
 });

@@ -6,72 +6,82 @@
   <title>Testudoq Extension Options</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" type="text/css" href="options.css">
-
 </head>
 
 <body class="bg">
-  <div id="main" class="container-fluid" role="main-screen">
+  <div id="main" class="container-fluid">
     <div class="row">
       <div class="col-md-12">
         <h1 class="increase-font">Testudoq Extension Options</h1>
-        <form id="mainForm" role="optionsForm" action="#" method="post">
+        <form id="mainForm" role="optionsForm">
+          <!-- Checkbox to hide standard menus -->
           <div class="form-group">
-            <div class="checkbox">
-              <label>
-                <input type="checkbox" id="skipStandardCheckbox" role="option-skipStandard" aria-label="Hide standard menus">
-                Hide standard menus
-              </label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="skipStandardCheckbox" role="option-skipStandard" aria-label="Hide standard menus">
+              <label class="form-check-label" for="skipStandardCheckbox">Hide standard menus</label>
             </div>
           </div>
+
+          <!-- Button to add a configuration file -->
           <button type="button" id="addConfigFileButton" role="add" class="btn btn-primary increase-font">Add Configuration File</button>
-          <button type="button" id="closeButton" role="close" class="btn btn-default increase-font">Close</button>
-          <div id="noCustomDiv" role="no-custom" aria-live="polite" class="alert alert-info increase-font" style="display: none;">There are no custom configuration files loaded.</div>
+          <button type="button" id="closeButton" role="close" class="btn btn-secondary increase-font">Close</button>
+
+          <!-- Alert message when no custom configuration files are loaded -->
+          <div id="noCustomDiv" role="no-custom" class="alert alert-info increase-font" style="display: none;">
+            There are no custom configuration files loaded.
+          </div>
+
+          <!-- Configuration options container -->
           <div id="configOptions" style="display: none;">
             <div class="form-group">
-              <div class="radio">
-                <label>
-                  <input type="radio" name="source" id="sourceLocal" value="local" aria-labelledby="localFileLabel" checked="checked">
-                  <span id="localFileLabel" class="increase-font">Local file</span>
-                </label>
+              <!-- Radio buttons to choose the source of the configuration -->
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="source" id="sourceLocal" value="local" aria-labelledby="localFileLabel" checked>
+                <label class="form-check-label" id="localFileLabel" for="sourceLocal">Local file</label>
               </div>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="source" id="sourceRemote" value="remote" aria-labelledby="remoteURLLabel">
-                  <span id="remoteURLLabel" class="increase-font">Remote URL</span>
-                </label>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="source" id="sourceRemote" value="remote" aria-labelledby="remoteURLLabel">
+                <label class="form-check-label" id="remoteURLLabel" for="sourceRemote">Remote URL</label>
               </div>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="source" id="sourceConfig" value="source" aria-labelledby="pasteConfigLabel">
-                  <span id="pasteConfigLabel" class="increase-font">Paste configuration</span>
-                </label>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="source" id="sourceConfig" value="source" aria-labelledby="pasteConfigLabel">
+                <label class="form-check-label" id="pasteConfigLabel" for="sourceConfig">Paste configuration</label>
               </div>
-              <div class="form-group">
-                <label for="submenuName" class="control-label increase-font">Descriptive submenu label (required):</label>
-                <input type="text" id="submenuName" class="form-control increase-font" placeholder="Submenu label" required="true" aria-label="Submenu label">
+            </div>
+
+            <!-- Input field for submenu label -->
+            <div class="form-group">
+              <label for="submenuName" class="control-label increase-font">Descriptive submenu label (required):</label>
+              <input type="text" id="submenuName" class="form-control increase-font" placeholder="Submenu label" required aria-label="Submenu label">
+            </div>
+
+            <!-- Tab container for different configuration sources -->
+            <div class="tab-content">
+              <!-- Tab for selecting a local file -->
+              <div role="local-file" class="tab-pane active" aria-label="Local File Tab">
+                <button type="button" id="selectFileCover" class="btn btn-primary increase-font" role="select-file-cover">Select File</button>
+                <button type="button" id="back" class="btn btn-secondary increase-font" role="back">Cancel</button>
+                <input type="file" id="fileSelector" class="sr-only" role="file-selector" aria-label="Select File">
               </div>
-              <div class="tab-content">
-                <div role="local-file" class="tab-pane active" aria-label="Local File Tab">
-                  <button type="button" id="selectFileCover" class="btn btn-primary increase-font" role="select-file-cover">Select File</button>
-                  <button type="button" id="back" class="btn btn-default increase-font" role="back">Cancel</button>
-                  <input type="file" id="fileSelector" class="sr-only" role="file-selector" aria-label="Select File">
+
+              <!-- Tab for pasting configuration JSON -->
+              <div role="text-config" class="tab-pane" aria-label="Paste Configuration Tab">
+                <textarea id="customConfigText" class="form-control increase-font" placeholder="Paste configuration JSON" aria-label="Paste configuration JSON"></textarea>
+                <div class="text-right">
+                  <button type="button" id="addCustomConfig" class="btn btn-primary increase-font" role="add-custom-config">Save</button>
+                  <button type="button" id="back" class="btn btn-secondary increase-font" role="back">Cancel</button>
                 </div>
-                <div role="text-config" class="tab-pane" aria-label="Paste Configuration Tab">
-                  <textarea id="customConfigText" class="form-control increase-font" placeholder="Paste configuration JSON" aria-label="Paste configuration JSON"></textarea>
-                  <div class="text-right">
-                    <button type="button" id="addCustomConfig" class="btn btn-primary increase-font" role="add-custom-config">Save</button>
-                    <button type="button" id="back" class="btn btn-default increase-font" role="back">Cancel</button>
-                  </div>
+              </div>
+
+              <!-- Tab for entering a remote URL -->
+              <div role="remote-config" class="tab-pane" aria-label="Remote URL Tab">
+                <div class="form-group">
+                  <label for="remoteConfigUrl" class="control-label increase-font">URL:</label>
+                  <input type="text" id="remoteConfigUrl" class="form-control increase-font" placeholder="JSON file URL" aria-label="JSON file URL">
                 </div>
-                <div role="remote-config" class="tab-pane" aria-label="Remote URL Tab">
-                  <div class="form-group">
-                    <label for="remoteConfigUrl" class="control-label increase-font">URL:</label>
-                    <input type="text" id="remoteConfigUrl" class="form-control increase-font" placeholder="JSON file URL" aria-label="JSON file URL">
-                  </div>
-                  <div class="text-right">
-                    <button type="button" id="addRemoteConfig" class="btn btn-primary increase-font" role="add-remote-config">Load</button>
-                    <button type="button" id="back" class="btn btn-default increase-font" role="back">Cancel</button>
-                  </div>
+                <div class="text-right">
+                  <button type="button" id="addRemoteConfig" class="btn btn-primary increase-font" role="add-remote-config">Load</button>
+                  <button type="button" id="back" class="btn btn-secondary increase-font" role="back">Cancel</button>
                 </div>
               </div>
             </div>
@@ -81,60 +91,66 @@
     </div>
   </div>
 
+  <!-- Gremlins.js generator section -->
   <div id="gremlins-generator" class="container">
     <div class="bookmarklet">
       <form id="gremlins-form" class="form">
         <div class="row">
+          <!-- Mogwais species selection -->
           <div class="col-md-4">
             <h2>Species</h2>
-            <div>
-              <input id="clicker" name="clicker" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="clicker" name="clicker" type="checkbox" checked>
               <label for="clicker">Clicker</label>
             </div>
-            <div>
-              <input id="toucher" name="toucher" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="toucher" name="toucher" type="checkbox" checked>
               <label for="toucher">Toucher</label>
             </div>
-            <div>
-              <input id="formFiller" name="formFiller" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="formFiller" name="formFiller" type="checkbox" checked>
               <label for="formFiller">Form Filler</label>
             </div>
-            <div>
-              <input id="scroller" name="scroller" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="scroller" name="scroller" type="checkbox" checked>
               <label for="scroller">Scroller</label>
             </div>
-            <div>
-              <input id="typer" name="typer" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="typer" name="typer" type="checkbox" checked>
               <label for="typer">Typer</label>
             </div>
           </div>
+
+          <!-- Mogwais types selection -->
           <div class="col-md-4">
             <h2>Mogwais</h2>
-            <div>
-              <input id="alert" name="alert" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="alert" name="alert" type="checkbox" checked>
               <label for="alert">Alert</label>
             </div>
-            <div>
-              <input id="fps" name="fps" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="fps" name="fps" type="checkbox" checked>
               <label for="fps">Fps</label>
             </div>
-            <div>
-              <input id="gizmo" name="gizmo" type="checkbox" checked="checked">
-              <label for="gizmo">Gizmo</label>
+            <div class="form-check">
+              <input id="gizmo" name="gizmo" type="checkbox" checked>
+              <label forORw="gizmo">Gizmo</label>
             </div>
           </div>
+
+          <!-- Strategies selection -->
           <div class="col-md-4">
             <h2>Strategies</h2>
-            <div>
-              <input id="distribution" name="distribution" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="distribution" name="distribution" type="checkbox" checked>
               <label for="distribution">Distribution</label>
             </div>
-            <div>
-              <input id="allTogether" name="allTogether" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="allTogether" name="allTogether" type="checkbox" checked>
               <label for="allTogether">All Together</label>
             </div>
-            <div>
-              <input id="bySpecies" name="bySpecies" type="checkbox" checked="checked">
+            <div class="form-check">
+              <input id="bySpecies" name="bySpecies" type="checkbox" checked>
               <label for="bySpecies">By Species</label>
             </div>
           </div>
@@ -142,18 +158,18 @@
       </form>
     </div>
 
+    <!-- Bookmarklet instructions and code -->
     <div class="bookmarklet-container">
       <p>Drag and drop the link below to your bookmarks toolbar</p>
       <a id="bookmarklet" title="futterman.js" href="#">futterman.js</a>
     </div>
 
+    <!-- Generated code container -->
     <div class="code-container">
       <h2 class="code-title">Bookmarklet Code</h2>
       <pre id="code" class="code"></pre>
     </div>
   </div>
-
-  <span id="closeExtension" class="close-button">&times;</span>
 
   <script src="options-gremlins-handler.js" defer></script>
   <script src="prompt.js" defer></script>
