@@ -59,6 +59,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		}
 		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
 		// Add menu item for gremlins attack
+		/*
 		menuBuilder.menuItem('Trigger Gremlins Attack', rootMenu, (_, tab) => {
 			try {
 				if (!tab || !tab.id) {
@@ -81,6 +82,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 				console.error('An error occurred while triggering Gremlins Attack:', error);
 			}
 		});
+		*/
 		console.log('addGenericMenus - end');
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
