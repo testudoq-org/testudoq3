@@ -4,13 +4,13 @@ const injectValueRequestHandler = require('./inject-value-request-handler'),
 	gremlinsAttackHandler = require('./gremlins-attack-handler'); // New handler for gremlins attack
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	let handlerType = 'injectValue',
-		handlers = {
-			injectValue: injectValueRequestHandler,
-			paste: pasteRequestHandler,
-			copy: copyRequestHandler,
-			gremlinsAttack: gremlinsAttackHandler // Add new handler to handlers object
-		};
+	let handlerType = 'injectValue';
+	const handlers = {
+		injectValue: injectValueRequestHandler,
+		paste: pasteRequestHandler,
+		copy: copyRequestHandler,
+		gremlinsAttack: gremlinsAttackHandler // Add new handler to handlers object
+	};
 
 	function onClick(tabId, itemMenuValue) {
 		if (!itemMenuValue) {
@@ -59,7 +59,6 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		}
 		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
 		// Add menu item for gremlins attack
-		/*
 		menuBuilder.menuItem('Trigger Gremlins Attack', rootMenu, (_, tab) => {
 			try {
 				if (!tab || !tab.id) {
@@ -82,7 +81,6 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 				console.error('An error occurred while triggering Gremlins Attack:', error);
 			}
 		});
-		*/
 		console.log('addGenericMenus - end');
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
