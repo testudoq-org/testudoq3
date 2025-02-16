@@ -1,115 +1,206 @@
-# Implementation Plan for Extension Fixes
+# TestudoQ Implementation Analysis & Improvement Plan
 
-## 1. Popup Script Module Issues
+## Current Codebase Analysis
 
-### Current Problems
-- Export syntax error in popup.js due to ES module usage
-- Need to update to use classic script approach for Chrome extension compatibility
+[Previous sections unchanged...]
 
-### Required Changes
-1. Remove export statement from popup.js
-2. Move exported functions to window object
-3. Update any import statements in dependent files
+## Improvement Plan
 
-```javascript
-// Before
-export { toggleGremlins, launchGremlins, stopGremlins, updateButtonText, exportLogs };
+### Phase 1: Critical Fixes & Stability
+1. **Enhanced Debugging & Logging Infrastructure**
+   ```javascript
+   // Structured logging utility (src/lib/logger.js)
+   const Logger = {
+     PREFIX: '[TestudoQ]',
+     log: (component, message, data) => {
+       if (chrome.runtime.getManifest().debug) {
+         console.log(
+           `${Logger.PREFIX} [${component}]`,
+           message,
+           data ? JSON.stringify(data, null, 2) : ''
+         );
+       }
+     },
+     error: (component, message, error, context = {}) => {
+       console.error(
+         `${Logger.PREFIX} [${component}] ${message}`,
+         '\nError:', error,
+         '\nContext:', context,
+         '\nStack:', error.stack
+       );
+     }
+   };
 
-// After
-window.testudoq = {
-    toggleGremlins,
-    launchGremlins,
-    stopGremlins,
-    updateButtonText,
-    exportLogs
-};
-```
+   // Example usage in gremlins-attack-handler.js
+   async function executeGremlinsAttack(browserInterface, tabId, options = {}) {
+     Logger.log('GremlinsHandler', 'Initiating attack', { tabId, options });
 
-## 2. Content Security Policy Fixes
+     try {
+       // Validate inputs
+       if (!browserInterface || !tabId) {
+         throw new Error('Invalid parameters');
+       }
 
-### Current Problems
-- Inline script violations in popup.html
-- CSP restrictions on script execution
+       // Log pre-execution state
+       Logger.log('GremlinsHandler', 'Pre-execution state', {
+         manifestVersion: chrome.runtime.getManifest().manifest_version,
+         permissions: await chrome.permissions.getAll()
+       });
 
-### Required Changes
-1. Move inline script from popup.html to separate file
-2. Create new file: popup-init.js for tooltip initialization
-3. Update popup.html to reference external script
-4. Update manifest.json CSP settings
+       const message = {
+         command: 'startGremlins',
+         duration: options.duration || 15
+       };
 
-```html
-<!-- Before -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const tooltips = document.querySelectorAll('.tooltip');
-        // ...
-    });
-</script>
+       Logger.log('GremlinsHandler', 'Sending message', message);
 
-<!-- After -->
-<script src="popup-init.js"></script>
-```
+       const response = await browserInterface.sendMessage(tabId, message);
+       
+       Logger.log('GremlinsHandler', 'Received response', response);
 
-## 3. Background Script Error Handling
+       if (response?.status === 'started') {
+         Logger.log('GremlinsHandler', 'Attack started successfully', {
+           tabId,
+           timestamp: new Date().toISOString()
+         });
+         return response;
+       }
 
-### Current Problems
-- Errors in background.js:
-  - Line 1254: "Failed to start gremlins: undefined"
-  - Line 528: "Invalid tab for gremlins action"
+       throw new Error(response?.error || 'Unknown error');
+     } catch (error) {
+       const enhancedError = new Error(`Gremlins attack failed: ${error.message}`);
+       enhancedError.originalError = error;
+       enhancedError.context = {
+         tabId,
+         options,
+         timestamp: new Date().toISOString(),
+         manifestVersion: chrome.runtime.getManifest().manifest_version
+       };
 
-### Required Changes
-1. Add tab validation before gremlins actions
-2. Improve error handling in background script
-3. Add proper messaging between background and content scripts
+       Logger.error('GremlinsHandler', 'Attack execution failed', enhancedError, {
+         tabId,
+         options
+       });
 
-```javascript
-// Add tab validation
-async function validateTab(tabId) {
-    try {
-        const tab = await chrome.tabs.get(tabId);
-        return tab.url.startsWith('http') || tab.url.startsWith('https');
-    } catch {
-        return false;
-    }
-}
+       throw enhancedError;
+     }
+   }
+   ```
 
-// Add error handling for gremlins actions
-async function startGremlinsAttack(tabId, config) {
-    if (!await validateTab(tabId)) {
-        throw new Error('Invalid tab for gremlins action');
-    }
-    // ... rest of implementation
-}
-```
+2. **Permission Validation with Logging**
+   ```javascript
+   // Permission validator utility
+   async function validatePermissions(required) {
+     Logger.log('Permissions', 'Validating permissions', { required });
 
-## Implementation Order
+     try {
+       const current = await chrome.permissions.getAll();
+       Logger.log('Permissions', 'Current permissions', current);
 
-1. Fix CSP and Script Loading
-   - Create popup-init.js
-   - Update popup.html
-   - Update manifest.json
+       const missing = required.filter(
+         perm => !current.permissions.includes(perm)
+       );
 
-2. Fix Module Issues
-   - Update popup.js
-   - Remove ES module exports
-   - Add window.testudoq namespace
+       if (missing.length > 0) {
+         Logger.log('Permissions', 'Missing permissions', missing);
+         const granted = await chrome.permissions.request({
+           permissions: missing
+         });
 
-3. Fix Background Script
-   - Add tab validation
-   - Improve error handling
-   - Update message passing
+         Logger.log('Permissions', 'Permission request result', {
+           granted,
+           missing
+         });
 
-## Testing Steps
+         return granted;
+       }
 
-1. Verify popup loading and functionality
-2. Check CSP violations are resolved
-3. Test gremlins actions on valid and invalid tabs
-4. Verify error messages are properly displayed
-5. Test state synchronization between popup and background
+       return true;
+     } catch (error) {
+       Logger.error('Permissions', 'Validation failed', error);
+       return false;
+     }
+   }
+   ```
 
-## Migration Notes
+3. **Script Loading Reliability with Debug Info**
+   ```javascript
+   // Enhanced script loader
+   async function loadGremlinsScript(tabId) {
+     Logger.log('ScriptLoader', 'Loading gremlins script', { tabId });
 
-- Backup existing files before modifications
-- Test changes incrementally
-- Update documentation after changes
-- Consider adding error logging for debugging
+     try {
+       // First try loading from extension
+       const localPath = chrome.runtime.getURL('gremlins.min.js');
+       Logger.log('ScriptLoader', 'Attempting local load', { path: localPath });
+
+       await chrome.scripting.executeScript({
+         target: { tabId },
+         files: ['gremlins.min.js']
+       });
+
+       Logger.log('ScriptLoader', 'Local script loaded successfully');
+       return true;
+     } catch (error) {
+       Logger.error('ScriptLoader', 'Local load failed', error);
+
+       // Fallback to CDN
+       try {
+         Logger.log('ScriptLoader', 'Attempting CDN fallback');
+         const cdnUrl = 'https://unpkg.com/gremlins.js';
+         
+         await chrome.scripting.executeScript({
+           target: { tabId },
+           func: url => {
+             return new Promise((resolve, reject) => {
+               const script = document.createElement('script');
+               script.src = url;
+               script.onload = resolve;
+               script.onerror = reject;
+               document.head.appendChild(script);
+             });
+           },
+           args: [cdnUrl]
+         });
+
+         Logger.log('ScriptLoader', 'CDN script loaded successfully');
+         return true;
+       } catch (cdnError) {
+         Logger.error('ScriptLoader', 'CDN load failed', cdnError);
+         throw new Error('Failed to load gremlins script from all sources');
+       }
+     }
+   }
+   ```
+
+4. **State Tracking & Diagnostics**
+   ```javascript
+   // State tracker for debugging
+   const StateTracker = {
+     _state: new Map(),
+     
+     updateState(component, data) {
+       this._state.set(component, {
+         ...data,
+         timestamp: new Date().toISOString()
+       });
+       Logger.log('StateTracker', `State updated for ${component}`, data);
+     },
+
+     getState(component) {
+       return this._state.get(component);
+     },
+
+     getDiagnostics() {
+       const diagnostics = {
+         manifest: chrome.runtime.getManifest(),
+         state: Object.fromEntries(this._state),
+         timestamp: new Date().toISOString()
+       };
+       Logger.log('StateTracker', 'Generated diagnostics', diagnostics);
+       return diagnostics;
+     }
+   };
+   ```
+
+[Rest of the document unchanged...]
