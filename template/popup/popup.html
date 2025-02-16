@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Futterman: Gremlins.js Extension</title>
+	<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+	<h1>Futterman: Gremlins.js Extension</h1>
+
+	<div class="error-message" id="errorMessage"></div>
+
+	<div class="control-panel">
+		<div class="tooltip" data-tooltip="Duration in seconds">
+			<label for="attackDuration">Duration:</label>
+			<input type="number" id="attackDuration" value="15" min="1" max="300">
+		</div>
+		<button id="gremlinsButton">Start Gremlins</button>
+		<button id="exportLogsButton">Export Logs</button>
+	</div>
+
+	<div class="warning-message">
+		If you get a rogue gremlin reload the page!
+	</div>
+
+	<form id="gremlin-form">
+		<div class="config-section">
+			<h2>Species</h2>
+			<div class="checkbox-container">
+				<input id="clicker" name="species" type="checkbox" checked />
+				<label for="clicker">Clicker</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="toucher" name="species" type="checkbox" checked />
+				<label for="toucher">Toucher</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="formFiller" name="species" type="checkbox" checked />
+				<label for="formFiller">Form Filler</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="scroller" name="species" type="checkbox" checked />
+				<label for="scroller">Scroller</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="typer" name="species" type="checkbox" checked />
+				<label for="typer">Typer</label>
+			</div>
+		</div>
+
+		<div class="config-section">
+			<h2>Mogwais</h2>
+			<div class="checkbox-container">
+				<input id="alert" name="mogwais" type="checkbox" checked />
+				<label for="alert">Alert</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="fps" name="mogwais" type="checkbox" checked />
+				<label for="fps">FPS</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="gizmo" name="mogwais" type="checkbox" checked />
+				<label for="gizmo">Gizmo</label>
+			</div>
+		</div>
+
+		<div class="config-section strategy-section">
+			<h2>Strategy</h2>
+			<div class="checkbox-container">
+				<input id="distribution" name="strategy" type="radio" checked />
+				<label for="distribution" class="tooltip" data-tooltip="Run species randomly">Distribution</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="allTogether" name="strategy" type="radio" />
+				<label for="allTogether" class="tooltip" data-tooltip="Run all species at once">All Together</label>
+			</div>
+			<div class="checkbox-container">
+				<input id="bySpecies" name="strategy" type="radio" />
+				<label for="bySpecies" class="tooltip" data-tooltip="Run one species at a time">By Species</label>
+			</div>
+		</div>
+	</form>
+
+	<script src="popup-init.js"></script>
+	<script src="popup.js"></script>
+</body>
+</html>

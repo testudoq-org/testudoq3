@@ -1,7 +1,7 @@
 const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
 	copyRequestHandler = require('./copy-request-handler'),
-	gremlinsAttackHandler = require('./gremlins-attack-handler'); // New handler for gremlins attack
+	gremlinsAttackHandler = require('./gremlins-attack-handler');
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
 	let handlerType = 'injectValue';
@@ -9,7 +9,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		injectValue: injectValueRequestHandler,
 		paste: pasteRequestHandler,
 		copy: copyRequestHandler,
-		gremlinsAttack: gremlinsAttackHandler // Add new handler to handlers object
+		gremlinsAttack: gremlinsAttackHandler
 	};
 
 	function onClick(tabId, itemMenuValue) {
@@ -44,49 +44,44 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	}
 
 	function addGenericMenus(rootMenu) {
-		console.log('addGenericMenus - start');
+		const handlerChoices = {},
+			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu),
+			gremlinsMenu = menuBuilder.subMenu('Gremlins Testing', rootMenu);
+
 		menuBuilder.separator(rootMenu);
-		console.log('add separator');
-		const handlerChoices = {};
+
 		if (pasteSupported !== undefined) {
 			pasteSupported = pasteSupported || true;
 		}
+
 		if (pasteSupported) {
-			const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
 			handlerChoices.injectValue = menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerType);
 			handlerChoices.paste = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
 			handlerChoices.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
 		}
+
 		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
-		// Add menu item for gremlins attack
-		menuBuilder.menuItem('Trigger Gremlins Attack', rootMenu, (_, tab) => {
-			try {
-				if (!tab || !tab.id) {
-					console.error('Tab object or tab id is missing.');
-					return;
-				}
 
-				// Retrieve the tabId from the tab object
-				const tabId = tab.id;
-
-				// Check if browserInterface is available
-				if (!browserInterface) {
-					console.error('browserInterface is missing.');
-					return;
-				}
-
-				// Call the gremlinsAttack function with the browserInterface and tabId
-				handlers.gremlinsAttack(browserInterface, tabId);
-			} catch (error) {
-				console.error('An error occurred while triggering Gremlins Attack:', error);
+		menuBuilder.menuItem('Start Attack (15s)', gremlinsMenu, (_, tab) => {
+			if (!tab || !tab.id) {
+				console.error('Invalid tab for gremlins action');
+				return;
 			}
+			handlers.gremlinsAttack.start(browserInterface, tab.id, { duration: 15 });
 		});
-		console.log('addGenericMenus - end');
+
+		menuBuilder.menuItem('Stop Attack', gremlinsMenu, (_, tab) => {
+			if (!tab || !tab.id) {
+				console.error('Invalid tab for gremlins action');
+				return;
+			}
+			handlers.gremlinsAttack.stop(browserInterface, tab.id);
+		});
+
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
 				throw new TypeError('browserInterface cannot be null or undefined');
 			}
-			// Use the browserInterface.openUrl() method to open the URL
 			browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
 		});
 	}
