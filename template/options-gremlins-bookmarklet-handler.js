@@ -1,3 +1,5 @@
+// options-gremlins-bookmarklet-handler.js
+// This script sets the bookmarklet script based on the selections in the options page.
 function setBookmarkletScript() {
 	const clicker = document.getElementById('clicker').checked,
 		toucher = document.getElementById('toucher').checked,
