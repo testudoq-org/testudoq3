@@ -1,28 +1,29 @@
-const path = require('path');
-const recursiveLs = require('fs-readdir-recursive');
+const path = require('path'),
+	recursiveLs = require('fs-readdir-recursive'),
+	CopyWebpackPlugin = require('copy-webpack-plugin'),
 
-/**
- * Object to store entry points for webpack.
- * @type {Object.<string, string>}
- */
-const entries = {};
+	/**
+	 * Object to store entry points for webpack.
+	 * @type {Object.<string, string>}
+	 */
+	entries = {},
 
-/**
- * Function to recursively build entry points based on files in a directory.
- * @param {string} dir - The directory to scan for files.
- */
-const buildEntries = (dir) => {
-	try {
-		// Recursively list files in the specified directory
-		recursiveLs(dir).forEach((f) => {
-			// Add each file as an entry point with its full path
-			entries[f] = path.join(dir, f);
-		});
-	} catch (err) {
-		// Handle errors if any occur during directory scanning
-		console.error('Error building entries:', err);
-	}
-};
+	/**
+	 * Function to recursively build entry points based on files in a directory.
+	 * @param {string} dir - The directory to scan for files.
+	 */
+	buildEntries = (dir) => {
+		try {
+			// Recursively list files in the specified directory
+			recursiveLs(dir).forEach((f) => {
+				// Add each file as an entry point with its full path
+				entries[f] = path.join(dir, f);
+			});
+		} catch (err) {
+			// Handle errors if any occur during directory scanning
+			console.error('Error building entries:', err);
+		}
+	};
 
 // Call buildEntries function to generate entry points from the 'src/main' directory
 buildEntries(path.resolve(__dirname, 'src', 'main'));
@@ -48,9 +49,19 @@ module.exports = {
 	resolve: {
 		// Add any resolve configurations if needed
 	},
+	// Add plugins configuration
+	plugins: [
+		new CopyWebpackPlugin({
+			patterns: [
+				{
+					from: 'node_modules/gremlins.js/dist/gremlins.min.js',
+					to: 'gremlins.min.js'
+				}
+			]
+		})
+	],
 	// Disable compression/minimization
 	optimization: {
 		minimize: false // Disables all forms of minimization
 	}
-	// Add any other necessary configurations
 };
