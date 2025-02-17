@@ -1,204 +1,141 @@
 /* global browser, chrome */
 
 const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
-    ContextMenu = require('../lib/context-menu'),
-    processMenuObject = require('../lib/process-menu-object'),
-    standardConfig = require('../../template/config.json'),
-    MenuBuilder = (typeof browser !== 'undefined') ?
-        require('../lib/firefox-menu-builder') :
-        require('../lib/chrome-menu-builder'),
-    BrowserInterface = (typeof browser !== 'undefined') ?
-        require('../lib/firefox-browser-interface') :
-        require('../lib/chrome-browser-interface'),
-    menuBuilderInstance = new MenuBuilder(browserAPI),
-    browserInterfaceInstance = new BrowserInterface(browserAPI),
-    isFirefox = (typeof browser !== 'undefined'),
-    contextMenu = new ContextMenu(
-        standardConfig,
-        browserInterfaceInstance,
-        menuBuilderInstance,
-        processMenuObject,
-        isFirefox
-    ),
-    MESSAGE_TYPES = {
-        START: 'startGremlins',
-        STOP: 'stopGremlins',
-        UPDATE: 'updateConfig',
-        STATE: 'gremlinStateUpdate'
-    };
+	ContextMenu = require('../lib/context-menu'),
+	processMenuObject = require('../lib/process-menu-object'),
+	standardConfig = require('../../template/config.json'),
+	MenuBuilder = (typeof browser !== 'undefined') ?
+		require('../lib/firefox-menu-builder') :
+		require('../lib/chrome-menu-builder'),
+	BrowserInterface = (typeof browser !== 'undefined') ?
+		require('../lib/firefox-browser-interface') :
+		require('../lib/chrome-browser-interface'),
+	menuBuilderInstance = new MenuBuilder(browserAPI),
+	browserInterfaceInstance = new BrowserInterface(browserAPI),
+	isFirefox = (typeof browser !== 'undefined'),
+	contextMenu = new ContextMenu(
+		standardConfig,
+		browserInterfaceInstance,
+		menuBuilderInstance,
+		processMenuObject,
+		isFirefox
+	),
+	MESSAGE_TYPES = {
+		START: 'startGremlins',
+		STOP: 'stopGremlins',
+		UPDATE: 'updateConfig',
+		STATE: 'gremlinStateUpdate'
+	};
 
 let attackState = {
-    isActive: false,
-    currentTab: null,
-    configuration: null
+	isActive: false,
+	currentTab: null,
+	configuration: null
 };
 
 function initializeMenus() {
-    return browserAPI.contextMenus.removeAll()
-        .then(() => contextMenu.init())
-        .then(() => createGremlinsMenu());
+	return browserAPI.contextMenus.removeAll()
+		.then(() => contextMenu.init());
 }
 
 function handleGremlinsAction(action, tab, config) {
-    if (!tab || !tab.id) {
-        console.error('Invalid tab for gremlins action');
-        return Promise.reject(new Error('Invalid tab'));
-    }
+	if (!tab || !tab.id) {
+		console.error('Invalid tab for gremlins action');
+		return Promise.reject(new Error('Invalid tab'));
+	}
 
-    if (action === 'start' && attackState.isActive && attackState.currentTab === tab.id) {
-        console.warn('Gremlins attack already running on this tab');
-        return Promise.resolve({ status: 'running' });
-    }
+	if (action === 'start' && attackState.isActive && attackState.currentTab === tab.id) {
+		console.warn('Gremlins attack already running on this tab');
+		return Promise.resolve({ status: 'running' });
+	}
 
-    return new Promise((resolve, reject) => {
-        browserAPI.tabs.sendMessage(tab.id, {
-            command: action === 'start' ? MESSAGE_TYPES.START : MESSAGE_TYPES.STOP,
-            payload: action === 'start' ? {
-                duration: config && config.duration ? config.duration : 15,
-                configuration: config && config.configuration ? config.configuration : null
-            } : undefined
-        })
-            .then(response => {
-                if (response && (response.status === 'started' || response.status === 'stopped')) {
-                    attackState = {
-                        isActive: response.status === 'started',
-                        currentTab: response.status === 'started' ? tab.id : null,
-                        configuration: response.status === 'started' ? config : null
-                    };
+	return new Promise((resolve, reject) => {
+		browserAPI.tabs.sendMessage(tab.id, {
+			command: action === 'start' ? MESSAGE_TYPES.START : MESSAGE_TYPES.STOP,
+			payload: action === 'start' ? {
+				duration: config && config.duration ? config.duration : 15,
+				configuration: config && config.configuration ? config.configuration : null
+			} : undefined
+		})
+			.then(response => {
+				if (response && (response.status === 'started' || response.status === 'stopped')) {
+					attackState = {
+						isActive: response.status === 'started',
+						currentTab: response.status === 'started' ? tab.id : null,
+						configuration: response.status === 'started' ? config : null
+					};
 
-                    browserAPI.runtime.sendMessage({
-                        command: MESSAGE_TYPES.STATE,
-                        payload: {
-                            attacking: attackState.isActive,
-                            configuration: attackState.configuration
-                        }
-                    }).catch(error => console.warn('Failed to broadcast state:', error));
+					browserAPI.runtime.sendMessage({
+						command: MESSAGE_TYPES.STATE,
+						payload: {
+							attacking: attackState.isActive,
+							configuration: attackState.configuration
+						}
+					}).catch(error => console.warn('Failed to broadcast state:', error));
 
-                    console.log(`Gremlins attack ${response.status} successfully`);
-                    resolve(response);
-                } else {
-                    const error = response && response.error ? response.error : 'Unknown error';
-                    console.error(`Failed to ${action} gremlins:`, error);
-                    reject(new Error(error));
-                }
-            })
-            .catch(error => {
-                console.error(`Error ${action}ing gremlins:`, error);
-                reject(error);
-            });
-    });
-}
-
-function createGremlinsMenu() {
-    const timestamp = Date.now(),
-        menuIds = {
-            root: `gremlinsMenu_${timestamp}`,
-            start: `startGremlins_${timestamp}`,
-            stop: `stopGremlins_${timestamp}`,
-            config: `configGremlins_${timestamp}`
-        };
-
-    browserAPI.contextMenus.create({
-        id: menuIds.root,
-        title: 'Gremlins Testing',
-        contexts: ['all']
-    });
-
-    browserAPI.contextMenus.create({
-        id: menuIds.start,
-        parentId: menuIds.root,
-        title: 'Start Attack (15s)',
-        contexts: ['all']
-    });
-
-    browserAPI.contextMenus.create({
-        id: menuIds.stop,
-        parentId: menuIds.root,
-        title: 'Stop Attack',
-        contexts: ['all']
-    });
-
-    browserAPI.contextMenus.create({
-        id: menuIds.config,
-        parentId: menuIds.root,
-        title: 'Configure',
-        contexts: ['all']
-    });
-
-    browserAPI.contextMenus.onClicked.addListener((info, tab) => {
-        if (!tab || !tab.id) {
-            console.error('Invalid tab for gremlins action');
-            return;
-        }
-
-        switch (info.menuItemId) {
-            case menuIds.start:
-                handleGremlinsAction('start', tab, { duration: 15 });
-                break;
-            case menuIds.stop:
-                handleGremlinsAction('stop', tab);
-                break;
-            case menuIds.config:
-                browserAPI.windows.create({
-                    url: browserAPI.runtime.getURL('popup/popup.html'),
-                    type: 'popup',
-                    width: 400,
-                    height: 600,
-                    focused: true
-                });
-                break;
-        }
-    });
+					console.log(`Gremlins attack ${response.status} successfully`);
+					resolve(response);
+				} else {
+					const error = response && response.error ? response.error : 'Unknown error';
+					console.error(`Failed to ${action} gremlins:`, error);
+					reject(new Error(error));
+				}
+			})
+			.catch(error => {
+				console.error(`Error ${action}ing gremlins:`, error);
+				reject(error);
+			});
+	});
 }
 
 browserAPI.runtime.onInstalled.addListener(() => initializeMenus());
 browserAPI.runtime.onStartup.addListener(() => initializeMenus());
 
 browserAPI.runtime.onMessage.addListener((message, sender) => {
-    if (!message.command || !MESSAGE_TYPES[message.command]) {
-        return false;
-    }
+	if (!message.command || !MESSAGE_TYPES[message.command]) {
+		return false;
+	}
 
-    const tabId = sender.tab ? sender.tab.id : null;
-    if (!tabId) {
-        browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]) {
-                const action = message.command === MESSAGE_TYPES.START ? 'start' : 'stop';
-                handleGremlinsAction(action, tabs[0], message.payload);
-            }
-        });
-    } else {
-        const action = message.command === MESSAGE_TYPES.START ? 'start' : 'stop';
-        handleGremlinsAction(action, { id: tabId }, message.payload);
-    }
+	const tabId = sender.tab ? sender.tab.id : null;
+	if (!tabId) {
+		browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+			if (tabs[0]) {
+				const action = message.command === MESSAGE_TYPES.START ? 'start' : 'stop';
+				handleGremlinsAction(action, tabs[0], message.payload);
+			}
+		});
+	} else {
+		const action = message.command === MESSAGE_TYPES.START ? 'start' : 'stop';
+		handleGremlinsAction(action, { id: tabId }, message.payload);
+	}
 
-    return true;
+	return true;
 });
 
 browserAPI.tabs.onRemoved.addListener((tabId) => {
-    if (attackState.currentTab === tabId) {
-        attackState = {
-            isActive: false,
-            currentTab: null,
-            configuration: null
-        };
-    }
+	if (attackState.currentTab === tabId) {
+		attackState = {
+			isActive: false,
+			currentTab: null,
+			configuration: null
+		};
+	}
 });
 
 browserAPI.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === 'loading' && attackState.currentTab === tabId) {
-        attackState = {
-            isActive: false,
-            currentTab: null,
-            configuration: null
-        };
+	if (changeInfo.status === 'loading' && attackState.currentTab === tabId) {
+		attackState = {
+			isActive: false,
+			currentTab: null,
+			configuration: null
+		};
 
-        browserAPI.runtime.sendMessage({
-            command: MESSAGE_TYPES.STATE,
-            payload: {
-                attacking: false,
-                configuration: null
-            }
-        }).catch(error => console.warn('Failed to broadcast state:', error));
-    }
+		browserAPI.runtime.sendMessage({
+			command: MESSAGE_TYPES.STATE,
+			payload: {
+				attacking: false,
+				configuration: null
+			}
+		}).catch(error => console.warn('Failed to broadcast state:', error));
+	}
 });

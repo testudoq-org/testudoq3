@@ -45,8 +45,7 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 
 	function addGenericMenus(rootMenu) {
 		const handlerChoices = {},
-			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu),
-			gremlinsMenu = menuBuilder.subMenu('Gremlins Testing', rootMenu);
+			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
 
 		menuBuilder.separator(rootMenu);
 
@@ -61,22 +60,6 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		}
 
 		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
-
-		menuBuilder.menuItem('Start Attack (15s)', gremlinsMenu, (_, tab) => {
-			if (!tab || !tab.id) {
-				console.error('Invalid tab for gremlins action');
-				return;
-			}
-			handlers.gremlinsAttack.start(browserInterface, tab.id, { duration: 15 });
-		});
-
-		menuBuilder.menuItem('Stop Attack', gremlinsMenu, (_, tab) => {
-			if (!tab || !tab.id) {
-				console.error('Invalid tab for gremlins action');
-				return;
-			}
-			handlers.gremlinsAttack.stop(browserInterface, tab.id);
-		});
 
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
