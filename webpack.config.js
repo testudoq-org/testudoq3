@@ -54,8 +54,9 @@ module.exports = {
 		new CopyWebpackPlugin({
 			patterns: [
 				{
-					from: 'node_modules/gremlins.js/dist/gremlins.min.js',
-					to: 'gremlins.min.js'
+					from: './template/gremlins.min.js',
+					to: 'gremlins.min.js',
+					force: true
 				}
 			]
 		})

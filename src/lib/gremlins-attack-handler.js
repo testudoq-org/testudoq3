@@ -14,18 +14,17 @@ async function loadGremlinsScript(browserInterface, tabId) {
 	Logger.log('GremlinsHandler', 'Loading script', { tabId });
 
 	try {
-		const localPath = chrome.runtime.getURL('gremlins.min.js');
-		Logger.log('GremlinsHandler', 'Loading local script', { path: localPath });
-
-		await browserInterface.executeScript(tabId, {
-			file: 'gremlins.min.js'
+		// Let the content script handle library injection
+		await browserInterface.sendMessage(tabId, {
+			command: 'startGremlins',
+			requireLibrary: true
 		});
 
-		Logger.log('GremlinsHandler', 'Script loaded successfully');
+		Logger.log('GremlinsHandler', 'Script load request sent to content script');
 		return true;
 	} catch (error) {
-		Logger.error('GremlinsHandler', 'Script load failed', error);
-		throw new Error('Failed to load gremlins script');
+		Logger.error('GremlinsHandler', 'Script load request failed', error);
+		throw new Error('Failed to request gremlins script load');
 	}
 }
 

@@ -140,38 +140,45 @@ async function startGremlinsAttack(duration, config) {
 		broadcastState();
 		debugLog('State updated:', gremlinState);
 
-		const gremlinsScript = `
-			if (window.gremlins) {
-				if (window.testudoHorde) {
-					window.testudoHorde.stop();
-				}
-
-				window.testudoHorde = gremlins.createHorde({
-					species: [
-						${gremlinState.configuration.species.map(s => `gremlins.species.${s}()`).join(',\n')}
-					],
-					mogwais: [
-						${gremlinState.configuration.mogwais.map(m => `gremlins.mogwais.${m}()`).join(',\n')}
-					],
-					strategies: [
-						gremlins.strategies.${gremlinState.configuration.strategy}()
-					]
-				});
-
-				console.log('[Gremlins] Starting attack for ${duration} seconds');
-				window.testudoHorde.unleash();
-
-				setTimeout(() => {
-					if (window.testudoHorde) {
-						window.testudoHorde.stop();
-						window.testudoHorde = null;
-						console.log('[Gremlins] Attack completed');
-					}
-				}, ${duration} * 1000);
-			} else {
-				console.error('[Gremlins] Library not found');
-			}`,
-			scriptElement = document.createElement('script');
+		const
+		gremlinsScript = `
+		if (window.gremlins) {
+		if (window.testudoHorde) {
+		window.testudoHorde.stop();
+		}
+		
+		window.testudoHorde = gremlins.createHorde({
+		species: [
+		${gremlinState.configuration.species.map(s => `gremlins.species.${s}()`).join(',\n')}
+		],
+		mogwais: [
+		${gremlinState.configuration.mogwais.map(m => `gremlins.mogwais.${m}()`).join(',\n')}
+		],
+		strategies: [
+		gremlins.strategies.${gremlinState.configuration.strategy}()
+		]
+		});
+		
+		console.log('[Gremlins] Starting attack for ${duration} seconds');
+		window.testudoHorde.unleash();
+		
+		setTimeout(() => {
+		if (window.testudoHorde) {
+		window.testudoHorde.stop();
+		window.testudoHorde = null;
+		console.log('[Gremlins] Attack completed');
+		}
+		}, ${duration} * 1000);
+		} else {
+		console.error('[Gremlins] Library not found');
+		}`,
+		scriptElement = document.createElement('script'),
+		stopScript = `
+		if (window.testudoHorde) {
+		window.testudoHorde.stop();
+		window.testudoHorde = null;
+		console.log('[Gremlins] Attack stopped');
+		}`;
 		
 		scriptElement.textContent = gremlinsScript;
 		(document.head || document.documentElement).appendChild(scriptElement);
@@ -247,8 +254,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	try {
 		switch (message.command) {
 			case MESSAGE_TYPES.START:
-				startGremlinsAttack(message.duration || 15, message.config);
-				sendResponse({ status: 'started', timestamp: Date.now() });
+				if (message.requireLibrary) {
+					debugLog('Library load requested');
+					ensureGremlinsLoaded()
+						.then(() => {
+							debugLog('Library loaded successfully');
+							sendResponse({ status: 'loaded', timestamp: Date.now() });
+						})
+						.catch((error) => {
+							debugLog('Library load failed:', error);
+							sendResponse({ status: 'error', error: error.message });
+						});
+					return true; // Keep message channel open for async response
+				} else {
+					startGremlinsAttack(message.duration || 15, message.config);
+					sendResponse({ status: 'started', timestamp: Date.now() });
+				}
 				break;
 			case MESSAGE_TYPES.STOP:
 				stopGremlinsAttack();
