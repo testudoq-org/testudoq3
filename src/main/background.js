@@ -28,6 +28,11 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 		STATE: 'gremlinStateUpdate'
 	};
 
+// Initialize the context menu
+contextMenu.init().catch(error => {
+	console.error('Failed to initialize context menu:', error);
+});
+
 let attackState = {
 	isActive: false,
 	currentTab: null,
