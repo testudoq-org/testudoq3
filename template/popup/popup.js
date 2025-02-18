@@ -63,6 +63,8 @@ async function launchGremlins() {
 		updateButtonText();
 	} catch (error) {
 		console.error('Failed to launch gremlins:', error);
+		attacking = false;
+		updateButtonText();
 	}
 }
 
@@ -73,6 +75,15 @@ function toggleGremlins() {
 		launchGremlins();
 	}
 }
+
+// Listen for state updates from content script
+chrome.runtime.onMessage.addListener((message) => {
+	if (message.command === 'updateGremlinsState') {
+		attacking = message.attacking;
+		updateButtonText();
+		console.log('Gremlins state updated:', attacking);
+	}
+});
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {

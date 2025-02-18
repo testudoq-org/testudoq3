@@ -13,7 +13,8 @@ function stopGremlins() {
 		clearTimeout(attackTimeout);
 		attackTimeout = null;
 	}
-	chrome.runtime.sendMessage({ command: 'updateToggleButtonText', attacking: false });
+	// Notify popup that attack has stopped
+	chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
 }
 
 function startGremlins(config) {
@@ -38,13 +39,18 @@ function startGremlins(config) {
 		console.log('[Gremlins] Unleashing horde');
 		horde.unleash();
 
+		// Notify popup that attack has started
+		chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: true });
+
 		attackTimeout = setTimeout(() => {
-			stopGremlins();
+			stopGremlins(); // This will send the attacking:false message
 		}, attackDuration * 1000);
 
 		return { success: true };
 	} catch (error) {
 		console.error('[Gremlins] Attack failed:', error);
+		// Ensure popup is notified of failure
+		chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
 		return { success: false, error: error.message };
 	}
 }
@@ -71,10 +77,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Error handling
 window.addEventListener('error', (event) => {
 	console.error('[Gremlins] Error:', event.error);
+	chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
 });
 
 window.addEventListener('unhandledrejection', (event) => {
 	console.error('[Gremlins] Unhandled rejection:', event.reason);
+	chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
 });
 
 console.log('[Gremlins] Content script loaded');
