@@ -1,7 +1,7 @@
 {
 	"name": "Testudoq",
 	"description": "Testudoq emergent testing with a right-click menu for exploratory tests. Create, manage, and execute missions easily.",
-	"version": "1.2",
+	"version": "1.0.2",
 	"permissions": [
 		"contextMenus",
 		"storage",
