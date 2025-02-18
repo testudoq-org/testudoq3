@@ -1,206 +1,252 @@
-# Immediate Debug Fixes for Gremlins Integration
+# TestudoQ Debugging and Testing Strategy
 
-## 1. Message Handling Issues
+## Identified Critical Paths
 
-### Problem
-Multiple components sending different message formats:
-- context-menu.js uses handlers.gremlinsAttack.start()
-- popup.js uses chrome.tabs.sendMessage directly
-- gremlins-handler.js expects specific message formats
+1. Menu Rebuilding Sequence
+   ```
+   Storage Change → removeAll → buildRoot → processMenus → addHandlers
+   ```
 
-### Quick Fix
+2. Click Handler Flow
+   ```
+   MenuClick → HandlerIdentification → ScriptExecution → MessageDispatch
+   ```
+
+## Debugging Hooks
+
+### 1. Menu State Tracking
 ```javascript
-// In gremlins-handler.js
-const MESSAGE_TYPES = {
-    START: 'startGremlins',
-    STOP: 'stopGremlins',
-    UPDATE: 'updateConfig',
-    STATE: 'gremlinStateUpdate'
+const menuStateDebug = {
+  lastBuildTime: null,
+  menuItems: new Set(),
+  buildDuration: [],
+  
+  logBuildStart() {
+    this.lastBuildTime = performance.now();
+  },
+  
+  logBuildComplete() {
+    const duration = performance.now() - this.lastBuildTime;
+    this.buildDuration.push(duration);
+    console.debug(`Menu build completed in ${duration}ms`);
+  }
 };
+```
 
-// Standardize message handling
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (!message.command || !MESSAGE_TYPES[message.command]) {
-        return false;
-    }
-
+### 2. Handler Performance Monitoring
+```javascript
+function wrapHandler(handler, name) {
+  return async function(...args) {
+    const start = performance.now();
     try {
-        switch (message.command) {
-            case MESSAGE_TYPES.START:
-                startGremlinsAttack(message.payload?.duration || 15, message.payload?.configuration);
-                sendResponse({ status: 'started' });
-                break;
-            case MESSAGE_TYPES.STOP:
-                stopGremlinsAttack();
-                sendResponse({ status: 'stopped' });
-                break;
-            case MESSAGE_TYPES.UPDATE:
-                updateConfiguration(message.payload?.configuration);
-                sendResponse({ status: 'updated' });
-                break;
-        }
+      const result = await handler.apply(this, args);
+      const duration = performance.now() - start;
+      console.debug(`Handler ${name} completed in ${duration}ms`);
+      return result;
     } catch (error) {
-        sendResponse({ status: 'error', error: error.message });
+      console.error(`Handler ${name} failed:`, error);
+      throw error;
     }
-    return true;
-});
-```
-
-## 2. Library Loading Race Condition
-
-### Problem
-- gremlins.min.js might not be loaded when attack starts
-- Multiple components trying to load the library
-- No loading status tracking
-
-### Quick Fix
-```javascript
-// In gremlins-handler.js
-let libraryLoadPromise = null;
-
-function ensureLibraryLoaded() {
-    if (window.gremlins) {
-        return Promise.resolve(true);
-    }
-
-    if (libraryLoadPromise) {
-        return libraryLoadPromise;
-    }
-
-    libraryLoadPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = chrome.runtime.getURL('gremlins.min.js');
-        script.onload = () => {
-            console.log('Gremlins library loaded successfully');
-            resolve(true);
-        };
-        script.onerror = (error) => {
-            console.error('Failed to load Gremlins library:', error);
-            libraryLoadPromise = null;
-            reject(error);
-        };
-        (document.head || document.documentElement).appendChild(script);
-    });
-
-    return libraryLoadPromise;
+  };
 }
 ```
 
-## 3. Menu State Synchronization
+## Testing Strategies
 
-### Problem
-- Popup and context menu can become out of sync
-- No state persistence between page reloads
-- Multiple entry points updating state independently
-
-### Quick Fix
+### 1. Menu Building Tests
 ```javascript
-// In gremlins-handler.js
-let gremlinState = {
-    attacking: false,
-    duration: 15,
-    configuration: getDefaultConfiguration()
+describe('Menu Building', () => {
+  it('should handle rapid rebuilds', async () => {
+    const changes = [
+      { additionalMenus: [/*...*/] },
+      { additionalMenus: [/*...*/] },
+      { additionalMenus: [/*...*/] }
+    ];
+    
+    // Trigger changes in quick succession
+    await Promise.all(changes.map(c => 
+      browserInterface.triggerStorageChange(c)
+    ));
+    
+    // Verify final state is correct
+    expect(menuBuilder.getMenuCount()).toBe(1);
+  });
+});
+```
+
+### 2. Race Condition Tests
+```javascript
+describe('Concurrent Operations', () => {
+  it('should handle menu updates during click processing', async () => {
+    const clickPromise = simulateClick(menuId);
+    const updatePromise = triggerMenuUpdate();
+    
+    await Promise.all([clickPromise, updatePromise]);
+    
+    // Verify system remains consistent
+    expect(getActiveHandlers()).toBeDefined();
+  });
+});
+```
+
+## Performance Monitoring
+
+### 1. Build Time Metrics
+```javascript
+const buildMetrics = {
+  samples: [],
+  
+  record(duration) {
+    this.samples.push({
+      timestamp: Date.now(),
+      duration
+    });
+    
+    if (this.samples.length > 100) {
+      this.analyze();
+    }
+  },
+  
+  analyze() {
+    const avg = this.samples.reduce((a,b) => a + b.duration, 0) / this.samples.length;
+    console.info(`Average build time: ${avg}ms`);
+    this.samples = [];
+  }
 };
+```
 
-function broadcastState() {
-    chrome.runtime.sendMessage({
-        command: MESSAGE_TYPES.STATE,
-        payload: { ...gremlinState }
-    });
-}
-
-// Update state handlers
-function startGremlinsAttack(duration, config) {
-    gremlinState.attacking = true;
-    gremlinState.duration = duration;
-    if (config) {
-        gremlinState.configuration = { ...config };
+### 2. Memory Usage Tracking
+```javascript
+const memoryTracker = {
+  snapshots: [],
+  
+  takeSnapshot() {
+    if (performance.memory) {
+      this.snapshots.push({
+        time: Date.now(),
+        used: performance.memory.usedJSHeapSize,
+        total: performance.memory.totalJSHeapSize
+      });
     }
-    broadcastState();
-    // ... rest of start logic
-}
-
-function stopGremlinsAttack() {
-    gremlinState.attacking = false;
-    broadcastState();
-    // ... rest of stop logic
-}
+  },
+  
+  detectLeaks() {
+    // Compare sequential snapshots for unusual growth
+    return this.snapshots.reduce((acc, snap, i, arr) => {
+      if (i === 0) return acc;
+      const growth = snap.used - arr[i-1].used;
+      if (growth > 1000000) { // 1MB threshold
+        acc.push({ time: snap.time, growth });
+      }
+      return acc;
+    }, []);
+  }
+};
 ```
 
-## 4. Error Recovery
+## Debug Logging Strategy
 
-### Problem
-- No proper error handling for failed script injection
-- Missing recovery mechanisms
-- Unclear error messages
-
-### Quick Fix
+### 1. Context Collection
 ```javascript
-// In popup.js and context-menu.js
-function handleGremlinsError(error) {
-    console.error('Gremlins Error:', error);
-    
-    // Attempt recovery
-    if (error.message.includes('not loaded')) {
-        return reloadGremlinsLibrary()
-            .then(() => retryLastAction());
+const debugContext = {
+  collectMenuState() {
+    return {
+      menuCount: menuBuilder.getMenuCount(),
+      activeHandlers: Object.keys(itemHandlers).length,
+      lastUpdateTime: Date.now()
+    };
+  },
+  
+  collectHandlerState() {
+    return {
+      pendingHandlers: Object.keys(itemHandlers)
+        .filter(k => itemHandlers[k].isPending()),
+      handlerTypes: new Set(
+        Object.values(itemHandlers)
+          .map(h => h.type)
+      ).size
+    };
+  }
+};
+```
+
+### 2. Error Aggregation
+```javascript
+const errorAggregator = {
+  errors: new Map(),
+  
+  record(error, context) {
+    const key = `${error.name}:${error.message}`;
+    if (!this.errors.has(key)) {
+      this.errors.set(key, {
+        count: 0,
+        contexts: []
+      });
     }
     
-    // Reset state if unrecoverable
-    gremlinState.attacking = false;
-    broadcastState();
+    const record = this.errors.get(key);
+    record.count++;
+    record.contexts.push(context);
     
-    // Show user-friendly error
-    chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/testudo-16.png',
-        title: 'Gremlins Error',
-        message: 'Failed to execute gremlins attack. Please try reloading the page.'
-    });
-}
+    if (record.count === 1 || record.count % 10 === 0) {
+      console.warn(`Error occurred ${record.count} times:`, {
+        error,
+        contexts: record.contexts.slice(-5)
+      });
+    }
+  }
+};
 ```
 
-## 5. Implementation Steps
+## Validation Rules
 
-1. Apply Message Standardization:
-   - Update all message senders to use new format
-   - Add MESSAGE_TYPES enum
-   - Update all listeners
-
-2. Fix Library Loading:
-   - Implement ensureLibraryLoaded
-   - Add to start sequence
-   - Add loading status checks
-
-3. Add State Management:
-   - Implement gremlinState
-   - Add broadcast mechanism
-   - Update UI components to listen for state
-
-4. Improve Error Handling:
-   - Add error recovery logic
-   - Implement user notifications
-   - Add logging for debugging
-
-## Verification Steps
-
-1. Test Menu Integration:
+### 1. Menu Structure Validation
 ```javascript
-// In Chrome DevTools Console
-await chrome.runtime.sendMessage({
-    command: 'startGremlins',
-    payload: { duration: 5 }
-});
-// Should see proper state updates in popup
+const menuValidator = {
+  validateStructure(menu) {
+    const issues = [];
+    
+    if (!menu.id) issues.push('Missing menu ID');
+    if (!menu.title) issues.push('Missing menu title');
+    
+    if (menu.children) {
+      menu.children.forEach((child, index) => {
+        const childIssues = this.validateStructure(child);
+        issues.push(...childIssues.map(i => `Child ${index}: ${i}`));
+      });
+    }
+    
+    return issues;
+  }
+};
 ```
 
-2. Test Library Loading:
+### 2. Handler Validation
 ```javascript
-// Verify in Chrome DevTools Console
-window.gremlins // Should exist after attack starts
+const handlerValidator = {
+  validateHandler(handler) {
+    const issues = [];
+    
+    if (typeof handler !== 'function') {
+      issues.push('Handler must be a function');
+    }
+    
+    if (handler.length !== 2) {
+      issues.push('Handler must accept exactly 2 parameters');
+    }
+    
+    return issues;
+  }
+};
 ```
 
-3. Test Error Recovery:
-   - Try starting attack with library not loaded
-   - Check error messages
-   - Verify state reset
+## Implementation Notes
+
+1. Add debug logging strategically around critical paths
+2. Implement performance monitoring in development builds only
+3. Use validation in development, strip in production
+4. Add memory leak detection in development environment
+5. Implement error aggregation with rate limiting
+6. Add metrics collection with periodic reporting
+
+The debug strategy should be implemented alongside the performance improvements outlined in implementation-plan.md, providing visibility into the effectiveness of the changes and early warning of potential issues.
