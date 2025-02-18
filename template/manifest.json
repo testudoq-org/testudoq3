@@ -13,7 +13,7 @@
 		"notifications"
 	],
 	"background": {
-		"service_worker": "gremlins-background.js",
+		"service_worker": "background.js",
 		"type": "module"
 	},
 	"manifest_version": 3,
@@ -71,7 +71,7 @@
 				"paste.js",
 				"prompt.js",
 				"options.js",
-				"options-gremlins-handler.js",
+				"options-gremlins-bookmarklet-handler.js",
 				"content-scripts/gremlins-handler.js"
 			],
 			"run_at": "document_end"

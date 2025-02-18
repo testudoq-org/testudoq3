@@ -4,7 +4,9 @@ const injectValueRequestHandler = require('./inject-value-request-handler'),
 	gremlinsAttackHandler = require('./gremlins-attack-handler');
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	let handlerType = 'injectValue';
+	let handlerType = 'injectValue',
+		isRebuilding = false;
+
 	const handlers = {
 		injectValue: injectValueRequestHandler,
 		paste: pasteRequestHandler,
@@ -69,20 +71,35 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 		});
 	}
 
-	function rebuildMenu(options) {
-		const rootMenu = menuBuilder.rootMenu('Testudoq');
-		if (!options || !options.skipStandard) {
-			processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
+	async function rebuildMenu(options) {
+		if (isRebuilding) {
+			return;
 		}
-		loadAdditionalMenus(options && options.additionalMenus, rootMenu);
-		addGenericMenus(rootMenu);
+
+		isRebuilding = true;
+		try {
+			await menuBuilder.removeAll();
+			const rootMenu = menuBuilder.rootMenu('Testudoq');
+			if (!options || !options.skipStandard) {
+				processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
+			}
+			loadAdditionalMenus(options && options.additionalMenus, rootMenu);
+			addGenericMenus(rootMenu);
+		} finally {
+			isRebuilding = false;
+		}
 	}
 
 	function wireStorageListener() {
-		browserInterface.addStorageListener(() => menuBuilder.removeAll().then(browserInterface.getOptionsAsync).then(rebuildMenu));
+		browserInterface.addStorageListener(async () => {
+			const options = await browserInterface.getOptionsAsync();
+			await rebuildMenu(options);
+		});
 	}
 
-	this.init = function () {
-		return browserInterface.getOptionsAsync().then(rebuildMenu).then(wireStorageListener);
+	this.init = async function () {
+		const options = await browserInterface.getOptionsAsync();
+		await rebuildMenu(options);
+		wireStorageListener();
 	};
 };
