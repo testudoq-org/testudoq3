@@ -1,0 +1,27 @@
+# .clinerules-code
+
+## Coding Standards for CliniRule Chrome Extension (Manifest V3)
+
+This file outlines the coding standards and best practices that should be followed when contributing to the CliniRule Chrome extension using Manifest Version 3.
+
+### Manifest V3 Compliance
+
+- Ensure that the extension's manifest.json file follows the Manifest V3 specification.
+- Use the appropriate API permissions and avoid unnecessary permissions.
+- Implement declarative net request rules instead of blocking webRequest.
+
+### Naming Conventions
+
+- Use camelCase for variable and function names.
+- Use PascalCase for class and component names.
+- Use all-lowercase with underscores for constants.
+- Prefix background script and content script file names with "background-" and "content-", respectively.
+
+### Formatting
+
+Refer to the Eslint rules config
+
+### ESLint Rules
+
+The project uses ESLint to enforce the following formatting rules refer to them.
+On eslint rules broken attempt to fix once and then inform developer to fix manually.

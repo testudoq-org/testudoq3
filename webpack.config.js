@@ -1,16 +1,17 @@
-const path = require('path');
-const recursiveLs = require('fs-readdir-recursive'),
+const path = require('path'),
+	recursiveLs = require('fs-readdir-recursive'),
+	CopyWebpackPlugin = require('copy-webpack-plugin'),
 
 	/**
- * Object to store entry points for webpack.
- * @type {Object.<string, string>}
- */
+	 * Object to store entry points for webpack.
+	 * @type {Object.<string, string>}
+	 */
 	entries = {},
 
 	/**
- * Function to recursively build entry points based on files in a directory.
- * @param {string} dir - The directory to scan for files.
- */
+	 * Function to recursively build entry points based on files in a directory.
+	 * @param {string} dir - The directory to scan for files.
+	 */
 	buildEntries = (dir) => {
 		try {
 			// Recursively list files in the specified directory
@@ -47,6 +48,21 @@ module.exports = {
 	// Define resolve configurations for resolving module paths
 	resolve: {
 		// Add any resolve configurations if needed
+	},
+	// Add plugins configuration
+	plugins: [
+		new CopyWebpackPlugin({
+			patterns: [
+				{
+					from: './template/gremlins.min.js',
+					to: 'gremlins.min.js',
+					force: true
+				}
+			]
+		})
+	],
+	// Disable compression/minimization
+	optimization: {
+		minimize: false // Disables all forms of minimization
 	}
-	// Add any other necessary configurations
 };

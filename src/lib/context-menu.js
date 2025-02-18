@@ -1,14 +1,18 @@
 const injectValueRequestHandler = require('./inject-value-request-handler'),
 	pasteRequestHandler = require('./paste-request-handler'),
-	copyRequestHandler = require('./copy-request-handler');
+	copyRequestHandler = require('./copy-request-handler'),
+	gremlinsAttackHandler = require('./gremlins-attack-handler');
 
 module.exports = function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const handlerType = 'injectValue',
-		handlers = {
-			injectValue: injectValueRequestHandler,
-			paste: pasteRequestHandler,
-			copy: copyRequestHandler
-		};
+	let handlerType = 'injectValue',
+		isRebuilding = false;
+
+	const handlers = {
+		injectValue: injectValueRequestHandler,
+		paste: pasteRequestHandler,
+		copy: copyRequestHandler,
+		gremlinsAttack: gremlinsAttackHandler
+	};
 
 	function onClick(tabId, itemMenuValue) {
 		if (!itemMenuValue) {
@@ -42,43 +46,60 @@ module.exports = function ContextMenu(standardConfig, browserInterface, menuBuil
 	}
 
 	function addGenericMenus(rootMenu) {
-		console.log('addGenericMenus - start');
+		const handlerChoices = {},
+			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+
 		menuBuilder.separator(rootMenu);
-		console.log('add separator');
-		const handlerChoices = {};
+
 		if (pasteSupported !== undefined) {
 			pasteSupported = pasteSupported || true;
 		}
+
 		if (pasteSupported) {
-			const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
 			handlerChoices.injectValue = menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerType);
 			handlerChoices.paste = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
 			handlerChoices.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
 		}
-		menuBuilder.menuItem('Customize menus', rootMenu, browserInterface.openSettings);
+
+		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
+
 		menuBuilder.menuItem('Help/Support', rootMenu, () => {
 			if (!browserInterface) {
 				throw new TypeError('browserInterface cannot be null or undefined');
 			}
-			browserInterface.openUrl('https://xanpho.x10.bz/testudoq-help.html');
+			browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
 		});
-		console.log('addGenericMenus - end');
 	}
 
-	function rebuildMenu(options) {
-		const rootMenu = menuBuilder.rootMenu('Testudoq');
-		if (!options || !options.skipStandard) {
-			processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
+	async function rebuildMenu(options) {
+		if (isRebuilding) {
+			return;
 		}
-		loadAdditionalMenus(options && options.additionalMenus, rootMenu);
-		addGenericMenus(rootMenu);
+
+		isRebuilding = true;
+		try {
+			await menuBuilder.removeAll();
+			const rootMenu = menuBuilder.rootMenu('Testudoq');
+			if (!options || !options.skipStandard) {
+				processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
+			}
+			loadAdditionalMenus(options && options.additionalMenus, rootMenu);
+			addGenericMenus(rootMenu);
+		} finally {
+			isRebuilding = false;
+		}
 	}
 
 	function wireStorageListener() {
-		browserInterface.addStorageListener(() => menuBuilder.removeAll().then(browserInterface.getOptionsAsync).then(rebuildMenu));
+		browserInterface.addStorageListener(async () => {
+			const options = await browserInterface.getOptionsAsync();
+			await rebuildMenu(options);
+		});
 	}
 
-	this.init = function () {
-		return browserInterface.getOptionsAsync().then(rebuildMenu).then(wireStorageListener);
+	this.init = async function () {
+		const options = await browserInterface.getOptionsAsync();
+		await rebuildMenu(options);
+		wireStorageListener();
 	};
 };
