@@ -1,305 +1,80 @@
-/* global chrome */
+/* global chrome, gremlins */
 
-const DEBUG_MODE = true,
-	debugLog = (...args) => {
-		if (DEBUG_MODE) {
-			console.log('[Gremlins Debug]', ...args);
-		}
-	},
-	MESSAGE_TYPES = {
-		START: 'startGremlins',
-		STOP: 'stopGremlins',
-		UPDATE: 'updateConfig',
-		STATE: 'gremlinStateUpdate',
-		CONTENT_READY: 'GREMLINS_CONTENT_READY',
-		LIBRARY_LOADED: 'GREMLINS_LIBRARY_LOADED'
-	},
-	gremlinState = {
-		attacking: false,
-		duration: 15,
-		startTime: null,
-		configuration: {
-			species: ['clicker', 'toucher', 'formFiller', 'scroller', 'typer'],
-			mogwais: ['alert', 'fps', 'gizmo'],
-			strategy: 'distribution'
-		}
-	},
-	libraryStatus = {
-		loaded: false,
-		error: null,
-		loading: false,
-		initializationTime: null
-	};
+let horde = null,
+	attackTimeout = null;
 
-function broadcastState() {
-	debugLog('Broadcasting state:', gremlinState);
-	chrome.runtime.sendMessage({
-		command: MESSAGE_TYPES.STATE,
-		payload: {
-			attacking: gremlinState.attacking,
-			duration: gremlinState.duration,
-			startTime: gremlinState.startTime,
-			configuration: Object.assign({}, gremlinState.configuration)
-		}
-	});
+function stopGremlins() {
+	console.log('[Gremlins] Stopping attack');
+	if (horde) {
+		horde.stop();
+		horde = null;
+	}
+	if (attackTimeout) {
+		clearTimeout(attackTimeout);
+		attackTimeout = null;
+	}
+	chrome.runtime.sendMessage({ command: 'updateToggleButtonText', attacking: false });
 }
 
-function injectGremlinsLibrary() {
-	debugLog('Starting library injection');
-	if (libraryStatus.loaded) {
-		debugLog('Library already loaded');
-		return Promise.resolve(true);
+function startGremlins(config) {
+	console.log('[Gremlins] Starting attack with config:', config);
+	const { attackDuration, species, mogwais, strategy } = config;
+
+	if (horde) {
+		stopGremlins();
 	}
 
-	if (libraryStatus.loading) {
-		debugLog('Library currently loading, waiting...');
-		return new Promise((resolve) => {
-			const checkInterval = setInterval(() => {
-				if (libraryStatus.loaded) {
-					debugLog('Library load completed while waiting');
-					clearInterval(checkInterval);
-					resolve(true);
-				}
-			}, 100);
-		});
-	}
-
-	libraryStatus.loading = true;
-	return new Promise((resolve, reject) => {
-		const script = document.createElement('script');
-		script.src = chrome.runtime.getURL('gremlins.min.js');
-
-		script.addEventListener('load', () => {
-			debugLog('Library loaded successfully');
-			libraryStatus.loaded = true;
-			libraryStatus.loading = false;
-			libraryStatus.initializationTime = Date.now();
-			chrome.runtime.sendMessage({
-				command: MESSAGE_TYPES.LIBRARY_LOADED,
-				payload: { timestamp: libraryStatus.initializationTime }
-			});
-			resolve(true);
-		});
-
-		script.addEventListener('error', (e) => {
-			const error = new Error('Failed to load Gremlins library: ' + e.message);
-			debugLog('Library load failed:', error);
-			libraryStatus.error = error;
-			libraryStatus.loading = false;
-			reject(error);
-		});
-
-		(document.head || document.documentElement).appendChild(script);
-	});
-}
-
-async function verifyGremlinsLibrary() {
-	debugLog('Verifying library state');
-	const libraryExists = typeof window.gremlins !== 'undefined';
-	debugLog('Library present:', libraryExists);
-	return libraryExists;
-}
-
-async function ensureGremlinsLoaded() {
-	debugLog('Ensuring gremlins are loaded');
 	try {
-		await injectGremlinsLibrary();
-		const verified = await verifyGremlinsLibrary();
-		debugLog('Library verification result:', verified);
-		return verified;
-	} catch (error) {
-		debugLog('Failed to ensure gremlins loaded:', error);
-		return false;
-	}
-}
+		const speciesConfig = species.map(s => gremlins.species[s]()),
+			mogwaisConfig = mogwais.map(m => gremlins.mogwais[m]()),
+			strategyConfig = gremlins.strategies[strategy]();
 
-async function startGremlinsAttack(duration, config) {
-	debugLog('Starting attack with config:', { duration, config });
-	try {
-		const loaded = await ensureGremlinsLoaded();
-		if (!loaded) {
-			const error = new Error('Failed to load Gremlins library');
-			debugLog('Load failed:', error);
-			throw error;
-		}
-
-		if (!window.gremlins) {
-			const error = new Error('Gremlins library not found in window scope');
-			debugLog('Library not found:', error);
-			throw error;
-		}
-
-		debugLog('Library loaded successfully, updating state');
-
-		gremlinState.attacking = true;
-		gremlinState.duration = duration || 15;
-		gremlinState.startTime = Date.now();
-		if (config) {
-			gremlinState.configuration = Object.assign({}, config);
-		}
-		broadcastState();
-		debugLog('State updated:', gremlinState);
-
-		const
-		gremlinsScript = `
-		if (window.gremlins) {
-		if (window.testudoHorde) {
-		window.testudoHorde.stop();
-		}
-		
-		window.testudoHorde = gremlins.createHorde({
-		species: [
-		${gremlinState.configuration.species.map(s => `gremlins.species.${s}()`).join(',\n')}
-		],
-		mogwais: [
-		${gremlinState.configuration.mogwais.map(m => `gremlins.mogwais.${m}()`).join(',\n')}
-		],
-		strategies: [
-		gremlins.strategies.${gremlinState.configuration.strategy}()
-		]
+		horde = gremlins.createHorde({
+			species: speciesConfig,
+			mogwais: mogwaisConfig,
+			strategies: [strategyConfig]
 		});
-		
-		console.log('[Gremlins] Starting attack for ${duration} seconds');
-		window.testudoHorde.unleash();
-		
-		setTimeout(() => {
-		if (window.testudoHorde) {
-		window.testudoHorde.stop();
-		window.testudoHorde = null;
-		console.log('[Gremlins] Attack completed');
-		}
-		}, ${duration} * 1000);
-		} else {
-		console.error('[Gremlins] Library not found');
-		}`,
-		scriptElement = document.createElement('script'),
-		stopScript = `
-		if (window.testudoHorde) {
-		window.testudoHorde.stop();
-		window.testudoHorde = null;
-		console.log('[Gremlins] Attack stopped');
-		}`;
-		
-		scriptElement.textContent = gremlinsScript;
-		(document.head || document.documentElement).appendChild(scriptElement);
-		scriptElement.remove();
 
-		debugLog('Attack script injected successfully');
+		console.log('[Gremlins] Unleashing horde');
+		horde.unleash();
+
+		attackTimeout = setTimeout(() => {
+			stopGremlins();
+		}, attackDuration * 1000);
+
+		return { success: true };
 	} catch (error) {
-		gremlinState.attacking = false;
-		gremlinState.startTime = null;
-		broadcastState();
-		debugLog('Error starting gremlins attack:', error);
-		throw error;
+		console.error('[Gremlins] Attack failed:', error);
+		return { success: false, error: error.message };
 	}
 }
 
-function stopGremlinsAttack() {
-	debugLog('Stopping gremlins attack');
-	try {
-		const stopScript = `
-			if (window.testudoHorde) {
-				window.testudoHorde.stop();
-				window.testudoHorde = null;
-				console.log('[Gremlins] Attack stopped');
-			}`,
-			scriptElement = document.createElement('script');
-		
-		scriptElement.textContent = stopScript;
-		(document.head || document.documentElement).appendChild(scriptElement);
-		scriptElement.remove();
-
-		gremlinState.attacking = false;
-		gremlinState.startTime = null;
-		broadcastState();
-		debugLog('Attack stopped successfully');
-	} catch (error) {
-		debugLog('Error stopping gremlins attack:', error);
-		throw error;
-	}
-}
-
-function updateConfiguration(config) {
-	if (!config) {
-		return;
-	}
-	debugLog('Updating configuration:', config);
-	gremlinState.configuration = Object.assign(
-		{},
-		gremlinState.configuration,
-		config
-	);
-	broadcastState();
-}
-
-function monitorAttackState() {
-	setInterval(() => {
-		debugLog('Attack State:', {
-			attacking: gremlinState.attacking,
-			hordeExists: !!window.testudoHorde,
-			libraryLoaded: libraryStatus.loaded,
-			startTime: gremlinState.startTime,
-			runningTime: gremlinState.startTime ? (Date.now() - gremlinState.startTime) / 1000 : 0
-		});
-	}, 5000);
-}
-
+// Message handler
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (!message.command || !MESSAGE_TYPES[message.command]) {
-		return false;
+	console.log('[Gremlins] Received message:', message);
+
+	if (message.command === 'startGremlins') {
+		const result = startGremlins(message.config);
+		sendResponse(result);
+		return true;
 	}
 
-	debugLog('Received message:', message);
-
-	try {
-		switch (message.command) {
-			case MESSAGE_TYPES.START:
-				if (message.requireLibrary) {
-					debugLog('Library load requested');
-					ensureGremlinsLoaded()
-						.then(() => {
-							debugLog('Library loaded successfully');
-							sendResponse({ status: 'loaded', timestamp: Date.now() });
-						})
-						.catch((error) => {
-							debugLog('Library load failed:', error);
-							sendResponse({ status: 'error', error: error.message });
-						});
-					return true; // Keep message channel open for async response
-				} else {
-					startGremlinsAttack(message.duration || 15, message.config);
-					sendResponse({ status: 'started', timestamp: Date.now() });
-				}
-				break;
-			case MESSAGE_TYPES.STOP:
-				stopGremlinsAttack();
-				sendResponse({ status: 'stopped', timestamp: Date.now() });
-				break;
-			case MESSAGE_TYPES.UPDATE:
-				updateConfiguration(message.payload && message.payload.configuration);
-				sendResponse({ status: 'updated', timestamp: Date.now() });
-				break;
-			default:
-				debugLog('Unknown gremlins command:', message.command);
-				sendResponse({ status: 'error', error: 'Unknown command' });
-		}
-	} catch (error) {
-		debugLog('Error handling gremlins command:', error);
-		sendResponse({ status: 'error', error: error.message });
+	if (message.command === 'stopGremlins') {
+		stopGremlins();
+		sendResponse({ success: true });
+		return true;
 	}
 
-	return true;
+	return false;
 });
 
-debugLog('Content script initialized', {
-	url: window.location.href,
-	timestamp: Date.now()
+// Error handling
+window.addEventListener('error', (event) => {
+	console.error('[Gremlins] Error:', event.error);
 });
 
-chrome.runtime.sendMessage({
-	command: MESSAGE_TYPES.CONTENT_READY,
-	payload: { url: window.location.href }
+window.addEventListener('unhandledrejection', (event) => {
+	console.error('[Gremlins] Unhandled rejection:', event.reason);
 });
 
-monitorAttackState();
-injectGremlinsLibrary();
+console.log('[Gremlins] Content script loaded');
