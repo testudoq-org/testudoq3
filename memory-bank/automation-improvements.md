@@ -19,17 +19,20 @@ The current testing setup uses a mixed approach with multiple frameworks and too
 
 **Current Issue**: Mixing Jasmine and Jest creates inconsistency in test approaches, increases maintenance overhead, and requires developers to understand multiple testing paradigms.
 
-**Recommendation**: Consolidate testing on Jest, which offers:
-- Modern features like snapshot testing
-- Better async testing support
-- Improved mocking capabilities
-- Built-in code coverage
-- Active development community
+**Recommendation**: Consolidate testing on Jasmine, which offers:
+- Mature and stable testing ecosystem
+- Excellent browser integration through Testem
+- Simple syntax and intuitive API
+- Strong community support
+- Compatible with our existing test architecture
 
 **Implementation**:
-- Gradually migrate Jasmine tests to Jest
-- Update package.json scripts to use Jest commands
-- Consolidate configuration in jest.config.js
+- Remove Jest dependencies and configuration files
+- Upgrade to the latest Jasmine version (4.x+)
+- Port any Jest-specific tests to Jasmine format
+- Update package.json scripts to use standardized Jasmine/Testem commands
+- Implement Mustache for template-based test fixtures
+- Create unified Jasmine configuration
 
 ### 2. Browser Testing Enhancement
 
@@ -42,7 +45,7 @@ The current testing setup uses a mixed approach with multiple frameworks and too
 - Improved debugging with time-travel
 
 **Implementation**:
-- Add Playwright or Cypress as a dev dependency
+- Add Playwright / CodeceptJS as a dev dependency
 - Create browser-specific test configurations
 - Implement shared fixtures for common test scenarios
 - Set up visual snapshot comparisons for UI testing
