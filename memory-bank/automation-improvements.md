@@ -35,7 +35,7 @@ The current testing setup uses a mixed approach with multiple frameworks and too
 
 **Current Issue**: The current browser-based testing approach requires manual setup of environment variables and profiles.
 
-**Recommendation**: Implement Playwright or Cypress for automated browser testing:
+**Recommendation**: Implement Playwright / CodeceptJS for automated browser testing:
 - Cross-browser testing with minimal configuration
 - Visual regression testing capabilities
 - Network traffic interception
