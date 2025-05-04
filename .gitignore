@@ -12,3 +12,4 @@ pack.pem
 testudoq*.zip
 dist
 private_key.pem
+packages\
