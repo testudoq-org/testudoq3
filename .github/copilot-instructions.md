@@ -65,7 +65,7 @@ Focus on testing these areas:
 None identified yet - pending full testing cycle
 
 ## Coding Guidelines
-- Use ES6+ JavaScript features
+- JavaScript (ES6+ features with CommonJS module system)
 - Follow the established handler pattern
 - Abstract browser-specific code
 - Maintain proper error handling

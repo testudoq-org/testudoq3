@@ -2,7 +2,7 @@
 
 ## Technologies
 - Browser Extension Framework
-- JavaScript (ES6+)
+- JavaScript (ES6+ features with CommonJS module system)
 - Gremlins.js for chaos testing
 - Webpack for bundling
 

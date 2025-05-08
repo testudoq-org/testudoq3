@@ -2,6 +2,15 @@
 
 Testudoq utilizes WebPack for packaging, Jasmine for tests (executed via Testem), and ESLint for linting. The primary scripts are defined in `package.json`.
 
+## Module Format Standards
+TestudoQ consistently uses CommonJS module format (require/module.exports) throughout the codebase. When creating new files or modifying existing ones:
+
+- Use `const module = require('../path/to/module')` for imports
+- Use `module.exports = ...` for exporting functionality
+- Avoid using ES6 module syntax (import/export)
+
+This ensures compatibility with the existing codebase and testing infrastructure.
+
 ## Setting up a Local Development Environment
 
 Ensure that the `js-obfuscator` is installed:
