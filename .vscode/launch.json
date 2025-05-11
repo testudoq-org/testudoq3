@@ -26,18 +26,25 @@
         "-foreground" // Keep Firefox in the foreground
       ],
       "outFiles": [
-        "${workspaceFolder}/pack/**/*.js"
+        "${workspaceFolder}/pack/**/*.js",
+        "${workspaceFolder}/pack/**/*.mjs"
       ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "env": {
+        "NODE_OPTIONS": "--experimental-modules"
+      },
       "skipFiles": [
         "${workspaceFolder}/node_modules/**",
         "${workspaceFolder}/**/*.min.js"
       ]
-    },
-    {
+    },    {
       "name": "Launch Chrome Extension Pack",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "prepack-and-pack-extension",
+      "preLaunchTask": "buildExtension",
       "url": "https://testudo.co.nz/sbt/simple-input.html",
       "webRoot": "${workspaceFolder}",
       "sourceMapPathOverrides": {
@@ -51,10 +58,16 @@
       "runtimeArgs": [
         "--disable-extensions-except=${workspaceFolder}/pack",
         "--load-extension=${workspaceFolder}/pack",
-        "--user-data-dir=${env:CHROME_PROFILE_PATH}"
+        "--user-data-dir=${env:CHROME_PROFILE_PATH}",
+        "--js-flags=--experimental-modules"
       ],
       "outFiles": [
-        "${workspaceFolder}/pack/**/*.js"
+        "${workspaceFolder}/pack/**/*.js",
+        "${workspaceFolder}/pack/**/*.mjs"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
       ],
       "userDataDir": false,
       "skipFiles": [

@@ -1,6 +1,10 @@
 {
   "name": "testudoq",
   "version": "2.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "lint": "eslint src test",
     "pretest": "npm run lint && rimraf testem/compiled",
@@ -10,12 +14,19 @@
     "pretest-chrome": "npm run pretest",
     "test-chrome": "testem -l Chrome",
     "sourcemap": "sourcemap-lookup",
-    "prepack-extension": "rimraf pack && copyfiles -u 1 template/**/* pack",
-    "pack-extension": "webpack --config webpack.config.js",
-    "build-min-obs-extension": "npm run prepack-extension && cross-env DELAY=2 node -e \"setTimeout(() => {}, process.env.DELAY * 1000)\" && npm run pack-extension && npm run post-build-min-obs",
-    "build-extension": "npm run prepack-extension && cross-env DELAY=2 node -e \"setTimeout(() => {}, process.env.DELAY * 1000)\" && npm run pack-extension",
+    "clean": "rimraf pack",
+    "prepack-extension": "npm run clean && copyfiles -u 1 template/**/* pack",
+    "pack-extension": "webpack --config webpack.config.mjs",
+    "postpack-extension": "node --experimental-modules clean-duplicates.mjs",
+    "validate-build": "node validate-build.mjs",
+    "copy-main-files": "node copy-files.mjs",
+    "copy-lib-files": "node copy-lib-files.mjs",
+    "fix-imports": "node fix-imports.mjs",
+    "build-min-obs-extension": "npm run prepack-extension && npm run pack-extension && npm run copy-main-files && npm run copy-lib-files && npm run fix-imports && npm run validate-build && npm run post-build-min-obs",
+    "build-extension": "npm run prepack-extension && npm run pack-extension && npm run copy-main-files && npm run copy-lib-files && npm run fix-imports && npm run postpack-extension && npm run validate-build",
     "ff-build": "web-ext build",
-    "post-build-min-obs": "node post-build-min-obs"
+    "post-build-min-obs": "node post-build-min-obs",
+    "cleanup": "node --experimental-modules clean-duplicates.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

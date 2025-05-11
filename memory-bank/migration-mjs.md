@@ -23,22 +23,133 @@
 ## 2. General Recommendations & Preparation
 
 ### Version Control
-- Create a dedicated `esm-migration` branch
+- Use current a dedicated branch
 - Use atomic commits with clear messages
 - Tag significant migration milestones
 - Maintain detailed changelog in `memory-bank/migration-status.md`
 
 ### Prerequisites
 - Node.js version: >=18.0.0 (Latest LTS)
-- Update package.json:
-  ```json
-  {
-    "type": "module",
-    "engines": {
-      "node": ">=18.0.0"
-    }
-  }
-  ```
+
+## 3. Migration Progress Tracking
+
+### Phase 0: Setup (COMPLETED)
+- [x] Create migration progress section in this document
+- [x] Update package.json with type: "module" and Node.js version requirements
+- [x] Create jest.config.js file for ESM support
+- [x] Update .babelrc configuration
+- [x] Create webpack.config.mjs for ESM support
+
+### Phase 1: Core Utility Modules (COMPLETED)
+- [x] Convert logger.js → logger.mjs
+- [x] Convert trigger-events.js → trigger-events.mjs
+- [x] Convert get-request-value.js → get-request-value.mjs
+- [x] Convert inject-value-to-active-element.js → inject-value-to-active-element.mjs
+- [x] Convert process-menu-object.js → process-menu-object.mjs
+- [x] Update test files for utilities
+
+### Phase 2: Handler Modules (COMPLETED)
+- [x] Convert inject-value-request-handler.js → inject-value-request-handler.mjs
+- [x] Convert paste-request-handler.js → paste-request-handler.mjs
+- [x] Convert copy-request-handler.js → copy-request-handler.mjs
+- [x] Convert gremlins-attack-handler.js → gremlins-attack-handler.mjs
+
+### Phase 3: Configuration and State Management (COMPLETED)
+- [x] Convert configuration-manager.js → configuration-manager.mjs
+- [x] Convert state-manager.js → state-manager.mjs
+- [x] Convert resource-manager.js → resource-manager.mjs
+- [x] Convert permission-validator.js → permission-validator.mjs
+
+### Phase 4: Browser Interfaces (COMPLETED)
+- [x] Convert chrome-browser-interface.js → chrome-browser-interface.mjs
+- [x] Convert firefox-browser-interface.js → firefox-browser-interface.mjs
+- [x] Convert chrome-menu-builder.js → chrome-menu-builder.mjs
+- [x] Convert firefox-menu-builder.js → firefox-menu-builder.mjs
+- [x] Convert context-menu.js → context-menu.mjs
+- [x] Convert init-config-widget.js → init-config-widget.mjs
+
+### Phase 5: Main Application Files (COMPLETED)
+- [x] Update background.js → background.mjs
+- [x] Update inject-value.js → inject-value.mjs
+- [x] Update options.js → options.mjs
+- [x] Update paste.js → paste.mjs
+
+### Phase 5A: Template and UI Script Migration (COMPLETED)
+- [x] Convert `template/options-gremlins-bookmarklet-handler.js` → `template/options-gremlins-bookmarklet-handler.mjs`
+- [x] Convert `template/prompt.js` → `template/prompt.mjs`
+- [x] Convert `template/content-scripts/gremlins-handler.js` → `template/content-scripts/gremlins-handler.mjs`
+- [x] Convert `template/popup/popup-init.js` → `template/popup/popup-init.mjs`
+  - [x] Ensure `template/popup/popup.html` loads `popup-init.mjs` using `<script type="module">`
+- [x] Convert `template/popup/popup.js` → `template/popup/popup.mjs`
+  - [x] Ensure `template/popup/popup.html` loads `popup.js` using `<script type="module">`
+- [x] Document `template/gremlins.min.js` as a third-party library that will not be converted. Ensured its usage remains compatible.
+
+#### Phase 5A Completion Summary
+✅ Successfully completed all tasks:
+1. Removed duplicate .js files from template directory:
+   - prompt.js
+   - options-gremlins-bookmarklet-handler.js
+   - popup.js
+   - popup-init.js
+   - gremlins-handler.js
+
+2. Updated webpack.config.mjs to correctly handle .mjs files from template directory
+
+3. Verified HTML files use proper module syntax:
+   - popup.html correctly uses type="module" for popup-init.mjs and popup.mjs
+   - options.html correctly uses type="module" for options-gremlins-bookmarklet-handler.mjs and prompt.mjs
+
+4. Verified manifest.json configuration:
+   - Service worker uses .mjs extension
+   - Content scripts reference .mjs files
+   - type: "module" properly set
+
+5. Fixed accessibility issues in options.html:
+   - Corrected invalid ARIA roles
+   - Updated role attributes to use standard values
+   - Improved form accessibility
+
+### Issues requiring attention:
+1. ❌ Duplicate .js files still exist in the template directory:
+   - prompt.js
+   - options-gremlins-bookmarklet-handler.js
+   - popup.js
+   - popup-init.js
+   - gremlins-handler.js
+
+2. ❌ Build process isn't correctly using .mjs files from the template directory:
+   - options-gremlins-bookmarklet-handler.js (should be .mjs)
+   - prompt.js (should be .mjs)
+   - gremlins-handler.js (should be .mjs)
+   - popup-init.js (should be .mjs)
+   - popup.js (should be .mjs)
+
+To complete the migration, you should:
+1. Remove the duplicate .js files in the template directory
+2. Update your build process to ensure it correctly handles .mjs files
+3. Run a complete test of the extension to verify functionality
+### Manifest.json Update Considerations (Related to Phase 5A and previous phases)
+- **Service Worker:**
+  - [x] Update `background.service_worker` in `manifest.json` from `"background.js"` to `"background.mjs"`.
+- **Content Scripts:**
+  - [x] Update `manifest.json` `content_scripts` array to use `.mjs` extensions and correct root paths for all relevant files:
+    - Files from previous phases (from `src/main/`):
+      - `inject-value.js` → `inject-value.mjs`
+      - `paste.js` → `paste.mjs`
+      - `options.js` → `options.mjs`
+    - Files from new Phase 5A (from `template/`):
+      - `prompt.js` → `prompt.mjs`
+      - `options-gremlins-bookmarklet-handler.js` → `options-gremlins-bookmarklet-handler.mjs`
+      - `content-scripts/gremlins-handler.js` → `content-scripts/gremlins-handler.mjs`
+- **Popup HTML (`template/popup/popup.html`):**
+  - [x] Update `<script>` tags in `template/popup/popup.html` to use `type="module"` when loading `popup-init.mjs` and `popup.mjs`.
+
+### Phase 6: Build Configuration (IN PROGRESS)
+- [x] Create webpack.config.mjs for ESM support
+- [ ] Ensure application builds extension with ESM
+- [ ] Ensure that launch.json debugging works with ESM and new mjs approach
+- [ ] Test building extension with ESM
+- [ ] Ensure all files are migrated to .mjs and remove duplicate .js files that have been migrated to .mjs
 
 ### File Extension Convention
 - **Approach**: All JavaScript files will be renamed from `.js` to `.mjs`
@@ -74,222 +185,6 @@
 - Test coverage adequacy
 - Deployment pipeline modifications
 - Browser compatibility requirements
-
-### Dependency Updates
-1. Update test framework dependencies:
-   ```bash
-   npm install --save-dev jest@latest @babel/core@latest @babel/preset-env@latest
-   ```
-2. Update build tools:
-   ```bash
-   npm install --save-dev webpack@latest webpack-cli@latest
-   ```
-
-### Mixed Mode Support
-#### Interoperability Strategy
-1. **Dynamic Imports in CommonJS**:
-   ```javascript
-   // In CJS modules during transition
-   async function loadESModule() {
-     const { default: myESM } = await import('./esm-module.mjs');
-     return myESM;
-   }
-   ```
-
-2. **Conditional Exports**:
-   ```json
-   {
-     "name": "my-package",
-     "exports": {
-       ".": {
-         "import": "./index.mjs",
-         "require": "./index.cjs"
-       }
-     }
-   }
-   ```
-
-3. **Wrapper Modules**:
-   ```javascript
-   // wrapper.cjs
-   module.exports = async () => {
-     const { feature } = await import('./modern-feature.mjs');
-     return feature;
-   };
-   ```
-
-#### Temporary Compatibility Layer
-- Create bridge modules for critical paths
-- Use async boundaries for ESM/CJS interfaces
-- Implement feature detection for module support
-
-### Rollback Strategy
-1. Maintain feature branch isolation
-2. Create restoration points before major changes
-3. Document all configuration changes
-4. Keep CommonJS versions until full testing completion
-
-## 3. Phase 1: Jest Migration
-
-### Initial Setup
-1. Create new Jest configuration file (jest.config.js):
-   ```javascript
-   export default {
-     transform: {
-       '^.+\\.jsx?$': 'babel-jest'
-     },
-     testEnvironment: 'jsdom',
-     moduleFileExtensions: ['js', 'mjs'],
-     testMatch: ['**/*.spec.js'],
-     transformIgnorePatterns: [
-       '/node_modules/(?!@org\\/pkg1|@org\\/pkg2).+\\.js$',
-       '/node_modules/(?!lodash-es).+\\.mjs$'
-     ]
-   };
-   ```
-
-#### ESM Dependencies Handling
-1. **Identifying ESM Dependencies**:
-   ```javascript
-   // In jest.config.js
-   export default {
-     moduleNameMapper: {
-       '^lodash-es$': 'lodash',
-       '^vue$': 'vue/dist/vue.common.js'
-     }
-   };
-   ```
-
-2. **Common Adjustment Patterns**:
-   ```javascript
-   // Package-specific transforms
-   {
-     transform: {
-       '^.+\\.m?js$': ['babel-jest', {
-         presets: [
-           ['@babel/preset-env', {
-             targets: { node: 'current' },
-             modules: 'auto'
-           }]
-         ]
-       }]
-     }
-   }
-   ```
-
-2. Update Babel configuration (.babelrc):
-   ```json
-   {
-     "presets": [
-       ["@babel/preset-env", {
-         "targets": {
-           "node": "current"
-         }
-       }]
-     ]
-   }
-   ```
-
-### Test Framework Migration
-1. Convert test helpers to ES modules
-2. Update import statements in test files
-3. Migrate mock implementations
-4. Update test running scripts in package.json
-
-## 4. Phase 2: ES6 Module Conversion
-
-### Module Conversion Order (Leaf-First Strategy)
-1. Utility modules (src/lib/logger.js, src/lib/trigger-events.js)
-2. Service modules (src/lib/*-request-handler.js)
-3. Core functionality (src/lib/configuration-manager.js)
-4. Browser interfaces (src/lib/*-browser-interface.js)
-5. Background and service workers (src/main/background.js)
-
-### Background.js and Service Workers
-- Convert to ES modules explicitly
-- Update service worker registration
-- Handle import scoping
-- Example conversion:
-  ```javascript
-  // Before (CommonJS):
-  const { handleRequest } = require('./lib/request-handler');
-  
-  // After (ES Modules):
-  import { handleRequest } from './lib/request-handler.mjs';
-  ```
-
-### CommonJS Variable Handling
-- Replace __dirname and __filename:
-  ```javascript
-  import { fileURLToPath } from 'url';
-  import { dirname } from 'path';
-  
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-  ```
-
-### Automated Conversion Tools
-1. Dependencies scanner:
-   ```bash
-   npx dependency-cruise src/ -T dot > dependencies.dot
-   ```
-2. ESM conversion helpers:
-   - `jscodeshift` for automated transforms
-   - `lebab` for ES6 syntax conversion
-
-### Webpack Configuration
-```javascript
-export default {
-  entry: './src/main/background.js',
-  experiments: {
-    outputModule: true
-  },
-  output: {
-    filename: 'background.js',
-    module: true,
-    library: {
-      type: 'module'
-    }
-  },
-  resolve: {
-    extensions: ['.js', '.mjs']
-  }
-};
-```
-
-## 5. Implementation Flow
-
-```mermaid
-graph TD
-    A[Start Migration] --> B[Update Dependencies]
-    B --> C[Jest Migration]
-    C --> D[Update Test Framework]
-    D --> E[Convert Utility Modules]
-    E --> F[Convert Service Modules]
-    F --> G[Convert Core Modules]
-    G --> H[Update Browser Interfaces]
-    H --> I[Convert Background Scripts]
-    I --> J[Update Webpack Config]
-    J --> K[Integration Testing]
-    K --> L[Performance Testing]
-    L --> M[Complete Migration]
-
-    style A fill:#f9f,stroke:#333
-    style M fill:#9f9,stroke:#333
-```
-
-### Parallel vs Sequential Tasks
-1. Sequential:
-   - Dependency updates
-   - Jest migration
-   - Core module conversion
-   - Background script conversion
-
-2. Parallel:
-   - Utility module conversion
-   - Service module conversion
-   - Test updates
-   - Documentation updates
 
 ### Testing Strategy
 1. Unit Tests:

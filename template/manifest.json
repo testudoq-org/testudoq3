@@ -13,7 +13,7 @@
 		"notifications"
 	],
 	"background": {
-		"service_worker": "background.js",
+		"service_worker": "background.mjs",
 		"type": "module"
 	},
 	"manifest_version": 3,
@@ -67,12 +67,12 @@
 				"<all_urls>"
 			],
 			"js": [
-				"inject-value.js",
-				"paste.js",
-				"prompt.js",
-				"options.js",
-				"options-gremlins-bookmarklet-handler.js",
-				"content-scripts/gremlins-handler.js"
+				"inject-value.mjs",
+				"paste.mjs",
+				"prompt.mjs",
+				"options.mjs", 
+				"options-gremlins-bookmarklet-handler.mjs",
+				"content-scripts/gremlins-handler.mjs"
 			],
 			"run_at": "document_end"
 		}

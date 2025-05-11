@@ -1,45 +1,168 @@
 /*global jasmine, beforeEach, it, expect, describe */
-const processMenuObject = require('../src/lib/process-menu-object');
-describe('processMenuObject', function () {
-	'use strict';
+import processMenuObject from '../src/lib/process-menu-object.mjs';
+
+/**
+ * Test suite for the processMenuObject function
+ * Tests menu generation from various configuration objects
+ */
+describe('processMenuObject', () => {
+	/**
+	 * Test constants
+	 * @type {Object}
+	 */
+	const test_data = {
+		root_menu: 'rootM',
+		sub_menu: 'subM',
+		menu_items: {
+			first: { name: 'First Item', value: 'VAT' },
+			second: { name: 'Second Item', value: 'Corporate Tax' },
+			another: { name: 'Another Item', value: 'Euro VAT' }
+		},
+		complex_item: {
+			_type: 'taxtype',
+			amount: '200'
+		}
+	};
+
+	/**
+	 * Test setup variables
+	 */
 	let rootMenu, menuBuilder, onClick;
-	beforeEach(function () {
-		rootMenu = 'rootM';
+
+	beforeEach(() => {
+		rootMenu = test_data.root_menu;
 		menuBuilder = jasmine.createSpyObj('menuBuilder', ['rootMenu', 'subMenu', 'menuItem']);
 		onClick = jasmine.createSpy('onClick');
+		menuBuilder.subMenu.and.returnValue(test_data.sub_menu);
 	});
-	it('creates simple menu items out of string-value properties, in order of appearance', function () {
-		processMenuObject({'First Item': 'VAT', 'Second Item': 'Corporate Tax', 'Another Item': 'Euro VAT'}, menuBuilder, rootMenu, onClick);
-		expect(menuBuilder.menuItem.calls.count()).toBe(3);
-		expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual(['First Item', 'rootM', onClick, 'VAT']);
-		expect(menuBuilder.menuItem.calls.argsFor(1)).toEqual(['Second Item', 'rootM', onClick, 'Corporate Tax']);
-		expect(menuBuilder.menuItem.calls.argsFor(2)).toEqual(['Another Item', 'rootM', onClick, 'Euro VAT']);
-	});
-	it('creates simple menu items out of objects with _type property, passing the object into the menu as value', function () {
-		processMenuObject({'First Item': { '_type': 'taxtype', 'amount': '200' }}, menuBuilder, rootMenu, onClick);
-		expect(menuBuilder.menuItem.calls.count()).toBe(1);
-		expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual(['First Item', 'rootM', onClick, {'_type': 'taxtype', 'amount': '200'}]);
-	});
-	it('creates sub-menus out of string array items, using name as label, in array index order', function () {
-		menuBuilder.subMenu.and.returnValue('subM');
-		processMenuObject({'Taxes': ['VAT', 'Corporate Tax', 'Euro VAT']}, menuBuilder, rootMenu, onClick);
 
-		expect(menuBuilder.subMenu).toHaveBeenCalledWith('Taxes', 'rootM');
-		expect(menuBuilder.menuItem.calls.count()).toBe(3);
-		expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual(['VAT', 'subM', onClick, 'VAT']);
-		expect(menuBuilder.menuItem.calls.argsFor(1)).toEqual(['Corporate Tax', 'subM', onClick, 'Corporate Tax']);
-		expect(menuBuilder.menuItem.calls.argsFor(2)).toEqual(['Euro VAT', 'subM', onClick, 'Euro VAT']);
-	});
-	it('creates sub-menus out of hash items', function () {
-		menuBuilder.subMenu.and.returnValue('subM');
-		processMenuObject({'Taxes': {'First Item': 'VAT', 'Second Item': 'Corporate Tax', 'Another Item': 'Euro VAT'}}, menuBuilder, rootMenu, onClick);
+	describe('simple menu items', () => {
+		it('creates menu items from string-value properties in order', () => {
+			const config = {
+				[test_data.menu_items.first.name]: test_data.menu_items.first.value,
+				[test_data.menu_items.second.name]: test_data.menu_items.second.value,
+				[test_data.menu_items.another.name]: test_data.menu_items.another.value
+			};
 
-		expect(menuBuilder.subMenu).toHaveBeenCalledWith('Taxes', 'rootM');
-		expect(menuBuilder.menuItem.calls.count()).toBe(3);
-		expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual(['First Item', 'subM', onClick, 'VAT']);
-		expect(menuBuilder.menuItem.calls.argsFor(1)).toEqual(['Second Item', 'subM', onClick, 'Corporate Tax']);
-		expect(menuBuilder.menuItem.calls.argsFor(2)).toEqual(['Another Item', 'subM', onClick, 'Euro VAT']);
+			processMenuObject(config, menuBuilder, rootMenu, onClick);
+
+			expect(menuBuilder.menuItem.calls.count()).toBe(3);
+			expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual([
+				test_data.menu_items.first.name,
+				rootMenu,
+				onClick,
+				test_data.menu_items.first.value
+			]);
+			expect(menuBuilder.menuItem.calls.argsFor(1)).toEqual([
+				test_data.menu_items.second.name,
+				rootMenu,
+				onClick,
+				test_data.menu_items.second.value
+			]);
+			expect(menuBuilder.menuItem.calls.argsFor(2)).toEqual([
+				test_data.menu_items.another.name,
+				rootMenu,
+				onClick,
+				test_data.menu_items.another.value
+			]);
+		});
+
+		it('creates menu items from objects with _type property', () => {
+			const config = {
+				[test_data.menu_items.first.name]: test_data.complex_item
+			};
+
+			processMenuObject(config, menuBuilder, rootMenu, onClick);
+
+			expect(menuBuilder.menuItem.calls.count()).toBe(1);
+			expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual([
+				test_data.menu_items.first.name,
+				rootMenu,
+				onClick,
+				test_data.complex_item
+			]);
+		});
+	});
+
+	describe('sub-menus', () => {
+		it('creates sub-menus from string arrays using array indices', () => {
+			const config = {
+				'Taxes': [
+					test_data.menu_items.first.value,
+					test_data.menu_items.second.value,
+					test_data.menu_items.another.value
+				]
+			};
+
+			processMenuObject(config, menuBuilder, rootMenu, onClick);
+
+			expect(menuBuilder.subMenu).toHaveBeenCalledWith('Taxes', rootMenu);
+			expect(menuBuilder.menuItem.calls.count()).toBe(3);
+			expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual([
+				test_data.menu_items.first.value,
+				test_data.sub_menu,
+				onClick,
+				test_data.menu_items.first.value
+			]);
+			expect(menuBuilder.menuItem.calls.argsFor(1)).toEqual([
+				test_data.menu_items.second.value,
+				test_data.sub_menu,
+				onClick,
+				test_data.menu_items.second.value
+			]);
+			expect(menuBuilder.menuItem.calls.argsFor(2)).toEqual([
+				test_data.menu_items.another.value,
+				test_data.sub_menu,
+				onClick,
+				test_data.menu_items.another.value
+			]);
+		});
+
+		it('creates sub-menus from nested objects', () => {
+			const config = {
+				'Taxes': {
+					[test_data.menu_items.first.name]: test_data.menu_items.first.value,
+					[test_data.menu_items.second.name]: test_data.menu_items.second.value,
+					[test_data.menu_items.another.name]: test_data.menu_items.another.value
+				}
+			};
+
+			processMenuObject(config, menuBuilder, rootMenu, onClick);
+
+			expect(menuBuilder.subMenu).toHaveBeenCalledWith('Taxes', rootMenu);
+			expect(menuBuilder.menuItem.calls.count()).toBe(3);
+			expect(menuBuilder.menuItem.calls.argsFor(0)).toEqual([
+				test_data.menu_items.first.name,
+				test_data.sub_menu,
+				onClick,
+				test_data.menu_items.first.value
+			]);
+			expect(menuBuilder.menuItem.calls.argsFor(1)).toEqual([
+				test_data.menu_items.second.name,
+				test_data.sub_menu,
+				onClick,
+				test_data.menu_items.second.value
+			]);
+			expect(menuBuilder.menuItem.calls.argsFor(2)).toEqual([
+				test_data.menu_items.another.name,
+				test_data.sub_menu,
+				onClick,
+				test_data.menu_items.another.value
+			]);
+		});
+	});
+
+	describe('error handling', () => {
+		it('handles falsy config objects gracefully', () => {
+			expect(() => processMenuObject(null, menuBuilder, rootMenu, onClick)).not.toThrow();
+			expect(() => processMenuObject(undefined, menuBuilder, rootMenu, onClick)).not.toThrow();
+			expect(menuBuilder.menuItem).not.toHaveBeenCalled();
+		});
+
+		it('handles missing or invalid arguments gracefully', () => {
+			expect(() => processMenuObject({}, null, rootMenu, onClick)).not.toThrow();
+			expect(() => processMenuObject({}, menuBuilder, null, onClick)).not.toThrow();
+			expect(menuBuilder.menuItem).not.toHaveBeenCalled();
+		});
 	});
 });
-
-
