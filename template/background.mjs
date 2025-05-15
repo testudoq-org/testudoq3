@@ -113,8 +113,21 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 			console.log('[Background Debug] Removed existing context menus');
 			// Load configuration
 			console.log('[Background Debug] Loading configuration...');
+			console.log('[Background Debug] Browser API capabilities:', {
+				hasContextMenus: !!browserAPI.contextMenus,
+				hasStorageAPI: !!browserAPI.storage,
+				hasNotifications: !!browserAPI.notifications,
+				hasScripting: !!browserAPI.scripting
+			});
+
 			const standardConfig = await loadConfig(),
-				contextMenu = new ContextMenu(standardConfig, browserInterfaceInstance, menuBuilderInstance, processMenuObject, isFirefox),
+				contextMenu = new ContextMenu(
+					standardConfig,
+					browserInterfaceInstance,
+					menuBuilderInstance,
+					processMenuObject,
+					isFirefox
+				),
 				clickHandlerRegistered = await new Promise(resolve => {
 					const testHandler = () => {
 						browserAPI.contextMenus.onClicked.removeListener(testHandler);
@@ -140,8 +153,17 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 			console.log('[Background Debug] Extension initialization complete');
 			return contextMenu;
 		} catch (error) {
-			console.error('[Background Debug] Failed to initialize:', error);
-			console.error('[Background Debug] Error stack:', error.stack);
+			console.error('[Background Debug] Failed to initialize:', {
+				error: error.message,
+				stack: error.stack,
+				phase: 'initialization',
+				browserType: isFirefox ? 'Firefox' : 'Chrome',
+				apis: {
+					contextMenus: !!browserAPI.contextMenus,
+					storage: !!browserAPI.storage,
+					scripting: !!browserAPI.scripting
+				}
+			});
 			// Show error notification to user
 			browserAPI.notifications.create({
 				type: 'basic',

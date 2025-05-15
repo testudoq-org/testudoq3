@@ -1,103 +1,110 @@
-/* eslint-env webextensions */
-/* global gremlins */
+console.log('gremlins-handler.mjs loaded');
+/* global chrome */
 
-// Attack state tracking
-let horde = null,
-	attackTimeout = null;
+const gremlinsHandler = {
+	state: {
+		horde: null,
+		attackTimeout: null,
+		gremlins: null
+	},
 
-/**
- * Stops any running gremlins attack and cleans up resources
- * @returns {void}
- */
-export function stopGremlins() {
-	console.log('[Gremlins] Stopping attack');
-	if (horde) {
-		horde.stop();
-		horde = null;
-	}
-	if (attackTimeout) {
-		clearTimeout(attackTimeout);
-		attackTimeout = null;
-	}
-	// Notify popup that attack has stopped
-	chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
-}
+	async loadGremlins() {
+		if (this.state.gremlins) {
+			return this.state.gremlins;
+		}
 
-/**
- * Starts a new gremlins attack with the given configuration
- * @param {Object} config - Attack configuration
- * @param {number} config.attackDuration - Duration in seconds
- * @param {string[]} config.species - List of gremlin species to use
- * @param {string[]} config.mogwais - List of mogwais to use
- * @param {string} config.strategy - Strategy to use
- * @returns {Object} Result indicating success or failure
- */
-export function startGremlins(config) {
-	console.log('[Gremlins] Starting attack with config:', config);
-	const { attackDuration, species, mogwais, strategy } = config;
+		const script = document.createElement('script'),
+			loaded = new Promise(resolve => {
+				script.onload = () => {
+					this.state.gremlins = window.gremlins;
+					resolve(this.state.gremlins);
+				};
+			});
 
-	if (horde) {
-		stopGremlins();
-	}
+		script.src = chrome.runtime.getURL('gremlins.min.js');
+		document.head.appendChild(script);
+		return loaded;
+	},
 
-	try {
-		const speciesConfig = species.map(s => gremlins.species[s]()),
-			mogwaisConfig = mogwais.map(m => gremlins.mogwais[m]()),
-			strategyConfig = gremlins.strategies[strategy]();
+	stopGremlins() {
+		console.log('[Gremlins] Stopping attack');
+		if (this.state.horde) {
+			this.state.horde.stop();
+			this.state.horde = null;
+		}
+		if (this.state.attackTimeout) {
+			clearTimeout(this.state.attackTimeout);
+			this.state.attackTimeout = null;
+		}
+		chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
+	},
 
-		horde = gremlins.createHorde({
-			species: speciesConfig,
-			mogwais: mogwaisConfig,
-			strategies: [strategyConfig]
+	async startGremlins(config) {
+		console.log('[Gremlins] Starting attack with config:', config);
+		const { attackDuration, species, mogwais, strategy } = config;
+
+		if (this.state.horde) {
+			this.stopGremlins();
+		}
+
+		try {
+			const gremlins = await this.loadGremlins(),
+				speciesConfig = species.map(s => gremlins.species[s]()),
+				mogwaisConfig = mogwais.map(m => gremlins.mogwais[m]()),
+				strategyConfig = gremlins.strategies[strategy]();
+
+			this.state.horde = gremlins.createHorde({
+				species: speciesConfig,
+				mogwais: mogwaisConfig,
+				strategies: [strategyConfig]
+			});
+
+			console.log('[Gremlins] Unleashing horde');
+			this.state.horde.unleash();
+
+			chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: true });
+
+			this.state.attackTimeout = setTimeout(() => this.stopGremlins(),
+				attackDuration * 1000);
+
+			return { success: true };
+		} catch (error) {
+			console.error('[Gremlins] Attack failed:', error);
+			chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
+			return { success: false, error: error.message };
+		}
+	},
+
+	init() {
+		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+			console.log('[Gremlins] Received message:', message);
+
+			if (message.command === 'startGremlins') {
+				this.startGremlins(message.config).then(sendResponse);
+				return true;
+			}
+
+			if (message.command === 'stopGremlins') {
+				this.stopGremlins();
+				sendResponse({ success: true });
+				return true;
+			}
+
+			return false;
 		});
 
-		console.log('[Gremlins] Unleashing horde');
-		horde.unleash();
+		window.addEventListener('error', event => {
+			console.error('[Gremlins] Error:', event.error);
+			chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
+		});
 
-		// Notify popup that attack has started
-		chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: true });
+		window.addEventListener('unhandledrejection', event => {
+			console.error('[Gremlins] Unhandled rejection:', event.reason);
+			chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
+		});
 
-		attackTimeout = setTimeout(() => {
-			stopGremlins(); // This will send the attacking:false message
-		}, attackDuration * 1000);
-
-		return { success: true };
-	} catch (error) {
-		console.error('[Gremlins] Attack failed:', error);
-		// Ensure popup is notified of failure
-		chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
-		return { success: false, error: error.message };
+		console.log('[Gremlins] Content script initialized');
 	}
-}
+};
 
-// Message handler
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	console.log('[Gremlins] Received message:', message);
-
-	if (message.command === 'startGremlins') {
-		const result = startGremlins(message.config);
-		sendResponse(result);
-		return true;
-	}
-
-	if (message.command === 'stopGremlins') {
-		stopGremlins();
-		sendResponse({ success: true });
-		return true;
-	}
-
-	return false;
-});
-
-// Error handling
-window.addEventListener('error', (event) => {
-	console.error('[Gremlins] Error:', event.error);
-	chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-	console.error('[Gremlins] Unhandled rejection:', event.reason);
-	chrome.runtime.sendMessage({ command: 'updateGremlinsState', attacking: false });
-});
-
-console.log('[Gremlins] Content script loaded');
+gremlinsHandler.init();

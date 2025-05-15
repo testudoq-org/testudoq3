@@ -29,7 +29,10 @@
 		}
 	},
 	"web_accessible_resources": [{
-		"resources": ["gremlins.min.js"],
+		"resources": [
+			"gremlins.min.js",
+			"config.json"
+		],
 		"matches": ["<all_urls>"]
 	}],
 	"homepage_url": "https://testudo.co.nz/futterman/testudoq-help.html",
@@ -67,13 +70,14 @@
 				"<all_urls>"
 			],
 			"js": [
-				"inject-value.mjs",
-				"paste.mjs",
-				"prompt.mjs",
-				"options.mjs", 
-				"options-gremlins-bookmarklet-handler.mjs",
-				"content-scripts/gremlins-handler.mjs"
+				"content-scripts/inject-value.mjs",
+				"content-scripts/paste.mjs",
+				"content-scripts/options.mjs",
+				"content-scripts/options-gremlins-bookmarklet-handler.mjs",
+				"content-scripts/gremlins-handler.mjs",
+				"content-scripts/prompt.mjs"
 			],
+			"type": "module",
 			"run_at": "document_end"
 		}
 	]
