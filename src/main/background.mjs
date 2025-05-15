@@ -58,19 +58,23 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 							name: key,
 							itemCount: Object.keys(config.menus[key]).length
 						})) : []
-					},
-					requiredFields = ['menus', 'contexts', 'handlers'],
-					missingFields = requiredFields.filter(field => !config[field]);
+					};
 				console.log('[Config Debug] Menu structure validation:', menuValidation);
 
-				if (menuValidation.menuCount === 0) {
-					throw new Error('No menu definitions found in config');
+				// Only validate menus presence
+				if (!config.menus || Object.keys(config.menus).length === 0) {
+					console.warn('[Config Debug] No menu definitions found in config');
+					config.menus = {}; // Provide empty default
 				}
 
-				// Validate required fields
-				if (missingFields.length > 0) {
-					throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-				}
+				// Set defaults for optional fields
+				config.contexts = config.contexts || ['editable'];
+				config.handlers = config.handlers || {
+					injectValue: true,
+					paste: true,
+					copy: true,
+					gremlinsAttack: true
+				};
 
 				console.log('[Config Debug] Config validation successful. Structure:', {
 					menuCount: menuValidation.menuCount,
