@@ -69,9 +69,21 @@ function isMenuItem(value) {
  * @returns {void}
  */
 export default function processMenuObject(configObject, menuBuilder, parentMenu, onClick) {
+	console.log('[ProcessMenu Debug] Starting menu processing:', {
+		hasConfig: !!configObject,
+		configKeys: configObject ? Object.keys(configObject) : [],
+		parentMenuId: parentMenu?.id,
+		timestamp: Date.now()
+	});
+
 	// Early return if config is invalid
 	if (!configObject || !menuBuilder || !parentMenu) {
-		console.warn('Process menu: Invalid arguments provided', { configObject, menuBuilder, parentMenu });
+		console.warn('[ProcessMenu Debug] Invalid arguments provided:', {
+			hasConfig: !!configObject,
+			hasBuilder: !!menuBuilder,
+			hasParent: !!parentMenu,
+			timestamp: Date.now()
+		});
 		return;
 	}
 
@@ -86,12 +98,31 @@ export default function processMenuObject(configObject, menuBuilder, parentMenu,
 		];
 
 		if (isMenuItem(value)) {
+			console.log('[ProcessMenu Debug] Creating menu item:', {
+				title,
+				parentMenuId: parentMenu?.id,
+				valueType: typeof value,
+				hasTypeFlag: value?.[menu_constants.special_props.type_flag],
+				value: value,
+				timestamp: Date.now()
+			});
 			menuBuilder.menuItem(title, parentMenu, onClick, value);
 		} else if (typeof value === menu_constants.value_types.object && value !== null) {
+			console.log('[ProcessMenu Debug] Creating submenu:', {
+				title,
+				parentMenuId: parentMenu?.id,
+				childKeys: Object.keys(value),
+				timestamp: Date.now()
+			});
 			const subMenu = menuBuilder.subMenu(title, parentMenu);
 			processMenuObject(value, menuBuilder, subMenu, onClick);
 		} else {
-			console.warn('Process menu: Skipping invalid menu item', { key, value });
+			console.warn('[ProcessMenu Debug] Skipping invalid menu item:', {
+				key,
+				valueType: typeof value,
+				value,
+				timestamp: Date.now()
+			});
 		}
 	});
 }

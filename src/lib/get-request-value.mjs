@@ -34,9 +34,15 @@ const [
 		 * @returns {string} The literal value
 		 */
 		literal(request) {
-			console.log('Getting literal value from request:', request);
+			console.log('[get-request-value] Processing literal request:', {
+				request: JSON.stringify(request, null, 2),
+				hasValue: request && 'value' in request
+			});
 			const value = request && request.value;
-			console.log('get-request-value: literal Value:', value);
+			console.log('[get-request-value] Extracted literal value:', {
+				value,
+				type: typeof value
+			});
 			return value;
 		},
 
@@ -97,20 +103,37 @@ const [
  * @returns {string|boolean} The generated value or false if invalid request
  */
 export default function getRequestValue(request) {
-	console.log('get-request-value: Start with request:', request);
+	console.log('[get-request-value] Processing request:', {
+		request: JSON.stringify(request, null, 2),
+		typeFlag: request_constants.type_flag,
+		requestType: request && request[request_constants.type_flag]
+	});
+
 	if (!request) {
-		console.log('get-request-value: Request is falsy, returning false');
+		console.log('[get-request-value] Request is falsy, returning false');
 		return false;
 	}
 
-	const generator = generators[request[request_constants.type_flag]];
-	console.log('get-request-value: generator:', generator);
+	const generator = generators[request[request_constants.type_flag]],
+		result = (() => {
+			console.log('[get-request-value] Selected generator:', {
+				generatorType: request && request[request_constants.type_flag],
+				hasGenerator: !!generator
+			});
 
-	if (!generator) {
-		console.log('get-request-value: No generator found, returning false');
-		return false;
-	}
+			if (!generator) {
+				console.log('[get-request-value] No valid generator found for type:', request[request_constants.type_flag]);
+				return false;
+			}
 
-	console.log('get-request-value: Calling generator with request:', request);
-	return generator(request);
+			console.log('[get-request-value] Calling generator...');
+			const value = generator(request);
+			console.log('[get-request-value] Generator result:', {
+				result: value,
+				type: typeof value
+			});
+			return value;
+		})();
+	
+	return result;
 }

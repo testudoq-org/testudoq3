@@ -1,15 +1,14 @@
-/* global global, navigator */
-import jest from 'jest';
+import { jest } from '@jest/globals';
 
 export default class FakeChromeApi {
 	constructor() {
-		const createEvent = (eventName) => ({
+		const createEvent = () => ({
 			addListener: jest.fn(),
 			removeListener: jest.fn()
 		});
 
 		this.runtime = {
-			onMessage: createEvent('onMessage')
+			onMessage: createEvent()
 		};
 
 		this.scripting = {
@@ -19,7 +18,7 @@ export default class FakeChromeApi {
 		this.contextMenus = {
 			create: jest.fn(),
 			removeAll: jest.fn().mockResolvedValue(undefined),
-			onClicked: createEvent('onClicked'),
+			onClicked: createEvent(),
 			update: jest.fn().mockResolvedValue(undefined),
 			getAll: jest.fn().mockResolvedValue([])
 		};
@@ -40,7 +39,7 @@ export default class FakeChromeApi {
 				get: jest.fn().mockResolvedValue({}),
 				set: jest.fn().mockResolvedValue(undefined)
 			},
-			onChanged: createEvent('onChanged')
+			onChanged: createEvent()
 		};
 
 		this.permissions = {

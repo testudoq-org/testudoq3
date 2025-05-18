@@ -12,8 +12,8 @@ import gremlinsAttackHandler from './gremlins-attack-handler.mjs';
  * @param {boolean} pasteSupported - Whether paste operations are supported
  */
 export default function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	// State management and handler registry
 	const STATE_KEY = 'context_menu_state',
+		menuValueCache = new Map(),
 		handlers = {
 			injectValue: injectValueRequestHandler,
 			paste: pasteRequestHandler,
@@ -25,9 +25,158 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		isRebuilding = false,
 		isInitialized = false;
 
-	// Load persisted state if available
-	async function loadState() {
+	// Define core click handler first
+	async function handleClick(info, tab) {
+		const startTime = Date.now(),
+			executionContext = {
+				menuItemId: info?.menuItemId,
+				tabId: tab?.id,
+				handlerType,
+				menuValue: null,
+				timeline: {},
+				markPhase: (phase) => {
+					executionContext.timeline[phase] = Date.now() - startTime;
+					return executionContext.timeline[phase];
+				},
+				elapsedMs: () => Date.now() - startTime,
+				getTimeline: () => Object.entries(executionContext.timeline)
+					.sort((a, b) => a[1] - b[1])
+					.map(([phase, time]) => `${phase}: ${time}ms`)
+			};
+
+		executionContext.markPhase('start');
+
+		console.log('[ContextMenu Debug] onClick entry:', {
+			...executionContext,
+			handlersAvailable: Object.keys(handlers),
+			menuValueCacheSize: menuValueCache.size
+		});
+
+		// Validate tab
+		if (!tab) {
+			console.error('[ContextMenu Debug] Tab object missing:', {
+				...executionContext,
+				elapsed: executionContext.elapsedMs()
+			});
+			throw new Error('Tab object is missing');
+		}
+
+		if (!tab.id) {
+			console.error('[ContextMenu Debug] Invalid tab ID:', {
+				...executionContext,
+				tabObject: tab,
+				elapsed: executionContext.elapsedMs()
+			});
+			console.error('[ContextMenu] Invalid tab ID');
+			throw new Error('Invalid tab ID');
+		}
+
+		// Get and validate menu value
+		executionContext.menuValue = menuValueCache.get(executionContext.menuItemId);
+		if (!executionContext.menuValue) {
+			console.warn('[ContextMenu Debug] No menu value found:', {
+				...executionContext,
+				elapsed: executionContext.elapsedMs()
+			});
+			return;
+		}
+
+		// Validate handler exists
+		if (!handlers[handlerType]) {
+			console.error('[ContextMenu Debug] Invalid handler type:', {
+				...executionContext,
+				elapsed: executionContext.elapsedMs()
+			});
+			throw new Error(`Invalid handler type: ${handlerType}`);
+		}
+
 		try {
+			console.log('[ContextMenu Debug] Executing action:', {
+				...executionContext,
+				elapsed: executionContext.elapsedMs()
+			});
+
+			executionContext.markPhase('handlerPrep');
+			// Convert string values to proper request objects
+			const requestValue = typeof executionContext.menuValue === 'string'
+					? { '_type': 'literal', 'value': executionContext.menuValue }
+					: executionContext.menuValue,
+				result = await (async () => {
+					executionContext.markPhase('handlerStart');
+					const handlerResult = await handlers[handlerType](
+						browserInterface,
+						executionContext.tabId,
+						requestValue
+					);
+					executionContext.markPhase('handlerEnd');
+					return handlerResult;
+				})();
+
+			console.log('[ContextMenu Flow] Action completed:', {
+				...executionContext,
+				result,
+				timeline: executionContext.getTimeline()
+			});
+			return result;
+		} catch (error) {
+			executionContext.markPhase('error');
+			console.error('[ContextMenu Flow] Action failed:', {
+				...executionContext,
+				error: error.message,
+				stack: error.stack,
+				timeline: executionContext.getTimeline()
+			});
+			browserInterface.showMessage(`Action failed: ${error.message}`);
+			throw error;
+		}
+	}
+
+	// Helper functions that depend on handleClick
+	function cacheMenuValue(menuId, value) {
+		menuValueCache.set(menuId, value);
+		console.log('[ContextMenu Debug] Cached menu value:', {
+			menuId,
+			value,
+			cacheSize: menuValueCache.size
+		});
+	}
+
+	function loadAdditionalMenus(additionalMenus, rootMenu) {
+		if (!additionalMenus) {
+			return;
+		}
+		additionalMenus.forEach(configItem => {
+			const menuItems = processMenuObject(
+				{ [configItem.name]: configItem.config },
+				menuBuilder,
+				rootMenu,
+				handleClick
+			);
+			if (menuItems) {
+				menuItems.forEach(item => {
+					if (item.id && item.value) {
+						cacheMenuValue(item.id, item.value);
+					}
+				});
+			}
+		});
+	}
+
+	// Bind click handler to instance
+	this.onClick = handleClick;
+
+	// State management functions
+	async function loadState() {
+		console.log('[ContextMenu Debug] Checking storage availability:', {
+			hasInterface: !!browserInterface,
+			hasStorage: !!browserInterface?.storage,
+			hasLocal: !!browserInterface?.storage?.local
+		});
+
+		try {
+			if (!browserInterface?.storage?.local) {
+				throw new Error('Storage API not properly initialized');
+			}
 			const result = await browserInterface.storage.local.get(STATE_KEY);
 			if (result[STATE_KEY]) {
 				handlerType = result[STATE_KEY].handlerType || handlerType;
@@ -53,57 +202,13 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		}
 	}
 
-	async function onClick(tabId, itemMenuValue) {
-		console.log('[ContextMenu Debug] onClick called:', { tabId, itemMenuValue });
-		if (!tabId) {
-			console.error('[ContextMenu] Invalid tab ID');
-			throw new Error('Invalid tab ID');
-		}
-
-		if (!itemMenuValue) {
-			console.warn('[ContextMenu] No menu value provided');
-			return;
-		}
-
-		console.log('[ContextMenu Debug] Handler type:', handlerType);
-		console.log('[ContextMenu Debug] Available handlers:', Object.keys(handlers));
-
-		try {
-			// Convert string values to proper request objects and execute handler
-			const requestValue = typeof itemMenuValue === 'string'
-					? { '_type': 'literal', 'value': itemMenuValue }
-					: itemMenuValue,
-				result = await handlers[handlerType](browserInterface, tabId, requestValue);
-
-			// Validate handler exists
-			if (!handlers[handlerType]) {
-				throw new Error(`Invalid handler type: ${handlerType}`);
-			}
-
-			console.log('[ContextMenu] Executing action:', {
-				handlerType,
-				tabId,
-				requestValue
-			});
-
-			console.log('[ContextMenu] Action completed:', {
-				handlerType,
-				result
-			});
-
-			return result;
-		} catch (error) {
-			console.error('[ContextMenu] Action failed:', error);
-			browserInterface.showMessage(`Action failed: ${error.message}`);
-			throw error;
-		}
-	}
 
 	async function turnOnPasting() {
 		try {
 			console.log('[ContextMenu] Requesting clipboard permissions');
 			await browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite']);
 			handlerType = 'paste';
+			await saveState();
 			console.log('[ContextMenu] Paste mode enabled');
 			return true;
 		} catch (error) {
@@ -117,6 +222,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		try {
 			handlerType = 'injectValue';
 			await browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
+			await saveState();
 			console.log('[ContextMenu] Paste mode disabled');
 			return true;
 		} catch (error) {
@@ -128,6 +234,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	async function turnOnCopy() {
 		try {
 			handlerType = 'copy';
+			await saveState();
 			console.log('[ContextMenu] Copy mode enabled');
 			return true;
 		} catch (error) {
@@ -136,11 +243,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		}
 	}
 
-	function loadAdditionalMenus(additionalMenus, rootMenu) {
-		if (additionalMenus) {
-			additionalMenus.forEach(configItem => processMenuObject({ [configItem.name]: configItem.config }, menuBuilder, rootMenu, onClick));
-		}
-	}
+
 
 	function addGenericMenus(rootMenu) {
 		const handlerChoices = {},
@@ -153,9 +256,27 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		}
 
 		if (pasteSupported) {
-			handlerChoices.injectValue = menuBuilder.choice('Inject value', modeMenu, turnOffPasting, true, handlerType);
-			handlerChoices.paste = menuBuilder.choice('Simulate pasting', modeMenu, turnOnPasting, false, handlerType);
-			handlerChoices.copy = menuBuilder.choice('Copy to clipboard', modeMenu, turnOnCopy, false, handlerType);
+			handlerChoices.injectValue = menuBuilder.choice(
+				'Inject value',
+				modeMenu,
+				turnOffPasting,
+				handlerType === 'injectValue',
+				handlerType
+			);
+			handlerChoices.paste = menuBuilder.choice(
+				'Simulate pasting',
+				modeMenu,
+				turnOnPasting,
+				handlerType === 'paste',
+				handlerType
+			);
+			handlerChoices.copy = menuBuilder.choice(
+				'Copy to clipboard',
+				modeMenu,
+				turnOnCopy,
+				handlerType === 'copy',
+				handlerType
+			);
 		}
 
 		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
@@ -176,27 +297,56 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 
 		isRebuilding = true;
 		const rebuildStart = Date.now(),
-			rebuildLog = (msg) => console.log(`[ContextMenu] ${msg}`);
+			rebuildLog = (msg, details = {}) => console.log('[ContextMenu Rebuild]', msg, {
+				timestamp: Date.now(),
+				elapsed: Date.now() - rebuildStart,
+				...details
+			});
 
 		try {
+			// Clear menu value cache
+			menuValueCache.clear();
+
 			// Cleanup existing menus
 			await menuBuilder.removeAll();
 			rebuildLog('Existing menus removed');
 
-			// Create root menu
+			// Create root menu and process items
+			rebuildLog('Starting menu rebuild', {
+				skipStandard: options?.skipStandard,
+				hasAdditionalMenus: !!options?.additionalMenus
+			});
+
 			const rootMenu = menuBuilder.rootMenu('Testudoq'),
-				rebuildTime = Date.now() - rebuildStart;
+				menuItems = !options?.skipStandard
+					? await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick)
+					: [];
 
 			rebuildLog('Root menu created');
 
-			// Build standard menu items if not skipped
-			if (!options || !options.skipStandard) {
-				await processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
-				rebuildLog('Standard menu items processed');
+			// Cache menu values for standard items
+			if (menuItems.length) {
+				rebuildLog('Processing standard menu items', {
+					itemCount: menuItems.length,
+					items: menuItems.map(item => ({
+						id: item.id,
+						hasValue: !!item.value
+					}))
+				});
+
+				menuItems.forEach(item => {
+					if (item.id && item.value) {
+						cacheMenuValue(item.id, item.value);
+					}
+				});
+
+				rebuildLog('Standard menu items processed', {
+					cacheSize: menuValueCache.size
+				});
 			}
 
 			// Add additional menus
-			if (options && options.additionalMenus) {
+			if (options?.additionalMenus) {
 				await loadAdditionalMenus(options.additionalMenus, rootMenu);
 				rebuildLog('Additional menus loaded');
 			}
@@ -208,14 +358,15 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			// Save state after successful rebuild
 			await saveState();
 
-			rebuildLog(`Menu rebuild completed in ${rebuildTime}ms`);
+			rebuildLog(`Menu rebuild completed in ${Date.now() - rebuildStart}ms`);
 		} catch (error) {
 			console.error('[ContextMenu] Menu rebuild failed:', error);
 			// Attempt recovery by rebuilding with only standard items
 			try {
+				menuValueCache.clear();
 				await menuBuilder.removeAll();
 				const rootMenu = menuBuilder.rootMenu('Testudoq');
-				await processMenuObject(standardConfig, menuBuilder, rootMenu, onClick);
+				await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick);
 				console.log('[ContextMenu] Fallback to standard menu successful');
 			} catch (recoveryError) {
 				console.error('[ContextMenu] Recovery failed:', recoveryError);
@@ -243,9 +394,11 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			console.log('[ContextMenu Debug] Starting initialization');
 			console.log('[ContextMenu Debug] Standard config:', standardConfig);
 			console.log('[ContextMenu Debug] Current handler type:', handlerType);
+
 			// Load persisted state
 			await loadState();
 			console.log('[ContextMenu Debug] State loaded, handler type:', handlerType);
+
 			// Get options and rebuild menu
 			console.log('[ContextMenu Debug] Loading options...');
 			const options = await browserInterface.getOptionsAsync();
@@ -253,9 +406,11 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			console.log('[ContextMenu Debug] Starting menu rebuild...');
 			await rebuildMenu(options);
 			console.log('[ContextMenu Debug] Menu rebuild complete');
+
 			// Set up storage listener
 			console.log('[ContextMenu Debug] Setting up storage listener...');
 			wireStorageListener();
+
 			isInitialized = true;
 			console.log('[ContextMenu Debug] Initialization complete. Available handlers:', Object.keys(handlers));
 		} catch (error) {

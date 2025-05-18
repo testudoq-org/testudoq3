@@ -150,6 +150,34 @@ describe('ChromeMenuBuilder', function () {
 		});
 	});
 
+	describe('value tracking', () => {
+		it('tracks menu item value in storage', async () => {
+			const value = 'test-value',
+				menuId = await underTest.menuItem('test', 'root', () => {}, value);
+			expect(chrome.storage.local.set).toHaveBeenCalledWith({
+				chrome_menu_state: {
+					values: jasmine.objectContaining({
+						[menuId]: value
+					})
+				}
+			});
+		});
+
+		it('retrieves menu item value during click handling', async () => {
+			const value = 'stored-value',
+				menuId = await underTest.menuItem('test', 'root', () => {}, value);
+			chrome.storage.local.get.and.returnValue(Promise.resolve({
+				chrome_menu_state: {
+					values: {
+						[menuId]: value
+					}
+				}
+			}));
+			await clickHandler({menuItemId: menuId}, {id: 5});
+			expect(chrome.storage.local.get).toHaveBeenCalledWith('chrome_menu_state');
+		});
+	});
+
 	describe('choice', () => {
 		it('creates a radio button menu item', () => {
 			underTest.choice('option1', 'root', () => {}, true);

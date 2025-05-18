@@ -1,5 +1,53 @@
 /* global browser, chrome */
 
+// Debug verification system
+(() => {
+	const debugSystem = {
+		isEnabled: true,
+		startTime: Date.now(),
+		getConsoleType: () => {
+			if (typeof browser !== 'undefined') {
+				return 'Firefox Extension Console';
+			}
+			if (typeof chrome !== 'undefined' && chrome.extension) {
+				return 'Chrome Extension Console';
+			}
+			return 'Web Console';
+		},
+		verify: () => {
+			try {
+				const consoleType = debugSystem.getConsoleType();
+				console.log('[Debug System] Verification:', {
+					timestamp: Date.now(),
+					location: 'background.mjs',
+					console: typeof console !== 'undefined',
+					logging: typeof console?.log === 'function',
+					destination: consoleType,
+					browser: typeof browser !== 'undefined' ? 'Firefox' : 'Chrome'
+				});
+				return true;
+			} catch (error) {
+				console.error('[Debug System] Verification failed:', error);
+				return false;
+			}
+		},
+		displayInstructions: () => {
+			const consoleType = debugSystem.getConsoleType(),
+				viewerInstructions = typeof chrome !== 'undefined' ?
+					'Open Chrome DevTools -> Extensions tab -> find extension -> inspect views: background page' :
+					'Open Firefox Browser Console (Ctrl+Shift+J) and filter for extension logs',
+				message = `Debug logs will appear in: ${consoleType}\nTo view: ${viewerInstructions}`;
+			console.info('[Debug System] Logging destination:', message);
+		}
+	};
+
+	if (!debugSystem.verify()) {
+		throw new Error('Debug system verification failed - console logging unavailable');
+	}
+
+	debugSystem.displayInstructions();
+})();
+
 console.log('[Module Debug] Starting module imports');
 
 import ContextMenu from '../lib/context-menu.mjs';
@@ -104,23 +152,44 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 	},
 
 	initializeExtension = async () => {
-		console.log('[Background Debug] Starting extension initialization');
-		console.log('[Background Debug] Browser type:', isFirefox ? 'Firefox' : 'Chrome');
-		try {
-			// Remove existing context menus first
-			console.log('[Background Debug] Removing existing menus...');
-			await browserAPI.contextMenus.removeAll();
-			console.log('[Background Debug] Removed existing context menus');
-			// Load configuration
-			console.log('[Background Debug] Loading configuration...');
-			console.log('[Background Debug] Browser API capabilities:', {
-				hasContextMenus: !!browserAPI.contextMenus,
-				hasStorageAPI: !!browserAPI.storage,
-				hasNotifications: !!browserAPI.notifications,
-				hasScripting: !!browserAPI.scripting
-			});
+		const initStart = Date.now(),
+			initTimeline = {
+				marks: {},
+				mark: (phase) => {
+					initTimeline.marks[phase] = Date.now() - initStart;
+					return initTimeline.marks[phase];
+				},
+				getTimeline: () => Object.entries(initTimeline.marks)
+					.sort((a, b) => a[1] - b[1])
+					.map(([phase, time]) => `${phase}: ${time}ms`)
+			};
 
+		console.log('[Background Flow] Starting extension initialization', {
+			timestamp: initStart,
+			browserType: isFirefox ? 'Firefox' : 'Chrome'
+		});
+		initTimeline.mark('start');
+
+		// Verify debug output destination
+		console.debug('[Debug System] Extension startup:', {
+			phase: 'initialization',
+			console: typeof chrome !== 'undefined' ? 'Chrome' : 'Firefox',
+			timestamp: Date.now()
+		});
+		try {
+			// Remove existing menus and initialize
+			await browserAPI.contextMenus.removeAll();
+			initTimeline.mark('menusCleared');
+
+			// Load and validate configuration
 			const standardConfig = await loadConfig(),
+				initMetrics = {
+					timestamp: Date.now(),
+					browserType: isFirefox ? 'Firefox' : 'Chrome',
+					hasMenuBuilder: !!menuBuilderInstance,
+					hasContextMenuAPI: !!browserAPI.contextMenus,
+					configMenuCount: Object.keys(standardConfig.menus || {}).length
+				},
 				contextMenu = new ContextMenu(
 					standardConfig,
 					browserInterfaceInstance,
@@ -128,14 +197,25 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 					processMenuObject,
 					isFirefox
 				),
-				clickHandlerRegistered = await new Promise(resolve => {
+				handlerCheck = async () => new Promise(resolve => {
 					const testHandler = () => {
 						browserAPI.contextMenus.onClicked.removeListener(testHandler);
 						resolve(true);
 					};
 					browserAPI.contextMenus.onClicked.addListener(testHandler);
 					setTimeout(() => resolve(false), 100);
-				});
+				}),
+				isHandlerRegistered = await handlerCheck(),
+				handlerStatus = {
+					...initMetrics,
+					hasStandardConfig: !!standardConfig,
+					hasOnClickMethod: typeof contextMenu.onClick === 'function',
+					contextMenuOnClick: contextMenu.onClick?.toString().slice(0, 100),
+					handlerRegistered: isHandlerRegistered
+				};
+
+			console.log('[Background Debug] Menu initialization:', initMetrics);
+			console.log('[Background Debug] Handler status:', handlerStatus);
 			console.log('[Background Debug] Configuration loaded:', standardConfig);
 			console.log('[Background Debug] Creating ContextMenu instance with dependencies:', {
 				hasMenuBuilder: !!menuBuilderInstance,
@@ -144,13 +224,25 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 			});
 			console.log('[Background Debug] Starting context menu initialization');
 			await contextMenu.init();
-			console.log('[Background Debug] Context menu initialization complete');
-			// Test click handler registration
-			console.log('[Background Debug] Verifying context menu click handler...');
-			console.log('[Background Debug] Click handler status:', clickHandlerRegistered ? 'registered' : 'not found');
-			// Store instance for potential cleanup/updates
-			browserAPI.storage.local.set({ contextMenuInitialized: true });
-			console.log('[Background Debug] Extension initialization complete');
+
+			// Complete initialization and save state
+			initTimeline.mark('initializationComplete');
+			await browserAPI.storage.local.set({
+				contextMenuInitialized: true,
+				lastInitialization: {
+					timestamp: Date.now(),
+					status: 'complete',
+					handlerRegistered: handlerStatus.handlerRegistered,
+					timeline: initTimeline.getTimeline()
+				}
+			});
+
+			console.log('[Background Flow] Initialization completed:', {
+				...handlerStatus,
+				timeline: initTimeline.getTimeline(),
+				elapsed: Date.now() - initStart
+			});
+
 			return contextMenu;
 		} catch (error) {
 			console.error('[Background Debug] Failed to initialize:', {

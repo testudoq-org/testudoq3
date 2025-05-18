@@ -6,11 +6,18 @@
  * @param {Object} requestValue - The value to be injected.
  * @return {Promise} A promise that resolves to the result of executing the script and sending the message.
  */
-export default function injectValueRequestHandler(browserInterface, tabId, requestValue) {
-	/**
-	 * Executes the 'inject-value.js' script in the given tab, then sends a message
-	 * with the given request value to the same tab.
-	 */
-	return browserInterface.executeScript(tabId, '/inject-value.js') // Execute script
-		.then(() => browserInterface.sendMessage(tabId, requestValue)); // Send message
+export default async function injectValueRequestHandler(browserInterface, tabId, requestValue) {
+	try {
+		// Execute script using chrome.scripting API
+		await browserInterface.executeScript(tabId, {
+			target: { tabId },
+			files: ['/content-scripts/inject-value.mjs']
+		});
+
+		// Send the message after script injection
+		return await browserInterface.sendMessage(tabId, requestValue);
+	} catch (error) {
+		console.error('[injectValueRequestHandler] Failed:', error);
+		throw error;
+	}
 }

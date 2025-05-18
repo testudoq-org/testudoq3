@@ -3,14 +3,25 @@
  * @param {Object} browserApi - The Chrome browser API object
  */
 export default function ChromeBrowserInterface(browserApi) {
+	if (!browserApi?.storage?.local) {
+		console.error('[BrowserInterface Debug] Storage API not available:', {
+			hasApi: !!browserApi,
+			hasStorage: !!browserApi?.storage,
+			hasLocal: !!browserApi?.storage?.local
+		});
+		throw new Error('Storage API not available');
+	}
+
 	const self = this,
 		chrome = browserApi;
 
-	console.log('[BrowserInterface Debug] Initializing with API capabilities:', {
-		hasContextMenus: !!chrome.contextMenus,
-		hasStorage: !!chrome.storage,
-		hasScripting: !!chrome.scripting,
-		hasPermissions: !!chrome.permissions
+	// Explicitly assign storage API to interface
+	self.storage = chrome.storage;
+
+	console.log('[BrowserInterface Debug] Storage API initialized:', {
+		hasStorage: !!self.storage,
+		hasLocal: !!self.storage?.local,
+		methods: Object.keys(self.storage || {})
 	});
 
 	/**

@@ -25,12 +25,54 @@ console.log('[Module Debug] Loaded chrome-browser-interface.mjs');
 
 console.log('[Module Debug] All modules imported successfully');
 
-const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
-	isFirefox = (typeof browser !== 'undefined'),
-	MenuBuilder = isFirefox ? FirefoxMenuBuilder : ChromeMenuBuilder,
-	BrowserInterface = isFirefox ? FirefoxBrowserInterface : ChromeBrowserInterface,
-	menuBuilderInstance = new MenuBuilder(browserAPI),
-	browserInterfaceInstance = new BrowserInterface(browserAPI),
+// Constants and Configuration
+const OPERATION_TIMEOUT = 5000,
+	EXTENSION_STATE = {
+		menuInstance: null,
+		status: null
+	},
+	CONFIG_CACHE_KEY = 'config_cache',
+	CONFIG_VERSION_KEY = 'config_version',
+	STATE_LOCK = {
+		locked: false,
+		queue: [],
+		lastUpdate: null,
+		currentOperation: null,
+		operationStart: null,
+		async acquire() {
+			if (this.locked) {
+				if (this.operationStart && Date.now() - this.operationStart > OPERATION_TIMEOUT) {
+					console.warn('[State Debug] Operation timeout, forcing release:', {
+						operation: this.currentOperation,
+						duration: Date.now() - this.operationStart
+					});
+					this.release();
+				}
+				return new Promise(resolve => this.queue.push(resolve));
+			}
+			this.locked = true;
+			this.lastUpdate = Date.now();
+			this.operationStart = Date.now();
+			return Promise.resolve();
+		},
+		release() {
+			this.locked = false;
+			this.currentOperation = null;
+			this.operationStart = null;
+			const next = this.queue.shift();
+			if (next) {
+				next();
+			}
+		}
+	},
+	EXTENSION_STATES = {
+		UNINITIALIZED: 'uninitialized',
+		LOADING_CONFIG: 'loading_config',
+		REMOVING_MENUS: 'removing_menus',
+		CREATING_MENUS: 'creating_menus',
+		READY: 'ready',
+		ERROR: 'error'
+	},
 	MESSAGE_TYPES = {
 		START: 'startGremlins',
 		STOP: 'stopGremlins',
@@ -38,200 +80,243 @@ const browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
 		STATE: 'gremlinStateUpdate',
 		CONTENT_READY: 'GREMLINS_CONTENT_READY'
 	},
+	browserAPI = (typeof browser !== 'undefined') ? browser : chrome,
+	isFirefox = (typeof browser !== 'undefined'),
+	MenuBuilder = isFirefox ? FirefoxMenuBuilder : ChromeMenuBuilder,
+	BrowserInterface = isFirefox ? FirefoxBrowserInterface : ChromeBrowserInterface,
+	menuBuilderInstance = new MenuBuilder(browserAPI),
+	browserInterfaceInstance = new BrowserInterface(browserAPI),
 	messageQueue = new Map(),
 	tabStates = new Map(),
+	updateState = async (newState) => {
+		await STATE_LOCK.acquire();
+		try {
+			EXTENSION_STATE.status = newState;
+			STATE_LOCK.currentOperation = newState;
+			STATE_LOCK.currentOperation = newState;
+			console.log('[State Debug] Extension state changed:', {
+				state: newState,
+				timestamp: Date.now(),
+				queueLength: STATE_LOCK.queue.length,
+				operationDuration: Date.now() - STATE_LOCK.operationStart
+			});
+		} finally {
+			STATE_LOCK.release();
+		}
+	},
 	loadConfig = async (retries = 3) => {
 		const configUrl = browserAPI.runtime.getURL('config.json');
-		console.log('[Config Debug] Attempting to load config from:', configUrl);
-		console.log('[Config Debug] Extension ID:', browserAPI.runtime.id);
-		console.log('[Config Debug] Web accessible resources:', await browserAPI.runtime.getManifest().web_accessible_resources);
-		let lastError;
-		for (let i = 0; i < retries; i++) {
-			try {
-				console.log(`[Config Debug] Attempt ${i + 1}/${retries} to load config`);
-				const response = await fetch(configUrl),
-					config = await response.json(),
-					menuValidation = {
-						hasMenus: !!config.menus,
-						menuCount: config.menus ? Object.keys(config.menus).length : 0,
-						menuTypes: config.menus ? Object.keys(config.menus).map(key => ({
-							name: key,
-							itemCount: Object.keys(config.menus[key]).length
-						})) : []
+		await STATE_LOCK.acquire();
+		try {
+			const cache = await browserAPI.storage.local.get([CONFIG_CACHE_KEY, CONFIG_VERSION_KEY]),
+				manifestVersion = browserAPI.runtime.getManifest().version;
+
+			if (cache[CONFIG_CACHE_KEY] && cache[CONFIG_VERSION_KEY] === manifestVersion) {
+				console.log('[Config Debug] Using cached config:', {
+					version: manifestVersion,
+					timestamp: cache[CONFIG_CACHE_KEY].timestamp
+				});
+				return cache[CONFIG_CACHE_KEY].data;
+			}
+
+			console.log('[Config Debug] Cache invalid or missing, loading from file:', {
+				configUrl,
+				manifestVersion,
+				cachedVersion: cache[CONFIG_VERSION_KEY]
+			});
+
+			let lastError;
+			for (let i = 0; i < retries; i++) {
+				try {
+					const response = await fetch(configUrl),
+						config = await response.json();
+
+					if (!config.menus || Object.keys(config.menus).length === 0) {
+						config.menus = {};
+					}
+
+					config.contexts = config.contexts || ['editable'];
+					config.handlers = config.handlers || {
+						injectValue: true,
+						paste: true,
+						copy: true,
+						gremlinsAttack: true
 					};
-				console.log('[Config Debug] Menu structure validation:', menuValidation);
 
-				// Only validate menus presence
-				if (!config.menus || Object.keys(config.menus).length === 0) {
-					console.warn('[Config Debug] No menu definitions found in config');
-					config.menus = {}; // Provide empty default
-				}
+					await browserAPI.storage.local.set({
+						[CONFIG_CACHE_KEY]: {
+							data: config,
+							timestamp: Date.now()
+						},
+						[CONFIG_VERSION_KEY]: manifestVersion
+					});
 
-				// Set defaults for optional fields
-				config.contexts = config.contexts || ['editable'];
-				config.handlers = config.handlers || {
-					injectValue: true,
-					paste: true,
-					copy: true,
-					gremlinsAttack: true
-				};
-
-				console.log('[Config Debug] Config validation successful. Structure:', {
-					menuCount: menuValidation.menuCount,
-					contextTypes: config.contexts,
-					handlerTypes: Object.keys(config.handlers)
-				});
-
-				return config;
-			} catch (error) {
-				lastError = error;
-				console.error(`[Config Debug] Load attempt ${i + 1} failed:`, {
-					error: error.message,
-					stack: error.stack
-				});
-
-				if (i < retries - 1) {
-					console.log(`[Config Debug] Retrying in 1 second... (${i + 1}/${retries})`);
-					await new Promise(resolve => setTimeout(resolve, 1000));
+					return config;
+				} catch (error) {
+					lastError = error;
+					if (i < retries - 1) {
+						await new Promise(resolve => setTimeout(resolve, 1000));
+					}
 				}
 			}
+
+			throw new Error(`Failed to load config after ${retries} attempts: ${lastError?.message}`);
+		} finally {
+			STATE_LOCK.release();
 		}
-
-		// If we've exhausted all retries, log detailed error and throw
-		console.error('[Config Debug] Config load failed after all retries:', {
-			lastError: lastError?.message,
-			stack: lastError?.stack,
-			configUrl,
-			extensionId: browserAPI.runtime.id
-		});
-		throw new Error(`Failed to load config after ${retries} attempts: ${lastError?.message}`);
 	},
-
 	initializeExtension = async () => {
 		console.log('[Background Debug] Starting extension initialization');
 		console.log('[Background Debug] Browser type:', isFirefox ? 'Firefox' : 'Chrome');
+
+		EXTENSION_STATE.status = EXTENSION_STATES.UNINITIALIZED;
 		try {
-			// Remove existing context menus first
-			console.log('[Background Debug] Removing existing menus...');
+			await updateState(EXTENSION_STATES.REMOVING_MENUS);
 			await browserAPI.contextMenus.removeAll();
-			console.log('[Background Debug] Removed existing context menus');
-			// Load configuration
-			console.log('[Background Debug] Loading configuration...');
+			await updateState(EXTENSION_STATES.LOADING_CONFIG);
+			console.log('[Background Debug] Loading standard config...');
 			const standardConfig = await loadConfig(),
-				contextMenu = new ContextMenu(standardConfig, browserInterfaceInstance, menuBuilderInstance, processMenuObject, isFirefox),
-				clickHandlerRegistered = await new Promise(resolve => {
-					const testHandler = () => {
-						browserAPI.contextMenus.onClicked.removeListener(testHandler);
-						resolve(true);
-					};
-					browserAPI.contextMenus.onClicked.addListener(testHandler);
-					setTimeout(() => resolve(false), 100);
-				});
-			console.log('[Background Debug] Configuration loaded:', standardConfig);
-			console.log('[Background Debug] Creating ContextMenu instance with dependencies:', {
-				hasMenuBuilder: !!menuBuilderInstance,
-				hasBrowserInterface: !!browserInterfaceInstance,
-				hasProcessMenuObject: !!processMenuObject
+				stats = {
+					hasMenus: !!standardConfig.menus,
+					menuCount: Object.keys(standardConfig.menus || {}).length,
+					contexts: standardConfig.contexts,
+					handlers: standardConfig.handlers,
+					timestamp: Date.now()
+				},
+				instance = new ContextMenu(
+					standardConfig,
+					browserInterfaceInstance,
+					menuBuilderInstance,
+					processMenuObject,
+					isFirefox
+				);
+			console.log('[Background Debug] Standard config loaded:', stats);
+			console.log('[Background Debug] Menu instance created');
+
+			await updateState(EXTENSION_STATES.CREATING_MENUS);
+			await instance.init();
+			await browserAPI.storage.local.set({
+				contextMenuInitialized: true,
+				lastInitializationTime: Date.now()
 			});
-			console.log('[Background Debug] Starting context menu initialization');
-			await contextMenu.init();
-			console.log('[Background Debug] Context menu initialization complete');
-			// Test click handler registration
-			console.log('[Background Debug] Verifying context menu click handler...');
-			console.log('[Background Debug] Click handler status:', clickHandlerRegistered ? 'registered' : 'not found');
-			// Store instance for potential cleanup/updates
-			browserAPI.storage.local.set({ contextMenuInitialized: true });
-			console.log('[Background Debug] Extension initialization complete');
-			return contextMenu;
+
+			await updateState(EXTENSION_STATES.READY);
+			return instance;
 		} catch (error) {
 			console.error('[Background Debug] Failed to initialize:', error);
-			console.error('[Background Debug] Error stack:', error.stack);
-			// Show error notification to user
-			browserAPI.notifications.create({
-				type: 'basic',
-				iconUrl: 'testudo-16.png',
-				title: 'Initialization Error',
-				message: `Failed to initialize extension: ${error.message}`
+			await updateState(EXTENSION_STATES.ERROR);
+
+			try {
+				const defaultConfig = {
+						menus: {},
+						contexts: ['editable'],
+						handlers: {
+							injectValue: true,
+							paste: true,
+							copy: true,
+							gremlinsAttack: true
+						}
+					},
+					instance = new ContextMenu(
+						defaultConfig,
+						browserInterfaceInstance,
+						menuBuilderInstance,
+						processMenuObject,
+						isFirefox
+					);
+				await instance.init();
+				await updateState(EXTENSION_STATES.READY);
+				return instance;
+			} catch (recoveryError) {
+				console.error('[Background Debug] Recovery failed:', recoveryError);
+				throw error;
+			}
+		}
+	},
+	queueMessage = (tabId, message) => {
+		if (!messageQueue.has(tabId)) {
+			messageQueue.set(tabId, []);
+		}
+		messageQueue.get(tabId).push(message);
+	},
+	processMessageQueue = (tabId) => {
+		const messages = messageQueue.get(tabId),
+			ready = tabStates.get(tabId);
+
+		if (!messages || messages.length === 0 || !ready) {
+			return;
+		}
+
+		while (messages.length > 0) {
+			const message = messages.shift();
+			browserAPI.tabs.sendMessage(tabId, message)
+				.catch(error => console.warn('Failed to send queued message:', error));
+		}
+	},
+	handleGremlinsAction = async (action, tab, config) => {
+		if (!tab?.id) {
+			throw new Error('Invalid tab');
+		}
+
+		const ready = tabStates.get(tab.id),
+			message = {
+				command: action === 'start' ? MESSAGE_TYPES.START : MESSAGE_TYPES.STOP
+			};
+
+		if (!ready) {
+			if (config) {
+				message.payload = config;
+			}
+			queueMessage(tab.id, message);
+			return { status: 'queued' };
+		}
+
+		try {
+			if (action === 'start') {
+				await GremlinsAttackHandler.start(browserInterfaceInstance, tab.id, config);
+				await browserAPI.runtime.sendMessage({
+					command: MESSAGE_TYPES.STATE,
+					payload: {
+						attacking: true,
+						configuration: config
+					}
+				});
+				return { status: 'started' };
+			} else if (action === 'stop') {
+				await GremlinsAttackHandler.stop(browserInterfaceInstance, tab.id);
+				await browserAPI.runtime.sendMessage({
+					command: MESSAGE_TYPES.STATE,
+					payload: {
+						attacking: false,
+						configuration: null
+					}
+				});
+				return { status: 'stopped' };
+			}
+		} catch (error) {
+			console.error(`Error ${action}ing gremlins:`, error);
+			await browserAPI.runtime.sendMessage({
+				type: 'error',
+				message: `Failed to ${action} gremlins: ${error.message}`
 			});
 			throw error;
 		}
 	};
 
-function queueMessage(tabId, message) {
-	if (!messageQueue.has(tabId)) {
-		messageQueue.set(tabId, []);
-	}
-	messageQueue.get(tabId).push(message);
-}
-
-function processMessageQueue(tabId) {
-	const messages = messageQueue.get(tabId),
-		ready = tabStates.get(tabId);
-
-	if (!messages || messages.length === 0) {
-		return;
-	}
-
-	if (!ready) {
-		return;
-	}
-
-	while (messages.length > 0) {
-		const message = messages.shift();
-		browserAPI.tabs.sendMessage(tabId, message)
-			.catch(error => console.warn('Failed to send queued message:', error));
-	}
-}
-
-async function handleGremlinsAction(action, tab, config) {
-	if (!tab || !tab.id) {
-		throw new Error('Invalid tab');
-	}
-
-	const ready = tabStates.get(tab.id),
-		message = {
-			command: action === 'start' ? MESSAGE_TYPES.START : MESSAGE_TYPES.STOP
-		};
-
-	if (!ready) {
-		if (config) {
-			message.payload = config;
-		}
-		queueMessage(tab.id, message);
-		return { status: 'queued' };
-	}
-
-	try {
-		if (action === 'start') {
-			await GremlinsAttackHandler.start(browserInterfaceInstance, tab.id, config);
-			await browserAPI.runtime.sendMessage({
-				command: MESSAGE_TYPES.STATE,
-				payload: {
-					attacking: true,
-					configuration: config
-				}
-			});
-			return { status: 'started' };
-		} else if (action === 'stop') {
-			await GremlinsAttackHandler.stop(browserInterfaceInstance, tab.id);
-			await browserAPI.runtime.sendMessage({
-				command: MESSAGE_TYPES.STATE,
-				payload: {
-					attacking: false,
-					configuration: null
-				}
-			});
-			return { status: 'stopped' };
-		}
-	} catch (error) {
-		console.error(`Error ${action}ing gremlins:`, error);
-		await browserAPI.runtime.sendMessage({
-			type: 'error',
-			message: `Failed to ${action} gremlins: ${error.message}`
+browserAPI.contextMenus.onClicked.addListener((info, tab) => {
+	if (EXTENSION_STATE.menuInstance) {
+		console.log('[Background Debug] Context menu click:', {
+			info,
+			tab,
+			menuInstance: EXTENSION_STATE.menuInstance
 		});
-		throw error;
+		EXTENSION_STATE.menuInstance.onClick(info, tab).catch(error => {
+			console.error('[Background Debug] Click handler error:', error);
+		});
+	} else {
+		console.error('[Background Debug] Context menu click received but no instance available');
 	}
-}
+});
 
 browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (!message.command) {
@@ -243,14 +328,14 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		tabStates.set(tabId, true);
 		processMessageQueue(tabId);
 		sendResponse({ status: 'ready' });
-		return;
+		return true;
 	}
 
 	if (!MESSAGE_TYPES[message.command]) {
 		return false;
 	}
 
-	const tabId = sender.tab ? sender.tab.id : null,
+	const tabId = sender.tab?.id,
 		action = message.command === MESSAGE_TYPES.START ? 'start' : 'stop';
 
 	if (!tabId) {
@@ -285,4 +370,16 @@ browserAPI.tabs.onUpdated.addListener((tabId, changeInfo) => {
 	}
 });
 
-initializeExtension();
+// Initialize extension and store instance
+initializeExtension()
+	.then(instance => {
+		EXTENSION_STATE.menuInstance = instance;
+		console.log('[Background Debug] Extension initialized successfully with instance:', {
+			hasInstance: !!instance,
+			state: EXTENSION_STATE
+		});
+	})
+	.catch(error => {
+		console.error('[Background Debug] Failed to initialize extension:', error);
+		EXTENSION_STATE.status = EXTENSION_STATES.ERROR;
+	});

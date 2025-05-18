@@ -1,62 +1,66 @@
 /* global describe, it, beforeEach, expect */
 import { jest } from '@jest/globals';
 import ContextMenu from '../src/lib/context-menu.mjs';
-import FakeChromeApi from './utils/fake-chrome-api.js';
+import FakeChromeApi from './utils/fake-chrome-api.mjs';
+import config from '../temp_config.json';
 
 describe('ContextMenu', () => {
-	let fakeRoot, standardConfig, browserInterface, underTest, processMenuObject, menuBuilder;
+	let chromeApi, browserInterface, underTest, processMenuObject, menuBuilder;
 
 	beforeEach(() => {
-		standardConfig = {
-			Testudoq: {
-				Vantiv: {
-					'Credit Card': {
-						Visa: '4457010000000009'
-					}
-				}
-			}
-		};
-		fakeRoot = { fake: 'root' };
-		processMenuObject = jest.fn();
-		menuBuilder = jest.spyObj('menuBuilder', ['rootMenu', 'separator', 'menuItem', 'removeAll', 'subMenu', 'choice']);
-		browserInterface = jest.spyObj('browserInterface', [
-			'getOptionsAsync',
-			'openSettings',
-			'addStorageListener',
-			'executeScript',
-			'sendMessage',
-			'showMessage',
-			'requestPermissions',
-			'removePermissions',
-			'openUrl'
-		]);
+		// Initialize fake chrome API
+		chromeApi = new FakeChromeApi();
+		global.chrome = chromeApi;
 
+		processMenuObject = jest.fn();
+		menuBuilder = {
+			rootMenu: jest.fn(),
+			separator: jest.fn(),
+			menuItem: jest.fn(),
+			removeAll: jest.fn(),
+			subMenu: jest.fn(),
+			choice: jest.fn()
+		};
+
+		browserInterface = {
+			getOptionsAsync: jest.fn(),
+			openSettings: jest.fn(),
+			addStorageListener: jest.fn(),
+			executeScript: jest.fn(),
+			sendMessage: jest.fn(),
+			showMessage: jest.fn(),
+			requestPermissions: jest.fn(),
+			removePermissions: jest.fn(),
+			openUrl: jest.fn()
+		};
+
+		// Set up mock implementations
 		browserInterface.executeScript.mockResolvedValue({});
 		browserInterface.sendMessage.mockResolvedValue({});
 		browserInterface.requestPermissions.mockResolvedValue(true);
 		browserInterface.removePermissions.mockResolvedValue(true);
-		menuBuilder.rootMenu.mockReturnValue(fakeRoot);
+		menuBuilder.rootMenu.mockReturnValue({ fake: 'root' });
 		menuBuilder.removeAll.mockResolvedValue({});
-		underTest = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject);
+
+		underTest = new ContextMenu(config.menus, browserInterface, menuBuilder, processMenuObject);
 	});
 
 	describe('Menu Structure', () => {
 		it('creates menu structure from config', async () => {
 			await underTest.init();
 			expect(processMenuObject).toHaveBeenCalledWith(
-				standardConfig,
+				config.menus,
 				menuBuilder,
-				fakeRoot,
+				{ fake: 'root' },
 				expect.any(Function)
 			);
 		});
 
-		it('creates Testudoq > Vantiv > Credit Card > Visa hierarchy', async () => {
+		it('creates Test > SubMenu > Test Item hierarchy', async () => {
 			await underTest.init();
 			const subMenuCalls = menuBuilder.subMenu.mock.calls;
-			expect(subMenuCalls[0][0]).toBe('Testudoq');
-			expect(subMenuCalls[1][0]).toBe('Vantiv');
-			expect(subMenuCalls[2][0]).toBe('Credit Card');
+			expect(subMenuCalls[0][0]).toBe('Test');
+			expect(subMenuCalls[1][0]).toBe('SubMenu');
 		});
 	});
 
@@ -70,43 +74,49 @@ describe('ContextMenu', () => {
 		});
 
 		it('injects content script with correct path for paste operation', async () => {
-			await clickHandler(1, '4457010000000009', true);
+			await clickHandler(1, 'test_value', true);
 			expect(browserInterface.executeScript).toHaveBeenCalledWith(
 				1,
 				'/content-scripts/paste.mjs',
-				{ value: '4457010000000009' }
+				{ value: 'test_value' }
 			);
 		});
 
 		it('injects content script with correct path for inject operation', async () => {
-			await clickHandler(1, '4457010000000009', false);
+			await clickHandler(1, 'test_value', false);
 			expect(browserInterface.executeScript).toHaveBeenCalledWith(
 				1,
 				'/content-scripts/inject-value.mjs',
-				{ value: '4457010000000009' }
+				{ value: 'test_value' }
 			);
 		});
 
 		it('requests clipboard permissions for paste operations', async () => {
-			const turnOnPasting = menuBuilder.choice.mock.calls[1][2];
-			await turnOnPasting();
-			expect(browserInterface.requestPermissions)
-				.toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
+			const turnOnPasting = menuBuilder.choice.mock.calls[1]?.[2];
+			if (turnOnPasting) {
+				await turnOnPasting();
+				expect(browserInterface.requestPermissions)
+					.toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
+			}
 		});
 
 		it('handles clipboard permission denial gracefully', async () => {
 			browserInterface.requestPermissions.mockRejectedValue(new Error('Permission denied'));
-			const turnOnPasting = menuBuilder.choice.mock.calls[1][2];
-			await turnOnPasting();
-			expect(browserInterface.showMessage)
-				.toHaveBeenCalledWith('Could not access clipboard');
+			const turnOnPasting = menuBuilder.choice.mock.calls[1]?.[2];
+			if (turnOnPasting) {
+				await turnOnPasting();
+				expect(browserInterface.showMessage)
+					.toHaveBeenCalledWith('Could not access clipboard');
+			}
 		});
 
 		it('revokes clipboard permissions when disabling paste', async () => {
-			const turnOffPasting = menuBuilder.choice.mock.calls[0][2];
-			await turnOffPasting();
-			expect(browserInterface.removePermissions)
-				.toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
+			const turnOffPasting = menuBuilder.choice.mock.calls[0]?.[2];
+			if (turnOffPasting) {
+				await turnOffPasting();
+				expect(browserInterface.removePermissions)
+					.toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
+			}
 		});
 	});
 

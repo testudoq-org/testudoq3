@@ -14,17 +14,40 @@ const MENU_STORAGE_KEY = 'chrome_menu_state',
 		validateValue: (value) => value !== undefined
 	};
 
+/**
+ * A builder class for creating and managing Chrome context menus.
+ * Handles menu item creation, state management, and click handling
+ * with proper error handling and logging.
+ *
+ * @param {Object} chrome - Chrome extension API object
+ */
 export default function ChromeMenuBuilder(chrome) {
-	// State management
-	let itemValues = {},
+	// State management and configuration
+	const menuItems = new Set(),
+		itemValues = {},
 		itemHandlers = {},
-		itemCount = 0;
-
-	const self = this,
+		handlerRegistry = {
+			registrationTime: Date.now(),
+			isRegistered: false,
+			registerHandler: () => {
+				handlerRegistry.isRegistered = true;
+				console.log('[MenuBuilder Flow] Handler registration:', {
+					timestamp: Date.now(),
+					registered: true,
+					handlers: Object.keys(itemHandlers),
+					registeredAt: handlerRegistry.registrationTime
+				});
+			}
+		},
 		contexts = DEFAULT_CONTEXTS,
+		self = this,
 		loadMenuState = async () => {
 			try {
-				console.log('[MenuBuilder Debug] Loading menu state...');
+				console.log('[MenuBuilder Debug] Loading menu state...', {
+					time: Date.now(),
+					existingItems: menuItems.size,
+					existingValues: Object.keys(itemValues).length
+				});
 				const result = await chrome.storage.local.get(MENU_STORAGE_KEY),
 					state = result[MENU_STORAGE_KEY],
 					validValues = {};
@@ -43,9 +66,12 @@ export default function ChromeMenuBuilder(chrome) {
 					}
 				});
 
-				itemValues = validValues;
+				Object.assign(itemValues, validValues);
 				console.log('[MenuBuilder Debug] State loaded successfully:', {
-					itemCount: Object.keys(itemValues).length
+					time: Date.now(),
+					itemCount: Object.keys(itemValues).length,
+					values: validValues,
+					finalItemValues: itemValues
 				});
 			} catch (error) {
 				console.error('[MenuBuilder Debug] Failed to load state:', error);
@@ -54,7 +80,7 @@ export default function ChromeMenuBuilder(chrome) {
 		},
 		saveMenuState = async () => {
 			try {
-				if (itemCount > MAX_MENU_ITEMS) {
+				if (menuItems.size >= MAX_MENU_ITEMS) {
 					throw new Error(`Menu item limit exceeded (max: ${MAX_MENU_ITEMS})`);
 				}
 
@@ -69,6 +95,16 @@ export default function ChromeMenuBuilder(chrome) {
 				console.error('[MenuBuilder Debug] Failed to save state:', error);
 				throw new Error('Failed to save menu state: ' + error.message);
 			}
+		},
+		logMenuState = (action) => {
+			console.log('[MenuBuilder Debug] Menu state:', {
+				action,
+				timestamp: Date.now(),
+				itemCount: menuItems.size,
+				registeredHandlers: Object.keys(itemHandlers),
+				registeredValues: Object.keys(itemValues),
+				isHandlerRegistered: handlerRegistry.isRegistered
+			});
 		};
 	/**
 	 * Creates a root menu with the given title.
@@ -131,10 +167,38 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @return {string} The ID of the created menu item
 	 */
 	/**
-	 * Creates a menu item with validation
+	 * Creates a menu item with validation and handler tracking
+	 */
+	/**
+	 * Creates a menu item with the given properties.
+	 *
+	 * @param {string} title - The title text for the menu item
+	 * @param {string} parentMenu - ID of the parent menu
+	 * @param {Function} clickHandler - Function to handle item clicks
+	 * @param {*} value - Value associated with this menu item
+	 * @returns {Promise<string>} ID of the created menu item
+	 * @throws {Error} If validation fails or menu limit is exceeded
 	 */
 	self.menuItem = async function (title, parentMenu, clickHandler, value) {
+		console.log('[MenuBuilder Flow] Creating menu item:', {
+			time: Date.now(),
+			title,
+			parentMenu,
+			hasHandler: !!clickHandler,
+			value,
+			existingItems: menuItems.size,
+			existingValues: Object.keys(itemValues)
+		});
 		try {
+			// Check menu limit before creating
+			if (menuItems.size >= MAX_MENU_ITEMS) {
+				console.error('[MenuBuilder] Menu limit reached:', {
+					current: menuItems.size,
+					limit: MAX_MENU_ITEMS
+				});
+				throw new Error(`Menu item limit exceeded (max: ${MAX_MENU_ITEMS})`);
+			}
+
 			// Validate inputs
 			if (!menuItemSchema.validateTitle(title)) {
 				throw new Error('Invalid title');
@@ -153,23 +217,30 @@ export default function ChromeMenuBuilder(chrome) {
 					title,
 					parentId: parentMenu,
 					contexts
-				});
+				}),
+				registrationTime = Date.now();
 
-			// Update state
+			// Update state and track menu item
+
+			menuItems.add(id);
 			itemValues[id] = value;
 			itemHandlers[id] = clickHandler;
-			itemCount++;
+			logMenuState('create');
 
 			// Save state
 			await saveMenuState();
 
-			console.log('[MenuBuilder Debug] Menu item created:', {
+			// Log registration with timing
+			console.log('[MenuBuilder Flow] Handler registered:', {
 				id,
-				itemCount,
-				handlers: Object.keys(itemHandlers).length,
-				values: Object.keys(itemValues).length
+				registeredAt: registrationTime,
+				handlerType: typeof clickHandler,
+				handlers: Object.keys(itemHandlers),
+				itemCount: menuItems.size,
+				isRegistered: handlerRegistry.isRegistered
 			});
 
+			handlerRegistry.registerHandler();
 			return result;
 		} catch (error) {
 			console.error('[MenuBuilder Debug] Failed to create menu item:', error);
@@ -220,10 +291,11 @@ export default function ChromeMenuBuilder(chrome) {
 			await chrome.storage.local.remove(MENU_STORAGE_KEY);
 			console.log('[MenuBuilder Debug] Cleared stored menu state');
 
-			// Reset memory state
-			itemValues = {};
-			itemHandlers = {};
-			itemCount = 0;
+			logMenuState('before_reset');
+			menuItems.clear();
+			Object.keys(itemValues).forEach(key => delete itemValues[key]);
+			Object.keys(itemHandlers).forEach(key => delete itemHandlers[key]);
+			logMenuState('after_reset');
 
 			// Remove all context menu items
 			await new Promise((resolve, reject) => {
@@ -252,36 +324,93 @@ export default function ChromeMenuBuilder(chrome) {
 
 	// Set up click listener with enhanced error handling and validation
 	chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-		const itemId = info?.menuItemId;
+		handlerRegistry.registerHandler();
+		const flowTimers = {
+				start: Date.now(),
+				getElapsed: () => Date.now() - flowTimers.start,
+				markTimestamp: (stage) => {
+					flowTimers[stage] = Date.now() - flowTimers.start;
+					return flowTimers[stage];
+				}
+			},
+			itemId = info?.menuItemId,
+			metrics = {
+				timestamp: flowTimers.start,
+				itemId,
+				tabId: tab?.id,
+				eventId: `click_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+				hasHandler: itemId ? !!itemHandlers[itemId] : false,
+				hasValue: itemId ? !!itemValues[itemId] : false,
+				registeredHandlers: Object.keys(itemHandlers),
+				totalHandlers: Object.keys(itemHandlers).length,
+				totalValues: Object.keys(itemValues).length,
+				flowTimers
+			};
+		console.log('[MenuBuilder Flow] Click event received:', {
+			...metrics,
+			elapsed: flowTimers.markTimestamp('eventReceived')
+		});
+
 		if (!itemId) {
-			console.error('[MenuBuilder Debug] Invalid menu item ID');
+			console.error('[MenuBuilder Flow] Invalid menu item ID:', {
+				...metrics,
+				elapsed: flowTimers.markTimestamp('invalidMenuId')
+			});
 			return;
 		}
 
 		try {
-			console.log('[MenuBuilder Debug] Menu item clicked:', {
-				itemId,
-				tabId: tab?.id,
-				hasHandler: !!itemHandlers[itemId],
-				hasValue: !!itemValues[itemId],
-				value: itemValues[itemId]
+			console.log('[MenuBuilder Flow] Processing click:', {
+				...metrics,
+				value: itemValues[itemId],
+				elapsed: flowTimers.markTimestamp('processingStart')
 			});
 
 			if (!tab?.id) {
+				console.error('[MenuBuilder Flow] Tab validation failed:', {
+					...metrics,
+					tab,
+					elapsed: flowTimers.markTimestamp('tabValidationFailed')
+				});
 				throw new Error('Invalid tab ID');
 			}
 
 			if (!itemHandlers[itemId]) {
-				console.warn('[MenuBuilder Debug] No handler found for menu item:', itemId);
+				console.warn('[MenuBuilder Flow] Handler lookup failed:', {
+					...metrics,
+					elapsed: flowTimers.markTimestamp('handlerLookupFailed')
+				});
 				return;
 			}
 
-			console.log('[MenuBuilder Debug] Executing handler for:', itemId);
+			console.log('[MenuBuilder Flow] Executing handler:', {
+				...metrics,
+				handlerType: typeof itemHandlers[itemId],
+				elapsed: flowTimers.markTimestamp('handlerExecutionStart')
+			});
+
 			const result = await itemHandlers[itemId](tab.id, itemValues[itemId]);
-			console.log('[MenuBuilder Debug] Handler execution completed:', result);
+
+			console.log('[MenuBuilder Flow] Handler completed:', {
+				...metrics,
+				success: true,
+				result,
+				elapsed: flowTimers.markTimestamp('handlerCompleted'),
+				timeline: Object.entries(flowTimers)
+					.filter(([key]) => key !== 'start' && typeof flowTimers[key] === 'number')
+					.sort((a, b) => a[1] - b[1])
+			});
+			return result;
 		} catch (error) {
-			console.error('[MenuBuilder Debug] Error handling click:', error);
-			// Re-throw error for potential external error handling
+			console.error('[MenuBuilder Flow] Handler execution failed:', {
+				...metrics,
+				error: error.message,
+				stack: error.stack,
+				elapsed: flowTimers.markTimestamp('handlerError'),
+				timeline: Object.entries(flowTimers)
+					.filter(([key]) => key !== 'start' && typeof flowTimers[key] === 'number')
+					.sort((a, b) => a[1] - b[1])
+			});
 			throw error;
 		}
 	});

@@ -1,17 +1,21 @@
 // jest.config.js
 export default {
-  transform: {
-    '^.+\\.jsx?$': 'babel-jest',
-    '^.+\\.mjs$': 'babel-jest'
-  },
-  testEnvironment: 'jsdom',
-  moduleFileExtensions: ['js', 'mjs'],
-  testMatch: ['**/*.spec.js'],
-  transformIgnorePatterns: [
-    '/node_modules/(?!@org\\/pkg1|@org\\/pkg2).+\\.js$',
-    '/node_modules/(?!lodash-es).+\\.mjs$'
-  ],
-  moduleNameMapper: {
-    // Add any module mappings here if needed
-  }
+	transform: {
+		'^.+\\.m?js$': 'babel-jest',
+		'^.+\\.json$': 'babel-jest'
+	},
+	testEnvironment: 'jsdom',
+	moduleFileExtensions: ['js', 'mjs'],
+	testMatch: ['**/*.spec.mjs'],
+	transformIgnorePatterns: [
+		'/node_modules/(?!lodash-es/).+\\.js$',
+		'/node_modules/(?!@org\\/pkg1|@org\\/pkg2).+\\.mjs$'
+	],
+	extensionsToTreatAsEsm: ['.mjs'],
+	moduleNameMapper: {
+		'^(\\.{1,2}/.*)\\.js$': '$1'
+	},
+	testEnvironmentOptions: {
+		customExportConditions: ['node', 'node-addons']
+	}
 };
