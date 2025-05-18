@@ -1,60 +1,49 @@
-import { jest } from '@jest/globals';
+import sinon from 'sinon';
 
-export default class FakeChromeApi {
+export class FakeBrowserAPI {
 	constructor() {
 		const createEvent = () => ({
-			addListener: jest.fn(),
-			removeListener: jest.fn()
+			addListener: sinon.stub(),
+			removeListener: sinon.stub()
 		});
 
+		this.executeScript = sinon.stub().resolves([{ result: true }]);
+		this.sendMessage = sinon.stub().resolves({ success: true });
+
+		// Keep other APIs for potential future use
 		this.runtime = {
 			onMessage: createEvent()
 		};
 
-		this.scripting = {
-			executeScript: jest.fn().mockResolvedValue([{ result: true }])
-		};
-
 		this.contextMenus = {
-			create: jest.fn(),
-			removeAll: jest.fn().mockResolvedValue(undefined),
+			create: sinon.stub(),
+			removeAll: sinon.stub().resolves(undefined),
 			onClicked: createEvent(),
-			update: jest.fn().mockResolvedValue(undefined),
-			getAll: jest.fn().mockResolvedValue([])
+			update: sinon.stub().resolves(undefined),
+			getAll: sinon.stub().resolves([])
 		};
 
 		this.tabs = {
-			sendMessage: jest.fn().mockResolvedValue({ success: true }),
-			executeScript: jest.fn().mockResolvedValue([{ result: true }]),
-			query: jest.fn().mockResolvedValue([{ id: 1 }])
+			query: sinon.stub().resolves([{ id: 1 }])
 		};
 
 		this.storage = {
 			local: {
-				get: jest.fn().mockResolvedValue({}),
-				set: jest.fn().mockResolvedValue(undefined),
-				clear: jest.fn().mockResolvedValue(undefined)
+				get: sinon.stub().resolves({}),
+				set: sinon.stub().resolves(undefined),
+				clear: sinon.stub().resolves(undefined)
 			},
 			sync: {
-				get: jest.fn().mockResolvedValue({}),
-				set: jest.fn().mockResolvedValue(undefined)
+				get: sinon.stub().resolves({}),
+				set: sinon.stub().resolves(undefined)
 			},
 			onChanged: createEvent()
 		};
 
 		this.permissions = {
-			request: jest.fn().mockResolvedValue(true),
-			remove: jest.fn().mockResolvedValue(true),
-			contains: jest.fn().mockResolvedValue(true)
-		};
-
-		// Mock clipboard API
-		if (typeof navigator === 'undefined') {
-			global.navigator = {};
-		}
-		navigator.clipboard = {
-			writeText: jest.fn().mockResolvedValue(undefined),
-			readText: jest.fn().mockResolvedValue('Mocked clipboard text')
+			request: sinon.stub().resolves(true),
+			remove: sinon.stub().resolves(true),
+			contains: sinon.stub().resolves(true)
 		};
 	}
 }
