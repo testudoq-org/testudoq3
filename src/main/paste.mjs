@@ -1,30 +1,87 @@
+/* global chrome */
+
 /**
- * This function handles the pasting of text from the clipboard.
- * It reads the text from the clipboard and processes it as needed.
- *
- * @return {Promise<void>} - A promise that resolves when the text from the clipboard is processed.
- * @throws {Error} - If there is an error reading the text from the clipboard.
+ * Handles pasting of text from clipboard with tab context validation.
  */
 export const handlePaste = async () => {
-	try {
-		// Read text from clipboard using the Clipboard API.
-		const textFromClipboard = await navigator.clipboard.readText(),
-			// Process the pasted text as needed.
-			// In this example, let's assume the pasted text is structured as "Menu: Submenu".
-			// We'll split the text to extract only the submenu item.
-			parts = textFromClipboard.split(':'),
-			submenuText = parts.length > 1 ? parts[1].trim() : textFromClipboard;
+		try {
+			const context = {
+					tabInfo: await chrome.tabs.getCurrent(),
+					permissionStatus: await navigator.permissions.query({ name: 'clipboard-read' })
+				},
+				diagnostics = {
+					hasTabContext: !!context.tabInfo?.id,
+					tabId: context.tabInfo?.id,
+					documentState: document.readyState,
+					hasClipboardAPI: 'clipboard' in navigator,
+					clipboardPermission: context.permissionStatus.state,
+					timestamp: Date.now()
+				},
+				clipboardData = {
+					text: await navigator.clipboard.readText(),
+					timestamp: Date.now()
+				},
+				submenuText = clipboardData.text.includes(':') ?
+					clipboardData.text.split(':')[1].trim() :
+					clipboardData.text;
 
-		// Log the extracted submenu text to the console.
-		console.log('Pasted submenu text:', submenuText);
-		return submenuText;
-	} catch (error) {
-		// If there is an error reading the text from the clipboard,
-		// log the error to the console.
-		console.error('Error reading text from clipboard:', error);
-		throw error;
+			console.log('[Paste Flow] Context validation:', diagnostics);
+
+			if (!diagnostics.hasTabContext) {
+				throw new Error('Missing tab context');
+			}
+
+			console.log('[Paste Flow] Operation completed:', {
+				submenuText,
+				originalText: clipboardData.text,
+				tabId: diagnostics.tabId,
+				timing: clipboardData.timestamp - diagnostics.timestamp
+			});
+
+			return submenuText;
+		} catch (error) {
+			console.error('[Paste Flow] Operation failed:', {
+				error: error.message,
+				stack: error.stack
+			});
+			throw error;
+		}
+	},
+
+	testPasteOperation = async () => {
+		console.log('[Test] Starting paste operation test...');
+
+		try {
+			const context = {
+					permissionStatus: await navigator.permissions.query({ name: 'clipboard-read' }),
+					tabInfo: await chrome.tabs.getCurrent()
+				},
+				result = await handlePaste();
+
+			console.log('[Test] Environment check:', {
+				clipboardRead: context.permissionStatus.state,
+				hasClipboardAPI: 'clipboard' in navigator,
+				hasTabInfo: !!context.tabInfo,
+				tabId: context.tabInfo?.id,
+				url: context.tabInfo?.url
+			});
+
+			console.log('[Test] Operation complete:', {
+				success: true,
+				result
+			});
+		} catch (error) {
+			console.error('[Test] Operation failed:', {
+				error: error.message,
+				stack: error.stack
+			});
+		}
+	};
+
+// Initialize paste handler and run tests in development
+document.addEventListener('DOMContentLoaded', () => {
+	handlePaste();
+	if (process.env.NODE_ENV === 'development') {
+		testPasteOperation();
 	}
-};
-
-// Initialize paste handler on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', handlePaste);
+});

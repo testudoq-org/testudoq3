@@ -20,13 +20,9 @@ export default async function pasteRequestHandler(browserInterface, tabId, reque
 		console.log('[pasteRequestHandler] Attempting to copy to clipboard...');
 		await copyToClipboard(browserInterface, tabId, request);
 		console.log('[pasteRequestHandler] Clipboard copy successful');
-
-		// Execute the 'paste.js' script using chrome.scripting API
+		// Execute the 'paste.mjs' script using chrome.scripting API
 		console.log('[pasteRequestHandler] Attempting to execute paste script...');
-		const result = await browserInterface.executeScript(tabId, {
-			target: { tabId },
-			files: ['/content-scripts/paste.mjs']
-		});
+		const result = await browserInterface.executeScript(tabId, '/content-scripts/paste.mjs');
 		console.log('[pasteRequestHandler] Script execution result:', result);
 		return result;
 	} catch (error) {

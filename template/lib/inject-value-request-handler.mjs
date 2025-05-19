@@ -12,12 +12,8 @@ export default async function injectValueRequestHandler(browserInterface, tabId,
 			tabId,
 			request: JSON.stringify(requestValue, null, 2)
 		});
-
 		// Execute script with correct path
-		await browserInterface.executeScript(tabId, {
-			target: { tabId },
-			files: ['/content-scripts/inject-value.mjs']
-		});
+		await browserInterface.executeScript(tabId, '/content-scripts/inject-value.mjs');
 
 		// Send message
 		return browserInterface.sendMessage(tabId, requestValue);

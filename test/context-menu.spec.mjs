@@ -72,13 +72,11 @@ describe('ContextMenu', () => {
 			await underTest.init();
 			clickHandler = processMenuObject.mock.calls[0][3];
 		});
-
 		it('injects content script with correct path for paste operation', async () => {
 			await clickHandler(1, 'test_value', true);
 			expect(browserInterface.executeScript).toHaveBeenCalledWith(
 				1,
-				'/content-scripts/paste.mjs',
-				{ value: 'test_value' }
+				'/content-scripts/paste.mjs'
 			);
 		});
 
@@ -86,8 +84,7 @@ describe('ContextMenu', () => {
 			await clickHandler(1, 'test_value', false);
 			expect(browserInterface.executeScript).toHaveBeenCalledWith(
 				1,
-				'/content-scripts/inject-value.mjs',
-				{ value: 'test_value' }
+				'/content-scripts/inject-value.mjs'
 			);
 		});
 

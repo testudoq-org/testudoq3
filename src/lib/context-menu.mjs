@@ -12,7 +12,8 @@ import gremlinsAttackHandler from './gremlins-attack-handler.mjs';
  * @param {boolean} pasteSupported - Whether paste operations are supported
  */
 export default function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const STATE_KEY = 'context_menu_state',
+	const MAX_MENU_ITEMS = 500,
+		STATE_KEY = 'context_menu_state',
 		menuValueCache = new Map(),
 		handlers = {
 			injectValue: injectValueRequestHandler,
@@ -26,11 +27,16 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		isInitialized = false;
 
 	// Define core click handler first
-	async function handleClick(info, tab) {
+	async function handleClick(tabId, value) {
 		const startTime = Date.now(),
+			handlerInfo = {
+				originalHandler: handlers[handlerType]?.toString().slice(0, 100),
+				handlerParams: {tabId, value},
+				expectedFormat: '(browserInterface, tabId, requestValue)'
+			},
 			executionContext = {
-				menuItemId: info?.menuItemId,
-				tabId: tab?.id,
+				menuItemId: value?.menuId || value?.id,
+				tabId,
 				handlerType,
 				menuValue: null,
 				timeline: {},
@@ -52,27 +58,20 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			menuValueCacheSize: menuValueCache.size
 		});
 
-		// Validate tab
-		if (!tab) {
-			console.error('[ContextMenu Debug] Tab object missing:', {
+		// Validate tab ID
+		if (!tabId) {
+			console.error('[ContextMenu Debug] Tab ID missing:', {
 				...executionContext,
 				elapsed: executionContext.elapsedMs()
 			});
-			throw new Error('Tab object is missing');
-		}
-
-		if (!tab.id) {
-			console.error('[ContextMenu Debug] Invalid tab ID:', {
-				...executionContext,
-				tabObject: tab,
-				elapsed: executionContext.elapsedMs()
-			});
-			console.error('[ContextMenu] Invalid tab ID');
-			throw new Error('Invalid tab ID');
+			throw new Error('Tab ID is missing');
 		}
 
 		// Get and validate menu value
-		executionContext.menuValue = menuValueCache.get(executionContext.menuItemId);
+		executionContext.menuValue = typeof value === 'object' ? value.value : value;
+		if (!executionContext.menuValue) {
+			executionContext.menuValue = menuValueCache.get(executionContext.menuItemId);
+		}
 		if (!executionContext.menuValue) {
 			console.warn('[ContextMenu Debug] No menu value found:', {
 				...executionContext,
@@ -103,9 +102,16 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 					: executionContext.menuValue,
 				result = await (async () => {
 					executionContext.markPhase('handlerStart');
+					console.log('[ContextMenu Flow] Handler execution:', {
+						...handlerInfo,
+						browserInterface: !!browserInterface,
+						tabId: executionContext.tabId,
+						requestValue
+					});
+
 					const handlerResult = await handlers[handlerType](
 						browserInterface,
-						executionContext.tabId,
+						tabId,
 						requestValue
 					);
 					executionContext.markPhase('handlerEnd');
@@ -319,7 +325,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 
 			const rootMenu = menuBuilder.rootMenu('Testudoq'),
 				menuItems = !options?.skipStandard
-					? await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick)
+					? (await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick)).slice(0, MAX_MENU_ITEMS)
 					: [];
 
 			rebuildLog('Root menu created');

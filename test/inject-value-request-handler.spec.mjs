@@ -11,14 +11,10 @@ describe('injectValueRequestHandler', () => {
 	beforeEach(() => {
 		browserInterface = new FakeBrowserAPI();
 	});
-
 	describe('when successful', () => {
 		it('executes script with correct file path', async () => {
 			await injectValueRequestHandler(browserInterface, tabId, requestValue);
-			expect(browserInterface.executeScript).to.have.been.calledWith(tabId, {
-				target: { tabId },
-				files: ['/content-scripts/inject-value.mjs']
-			});
+			expect(browserInterface.executeScript).to.have.been.calledWith(tabId, '/content-scripts/inject-value.mjs');
 		});
 
 		it('sends message to tab with request value', async () => {

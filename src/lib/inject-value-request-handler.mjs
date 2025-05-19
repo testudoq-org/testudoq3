@@ -9,10 +9,7 @@
 export default async function injectValueRequestHandler(browserInterface, tabId, requestValue) {
 	try {
 		// Execute script using chrome.scripting API
-		await browserInterface.executeScript(tabId, {
-			target: { tabId },
-			files: ['/content-scripts/inject-value.mjs']
-		});
+		await browserInterface.executeScript(tabId, '/content-scripts/inject-value.mjs');
 
 		// Send the message after script injection
 		return await browserInterface.sendMessage(tabId, requestValue);

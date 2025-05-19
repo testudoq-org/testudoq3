@@ -6,12 +6,11 @@ export default {
 	},
 	testEnvironment: 'jsdom',
 	moduleFileExtensions: ['js', 'mjs'],
-	testMatch: ['**/*.spec.mjs'],
-	transformIgnorePatterns: [
+	testMatch: ['**/*.spec.mjs'],	transformIgnorePatterns: [
 		'/node_modules/(?!lodash-es/).+\\.js$',
 		'/node_modules/(?!@org\\/pkg1|@org\\/pkg2).+\\.mjs$'
 	],
-	extensionsToTreatAsEsm: ['.mjs'],
+	extensionsToTreatAsEsm: [],
 	moduleNameMapper: {
 		'^(\\.{1,2}/.*)\\.js$': '$1'
 	},

@@ -6,7 +6,7 @@
 // Storage keys and default values
 const MENU_STORAGE_KEY = 'chrome_menu_state',
 	DEFAULT_CONTEXTS = ['editable'],
-	MAX_MENU_ITEMS = 100, // Chrome has a limit on number of context menu items
+	MAX_MENU_ITEMS = 500, // Chrome has a limit on number of context menu items
 	menuItemSchema = {
 		validateId: (id) => typeof id === 'string' && id.length > 0,
 		validateTitle: (title) => typeof title === 'string' && title.length > 0,
@@ -389,7 +389,21 @@ export default function ChromeMenuBuilder(chrome) {
 				elapsed: flowTimers.markTimestamp('handlerExecutionStart')
 			});
 
-			const result = await itemHandlers[itemId](tab.id, itemValues[itemId]);
+			// Add handler signature validation
+			const handler = itemHandlers[itemId],
+				menuValue = {
+					menuId: itemId,
+					value: itemValues[itemId]
+				},
+				handlerValidation = {
+					handlerName: handler.name,
+					handlerString: handler.toString().slice(0, 100),
+					expectedArgs: ['tabId', 'value'],
+					providedArgs: [tab.id, menuValue]
+				},
+				result = await itemHandlers[itemId](tab.id, menuValue);
+
+			console.log('[MenuBuilder Flow] Handler validation:', handlerValidation);
 
 			console.log('[MenuBuilder Flow] Handler completed:', {
 				...metrics,

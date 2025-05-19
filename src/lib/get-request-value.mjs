@@ -131,9 +131,8 @@ export default function getRequestValue(request) {
 			console.log('[get-request-value] Generator result:', {
 				result: value,
 				type: typeof value
-			});
-			return value;
+			});			return value;
 		})();
-	
+
 	return result;
 }
