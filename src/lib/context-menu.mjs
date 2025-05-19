@@ -31,7 +31,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		const startTime = Date.now(),
 			handlerInfo = {
 				originalHandler: handlers[handlerType]?.toString().slice(0, 100),
-				handlerParams: {tabId, value},
+				handlerParams: { tabId, value },
 				expectedFormat: '(browserInterface, tabId, requestValue)'
 			},
 			executionContext = {
@@ -98,8 +98,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			executionContext.markPhase('handlerPrep');
 			// Convert string values to proper request objects
 			const requestValue = typeof executionContext.menuValue === 'string'
-					? { '_type': 'literal', 'value': executionContext.menuValue }
-					: executionContext.menuValue,
+				? { '_type': 'literal', 'value': executionContext.menuValue }
+				: executionContext.menuValue,
 				result = await (async () => {
 					executionContext.markPhase('handlerStart');
 					console.log('[ContextMenu Flow] Handler execution:', {
@@ -147,26 +147,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		});
 	}
 
-	function loadAdditionalMenus(additionalMenus, rootMenu) {
-		if (!additionalMenus) {
-			return;
-		}
-		additionalMenus.forEach(configItem => {
-			const menuItems = processMenuObject(
-				{ [configItem.name]: configItem.config },
-				menuBuilder,
-				rootMenu,
-				handleClick
-			);
-			if (menuItems) {
-				menuItems.forEach(item => {
-					if (item.id && item.value) {
-						cacheMenuValue(item.id, item.value);
-					}
-				});
-			}
-		});
-	}
+	// loadAdditionalMenus function removed as part of menu improvement refactoring
+	// Reference: memory-bank/improve-right-click-menu.md
 
 	// Bind click handler to instance
 	this.onClick = handleClick;
@@ -250,50 +232,9 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	}
 
 
-
-	function addGenericMenus(rootMenu) {
-		const handlerChoices = {},
-			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
-
-		menuBuilder.separator(rootMenu);
-
-		if (pasteSupported !== undefined) {
-			pasteSupported = pasteSupported || true;
-		}
-
-		if (pasteSupported) {
-			handlerChoices.injectValue = menuBuilder.choice(
-				'Inject value',
-				modeMenu,
-				turnOffPasting,
-				handlerType === 'injectValue',
-				handlerType
-			);
-			handlerChoices.paste = menuBuilder.choice(
-				'Simulate pasting',
-				modeMenu,
-				turnOnPasting,
-				handlerType === 'paste',
-				handlerType
-			);
-			handlerChoices.copy = menuBuilder.choice(
-				'Copy to clipboard',
-				modeMenu,
-				turnOnCopy,
-				handlerType === 'copy',
-				handlerType
-			);
-		}
-
-		menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
-
-		menuBuilder.menuItem('Help/Support', rootMenu, () => {
-			if (!browserInterface) {
-				throw new TypeError('browserInterface cannot be null or undefined');
-			}
-			browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
-		});
-	}
+	// Function removed as part of menu improvement refactoring
+	// Reference: memory-bank/improve-right-click-menu.md
+	// The functionality is now inlined directly in rebuildMenu()
 
 	async function rebuildMenu(options) {
 		if (isRebuilding) {
@@ -349,16 +290,50 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 				rebuildLog('Standard menu items processed', {
 					cacheSize: menuValueCache.size
 				});
+			}			// Inline generic menus (per improve-right-click-menu.md)
+			menuBuilder.separator(rootMenu);
+
+			// Create operational mode submenu directly under root
+			const handlerChoices = {},
+				modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+
+			if (pasteSupported !== undefined) {
+				pasteSupported = pasteSupported || true;
 			}
 
-			// Add additional menus
-			if (options?.additionalMenus) {
-				await loadAdditionalMenus(options.additionalMenus, rootMenu);
-				rebuildLog('Additional menus loaded');
+			if (pasteSupported) {
+				handlerChoices.injectValue = menuBuilder.choice(
+					'Inject value',
+					modeMenu,
+					turnOffPasting,
+					handlerType === 'injectValue',
+					handlerType
+				);
+				handlerChoices.paste = menuBuilder.choice(
+					'Simulate pasting',
+					modeMenu,
+					turnOnPasting,
+					handlerType === 'paste',
+					handlerType
+				);
+				handlerChoices.copy = menuBuilder.choice(
+					'Copy to clipboard',
+					modeMenu,
+					turnOnCopy,
+					handlerType === 'copy',
+					handlerType
+				);
 			}
 
-			// Add generic menus
-			await addGenericMenus(rootMenu);
+			menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
+
+			menuBuilder.menuItem('Help/Support', rootMenu, () => {
+				if (!browserInterface) {
+					throw new TypeError('browserInterface cannot be null or undefined');
+				}
+				browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
+			});
+
 			rebuildLog('Generic menus added');
 
 			// Save state after successful rebuild

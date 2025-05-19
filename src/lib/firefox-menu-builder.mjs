@@ -11,7 +11,7 @@ export default function ChromeMenuBuilder(chrome) {
 	const self = this,
 
 		// Contexts where the menu items can appear
-		contexts = ['editable'];
+		contexts = ['page', 'selection', 'link', 'editable'];
 
 	/**
 	 * Creates a root menu.

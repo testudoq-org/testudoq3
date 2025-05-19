@@ -5,7 +5,7 @@
  */
 // Storage keys and default values
 const MENU_STORAGE_KEY = 'chrome_menu_state',
-	DEFAULT_CONTEXTS = ['editable'],
+	DEFAULT_CONTEXTS = ['page', 'selection', 'link', 'editable'],
 	MAX_MENU_ITEMS = 500, // Chrome has a limit on number of context menu items
 	menuItemSchema = {
 		validateId: (id) => typeof id === 'string' && id.length > 0,

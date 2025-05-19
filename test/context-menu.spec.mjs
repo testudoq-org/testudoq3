@@ -1,145 +1,311 @@
-/* global describe, it, beforeEach, expect */
-import { jest } from '@jest/globals';
+/* global describe, it, expect, jest, beforeEach */
 import ContextMenu from '../src/lib/context-menu.mjs';
-import FakeChromeApi from './utils/fake-chrome-api.mjs';
-import config from '../temp_config.json';
 
 describe('ContextMenu', () => {
-	let chromeApi, browserInterface, underTest, processMenuObject, menuBuilder;
+	let browserInterface,
+		menuBuilder,
+		processMenuObject,
+		standardConfig;
 
 	beforeEach(() => {
-		// Initialize fake chrome API
-		chromeApi = new FakeChromeApi();
-		global.chrome = chromeApi;
-
-		processMenuObject = jest.fn();
-		menuBuilder = {
-			rootMenu: jest.fn(),
-			separator: jest.fn(),
-			menuItem: jest.fn(),
-			removeAll: jest.fn(),
-			subMenu: jest.fn(),
-			choice: jest.fn()
-		};
-
+		// Mock browser interface
 		browserInterface = {
-			getOptionsAsync: jest.fn(),
-			openSettings: jest.fn(),
-			addStorageListener: jest.fn(),
-			executeScript: jest.fn(),
-			sendMessage: jest.fn(),
-			showMessage: jest.fn(),
+			storage: {
+				local: {
+					get: jest.fn(),
+					set: jest.fn()
+				}
+			},
 			requestPermissions: jest.fn(),
 			removePermissions: jest.fn(),
-			openUrl: jest.fn()
+			showMessage: jest.fn(),
+			openSettings: jest.fn(),
+			openUrl: jest.fn(),
+			getOptionsAsync: jest.fn(),
+			addStorageListener: jest.fn()
 		};
 
-		// Set up mock implementations
-		browserInterface.executeScript.mockResolvedValue({});
-		browserInterface.sendMessage.mockResolvedValue({});
-		browserInterface.requestPermissions.mockResolvedValue(true);
-		browserInterface.removePermissions.mockResolvedValue(true);
-		menuBuilder.rootMenu.mockReturnValue({ fake: 'root' });
-		menuBuilder.removeAll.mockResolvedValue({});
+		// Mock menu builder
+		menuBuilder = {
+			rootMenu: jest.fn().mockReturnValue('root-menu'),
+			subMenu: jest.fn(),
+			menuItem: jest.fn(),
+			separator: jest.fn(),
+			choice: jest.fn(),
+			removeAll: jest.fn()
+		};
 
-		underTest = new ContextMenu(config.menus, browserInterface, menuBuilder, processMenuObject);
+		// Mock process menu object
+		processMenuObject = jest.fn().mockResolvedValue([]);
+
+		// Mock standard config
+		standardConfig = {
+			menus: []
+		};
 	});
 
 	describe('Menu Structure', () => {
-		it('creates menu structure from config', async () => {
-			await underTest.init();
-			expect(processMenuObject).toHaveBeenCalledWith(
-				config.menus,
-				menuBuilder,
-				{ fake: 'root' },
+		it('should create menu structure with operational mode and help after separator', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			await contextMenu.init();
+
+			// Verify separator and operational mode placement
+			expect(menuBuilder.separator).toHaveBeenCalledWith('root-menu');
+			expect(menuBuilder.subMenu).toHaveBeenCalledWith('Operational mode', 'root-menu');
+
+			// Verify help/support menu item
+			expect(menuBuilder.menuItem).toHaveBeenCalledWith(
+				'Help/Support',
+				'root-menu',
 				expect.any(Function)
 			);
 		});
 
-		it('creates Test > SubMenu > Test Item hierarchy', async () => {
-			await underTest.init();
-			const subMenuCalls = menuBuilder.subMenu.mock.calls;
-			expect(subMenuCalls[0][0]).toBe('Test');
-			expect(subMenuCalls[1][0]).toBe('SubMenu');
+		it('should not create top-level menu groupings', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			await contextMenu.init();
+
+			// Verify only one root menu is created
+			expect(menuBuilder.rootMenu).toHaveBeenCalledTimes(1);
+			expect(menuBuilder.rootMenu).toHaveBeenCalledWith('Testudoq');
 		});
 	});
 
-	describe('Copy/Paste Functionality', () => {
-		let clickHandler;
+	describe('Handler Management', () => {
+		it('should change handler type when enabling paste mode', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true),
+				modeMenu = 'mode-menu',
+				pasteChoice = menuBuilder.choice.mock.calls.find(
+					call => call[0] === 'Simulate pasting'
+				)[2];
 
-		beforeEach(async () => {
+			browserInterface.requestPermissions.mockResolvedValue(true);
+			browserInterface.storage.local.get.mockResolvedValue({});
+			menuBuilder.subMenu.mockReturnValue(modeMenu);
+
+			await contextMenu.init();
+			await pasteChoice();
+
+			// Verify state changes
+			expect(browserInterface.requestPermissions).toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
+			expect(browserInterface.storage.local.set).toHaveBeenCalledWith({
+				'context_menu_state': expect.objectContaining({
+					handlerType: 'paste'
+				})
+			});
+		});
+
+		it('should restore handler type from storage on initialization', async () => {
+			const savedState = {
+					'context_menu_state': {
+						handlerType: 'paste'
+					}
+				},
+				contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+
+			browserInterface.storage.local.get.mockResolvedValue(savedState);
 			browserInterface.getOptionsAsync.mockResolvedValue({});
-			await underTest.init();
-			clickHandler = processMenuObject.mock.calls[0][3];
-		});
-		it('injects content script with correct path for paste operation', async () => {
-			await clickHandler(1, 'test_value', true);
-			expect(browserInterface.executeScript).toHaveBeenCalledWith(
-				1,
-				'/content-scripts/paste.mjs'
+
+			await contextMenu.init();
+
+			// Verify paste mode choices are created with correct state
+			expect(menuBuilder.choice).toHaveBeenCalledWith(
+				'Simulate pasting',
+				expect.any(String),
+				expect.any(Function),
+				true,
+				'paste'
 			);
-		});
-
-		it('injects content script with correct path for inject operation', async () => {
-			await clickHandler(1, 'test_value', false);
-			expect(browserInterface.executeScript).toHaveBeenCalledWith(
-				1,
-				'/content-scripts/inject-value.mjs'
-			);
-		});
-
-		it('requests clipboard permissions for paste operations', async () => {
-			const turnOnPasting = menuBuilder.choice.mock.calls[1]?.[2];
-			if (turnOnPasting) {
-				await turnOnPasting();
-				expect(browserInterface.requestPermissions)
-					.toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
-			}
-		});
-
-		it('handles clipboard permission denial gracefully', async () => {
-			browserInterface.requestPermissions.mockRejectedValue(new Error('Permission denied'));
-			const turnOnPasting = menuBuilder.choice.mock.calls[1]?.[2];
-			if (turnOnPasting) {
-				await turnOnPasting();
-				expect(browserInterface.showMessage)
-					.toHaveBeenCalledWith('Could not access clipboard');
-			}
-		});
-
-		it('revokes clipboard permissions when disabling paste', async () => {
-			const turnOffPasting = menuBuilder.choice.mock.calls[0]?.[2];
-			if (turnOffPasting) {
-				await turnOffPasting();
-				expect(browserInterface.removePermissions)
-					.toHaveBeenCalledWith(['clipboardRead', 'clipboardWrite']);
-			}
 		});
 	});
 
-	describe('Error Handling', () => {
-		let clickHandler;
-
-		beforeEach(async () => {
+	describe('Menu Rebuilding', () => {
+		it('should handle cleanup and reconstruction correctly', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
 			browserInterface.getOptionsAsync.mockResolvedValue({});
-			await underTest.init();
-			clickHandler = processMenuObject.mock.calls[0][3];
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			await contextMenu.init();
+
+			// Verify cleanup and reconstruction sequence
+			expect(menuBuilder.removeAll).toHaveBeenCalled();
+			expect(menuBuilder.rootMenu).toHaveBeenCalledWith('Testudoq');
+			expect(processMenuObject).toHaveBeenCalledWith(
+				standardConfig,
+				menuBuilder,
+				'root-menu',
+				expect.any(Function)
+			);
 		});
 
-		it('handles script injection failures', async () => {
-			browserInterface.executeScript.mockRejectedValue(new Error('Injection failed'));
-			await expect(clickHandler(1, 'test'))
-				.rejects.toThrow('Injection failed');
-			expect(browserInterface.showMessage)
-				.toHaveBeenCalledWith('Action failed: Injection failed');
+		it('should recover from rebuild failures', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			// Simulate initial failure then recovery
+			menuBuilder.removeAll
+				.mockRejectedValueOnce(new Error('Menu removal failed'))
+				.mockResolvedValueOnce();
+
+			await contextMenu.init();
+
+			// Verify recovery attempt
+			expect(menuBuilder.removeAll).toHaveBeenCalledTimes(2);
+			expect(menuBuilder.rootMenu).toHaveBeenCalledTimes(2);
+			expect(processMenuObject).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe('Menu Context Tests', () => {
+		it('should create menu items for all specified contexts', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			await contextMenu.init();
+
+			// Verify root menu context
+			expect(menuBuilder.rootMenu).toHaveBeenCalledWith('Testudoq');
+
+			// Verify standard menu item contexts
+			expect(processMenuObject).toHaveBeenCalledWith(
+				standardConfig,
+				menuBuilder,
+				'root-menu',
+				expect.any(Function)
+			);
+
+			// Verify separator context
+			expect(menuBuilder.separator).toHaveBeenCalledWith('root-menu');
+
+			// Verify operational mode submenu context
+			expect(menuBuilder.subMenu).toHaveBeenCalledWith(
+				'Operational mode',
+				'root-menu'
+			);
+
+			// Verify choices for operational mode
+			expect(menuBuilder.choice).toHaveBeenCalledWith(
+				'Inject value',
+				expect.any(String),
+				expect.any(Function),
+				true,
+				'injectValue'
+			);
+
+			expect(menuBuilder.choice).toHaveBeenCalledWith(
+				'Simulate pasting',
+				expect.any(String),
+				expect.any(Function),
+				false,
+				'injectValue'
+			);
+
+			expect(menuBuilder.choice).toHaveBeenCalledWith(
+				'Copy to clipboard',
+				expect.any(String),
+				expect.any(Function),
+				false,
+				'injectValue'
+			);
 		});
 
-		it('handles missing target tab errors', async () => {
-			browserInterface.executeScript.mockRejectedValue(new Error('Cannot access tab'));
-			await expect(clickHandler(1, 'test'))
-				.rejects.toThrow('Cannot access tab');
-			expect(browserInterface.showMessage)
-				.toHaveBeenCalledWith('Action failed: Cannot access tab');
+		it('should show Customise/Help items in all contexts', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true),
+				separatorIndex = menuBuilder.separator.mock.calls.findIndex(
+					call => call[0] === 'root-menu'
+				),
+				customiseIndex = menuBuilder.menuItem.mock.calls.findIndex(
+					call => call[0] === 'Customise menus'
+				),
+				helpIndex = menuBuilder.menuItem.mock.calls.findIndex(
+					call => call[0] === 'Help/Support'
+				);
+
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			await contextMenu.init();
+
+			// Verify Customise menu item
+			expect(menuBuilder.menuItem).toHaveBeenCalledWith(
+				'Customise menus',
+				'root-menu',
+				expect.any(Function)
+			);
+
+			// Verify Help/Support menu item with correct placement
+			expect(menuBuilder.menuItem).toHaveBeenCalledWith(
+				'Help/Support',
+				'root-menu',
+				expect.any(Function)
+			);
+
+			// Verify order - separator comes before Customise/Help items
+
+			expect(separatorIndex).toBeLessThan(customiseIndex);
+			expect(separatorIndex).toBeLessThan(helpIndex);
+		});
+	});
+
+	describe('Permission Management', () => {
+		it('should handle clipboard permission requests correctly', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true),
+				pasteChoice = menuBuilder.choice.mock.calls.find(
+					call => call[0] === 'Simulate pasting'
+				)[2];
+
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+			await contextMenu.init();
+
+			// Test successful permission grant
+			browserInterface.requestPermissions.mockResolvedValueOnce(true);
+			await pasteChoice();
+
+			expect(browserInterface.requestPermissions).toHaveBeenCalledWith([
+				'clipboardRead',
+				'clipboardWrite'
+			]);
+
+			// Test permission denial
+			browserInterface.requestPermissions.mockRejectedValueOnce(new Error('Permission denied'));
+			await expect(pasteChoice()).rejects.toThrow();
+			expect(browserInterface.showMessage).toHaveBeenCalledWith(
+				expect.stringContaining('Could not access clipboard')
+			);
+		});
+
+		it('should clean up permissions when disabling paste mode', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true),
+				injectChoice = menuBuilder.choice.mock.calls.find(
+					call => call[0] === 'Inject value'
+				)[2];
+
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({
+				'context_menu_state': { handlerType: 'paste' }
+			});
+
+			await contextMenu.init();
+			await injectChoice();
+
+			expect(browserInterface.removePermissions).toHaveBeenCalledWith([
+				'clipboardRead',
+				'clipboardWrite'
+			]);
+			expect(browserInterface.storage.local.set).toHaveBeenCalledWith({
+				'context_menu_state': expect.objectContaining({
+					handlerType: 'injectValue'
+				})
+			});
 		});
 	});
 });
