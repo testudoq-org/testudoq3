@@ -153,7 +153,7 @@ export default function ChromeMenuBuilder(chrome) {
 			id: parentMenu + Math.random(), // new ID
 			type: 'separator', // type of the separator
 			parentId: parentMenu, // parent menu ID
-			contexts // contexts for the separator
+			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
 		});
 	};
 
@@ -216,7 +216,7 @@ export default function ChromeMenuBuilder(chrome) {
 					id,
 					title,
 					parentId: parentMenu,
-					contexts
+					contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
 				}),
 				registrationTime = Date.now();
 
