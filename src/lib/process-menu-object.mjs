@@ -97,6 +97,11 @@ export default function processMenuObject(configObject, menuBuilder, parentMenu,
 			getTitle(configObject, key)
 		];
 
+		// Skip processing configuration properties
+		if (['contexts', 'menus', 'handlers'].includes(key)) {
+			return;
+		}
+
 		if (isMenuItem(value)) {
 			console.log('[ProcessMenu Debug] Creating menu item:', {
 				title,
