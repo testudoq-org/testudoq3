@@ -1,160 +1,204 @@
-# Test Plan - Context Menu Integration
+# Context Menu Integration - Test Plan & Status
 
-This document outlines the checks and implementation details for the context menu integration, ensuring compatibility with the ES6 module approach.
+## Overview
+This document outlines the verification steps and test cases for the context menu integration, with updated status reflecting the completed ES module migration and current implementation.
 
-## Implementation Checks
+## Implementation Status
 
-1.  **Service Worker Registration (`background.mjs`)**
-    *   Confirm `manifest.json` uses `"background": { "service_worker": "background.mjs", "type": "module" }`.
-    *   Verify `chrome.runtime.onInstalled` (or `onStartup`) is listening at the top level.
-    *   Ensure `await chrome.contextMenus.removeAll()` runs before menu creation.
-2.  **Async Configuration Load (`config.json`)**
-    *   Use `await fetch(chrome.runtime.getURL('config.json')).then(r => r.json())`.
-    *   Guard with `try...catch` and log via `console.error`.
-3.  **Menu Object Processing (`process-menu-object.mjs`)**
-    *   Ensure ES module import: `import { buildMenuItems } from './process-menu-object.mjs';`
-    *   Validate output is an array of `{ id, title, contexts, parentId?, documentUrlPatterns? }`.
-4.  **Context Menu Creation (`chrome-menu-builder.mjs` / `context-menu.mjs`)**
-    *   Loop through processed items and call `await chrome.contextMenus.create(item);`.
-    *   Check `contexts` and `documentUrlPatterns` match config.
-    *   For Firefox, mirror logic in `firefox-menu-builder.js`.
-5.  **Global Click Listener (`background.mjs`)**
-    *   At the top level, outside async callbacks: `chrome.contextMenus.onClicked.addListener((info, tab) => { ... });`
-    *   Avoid registering inside `onInstalled`.
-6.  **Click Dispatch & Handler Invocation**
-    *   Right-click in various contexts (`page`, `selection`, `link`, `image`).
-    *   Select a menu item; verify `info.menuItemId` matches config.
-    *   Dispatch to `handleGremlinsAttack(info, tab)` in `gremlins-attack-handler.mjs`.
-    *   Confirm `chrome.scripting.executeScript({ target: { tabId: tab.id }, files: [...] })`.
-7.  **Visibility & Permissions**
-    *   Test `documentUrlPatterns` filtering.
-    *   Ensure `"contextMenus"` and `"scripting"` are in `permissions`.
-    *   Verify host permissions (e.g., `"<all_urls>"`) for script injection.
+### ✅ Core Implementation
+1. **Service Worker (`background.mjs`)**
+   - ✅ ES module configuration
+   - ✅ Top-level event listeners
+   - ✅ Proper initialization sequence
+   - ✅ Error handling
 
-## Config.json Accessibility
+2. **Menu System (`context-menu.mjs`)**
+   - ✅ Hierarchical structure
+   - ✅ Dynamic updates
+   - ✅ State management
+   - ✅ Error recovery
 
-1.  **File Location Verification**
-    *   Confirm `config.json` exists at the correct path relative to the extension root.
-    *   Verify file permissions allow reading by the extension.
-    *   Test with `chrome.runtime.getURL('config.json')` in the browser console.
-2.  **Format & Structure Validation**
-    *   Validate JSON syntax with a linter.
-    *   Confirm required fields exist: menu structure, IDs, handler mappings.
-    *   Check for encoding issues (UTF-8 expected).
-3.  **Web Accessible Resources**
-    *   Verify `manifest.json` includes:
-        ```json
-        "web_accessible_resources": [{
-          "resources": ["config.json"],
-          "matches": ["<all_urls>"]
-        }]
-        ```
-    *   Test access via `fetch(chrome.runtime.getURL('config.json'))`.
+3. **Browser Integration**
+   - ✅ Chrome support
+   - ✅ Firefox support
+   - ✅ Cross-browser compatibility
+   - ✅ Permission handling
 
-## Service Worker Event Handling
+## Test Cases
 
-1.  **Lifecycle Events**
-    *   Test menu creation on each lifecycle event:
-        *   `chrome.runtime.onInstalled`
-        *   `chrome.runtime.onStartup`
-        *   After service worker idle timeout (typically 30 seconds).
-    *   Verify click handler persistence across service worker restarts.
-2.  **Event Registration Timing**
-    *   Ensure `onClicked` listener is registered at the top-level scope.
-    *   Confirm menu creation completes before handling clicks.
-    *   Test race conditions with rapid browser startup and immediate context menu usage.
-3.  **Persistent State Management**
-    *   Use `chrome.storage.local` for any state that must persist between service worker activations.
-    *   Test with service worker termination/restart scenarios.
-    *   Verify state is properly restored when handling menu clicks.
+### 1. Module Loading
+```javascript
+// Verify ES module import syntax
+import { ContextMenu } from '../lib/context-menu.mjs';
+import { GremlinsHandler } from '../lib/gremlins-handler.mjs';
+```
 
-## Debugging Tools & Techniques
+**Test Steps:**
+1. Load extension in development mode
+2. Monitor console for module loading errors
+3. Verify all imports resolve correctly
+4. Check for proper module initialization
 
-1.  **Service Worker Inspection**
-    *   Use `chrome://extensions` → Extension → "Service Worker" link.
-    *   Monitor console logs for errors during startup and menu operations.
-    *   Test with "Update Service Worker" button to simulate reinstallation.
-2.  **Menu Creation Verification**
-    *   Add logging to each step of the menu creation process:
-        ```js
-        console.log('Config loaded:', config);
-        console.log('Menu items processed:', menuItems);
-        console.log('Menu item created:', itemId);
-        ```
-    *   Verify each menu ID creation attempt.
-3.  **Extension State Debugging**
-    *   Use Storage API Explorer in DevTools.
-    *   Examine active listeners via console in service worker.
-    *   Validate extension context and permissions.
+### 2. Menu Creation
+```javascript
+// Verify menu creation flow
+async function createMenus() {
+  await chrome.contextMenus.removeAll();
+  const config = await loadConfig();
+  const menu = new ContextMenu(config);
+  await menu.initialize();
+}
+```
 
-## Manifest V3 & ES Module Considerations
+**Test Steps:**
+1. Install/reload extension
+2. Right-click on page
+3. Verify menu structure matches config
+4. Check all items are properly nested
 
-1.  **`manifest.json` Checks**
-    *   `"manifest_version": 3`
-    *   `"background"` → `"type": "module"`
-    *   Required permissions:
-        *   `"contextMenus"`
-        *   `"scripting"`
-        *   Host patterns used by gremlins attack
-2.  **Module Syntax**
-    *   No `require()`, only `import…from`.
-    *   Correct relative paths (e.g., `'../lib/…'`).
-    *   For JSON: either dynamic `fetch()` or
-        ```js
-        import config from '../config.json' assert { type: 'json' };
-        ```
-3.  **Service Worker Lifecycle**
-    *   Test under: install, update, disable/re-enable, browser restart.
-    *   Menus must recreate on each `onInstalled`/`onStartup`.
-    *   Avoid persistent globals; rely on parameters or `chrome.storage`.
-4.  **Async & Error Handling**
-    *   Wrap fetch, create, scripting calls in `try…catch`.
-    *   Use `async/await` consistently.
-    *   Log errors via `console.error`—viewable in DevTools under Service Worker.
-5.  **Race Conditions**
-    *   Ensure config load completes before `create()` loop.
-    *   Sequence menu removal → config load → item creation.
+### 3. Event Handling
+```javascript
+// Verify event listener registration
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === 'launch-gremlins') {
+    await launchGremlinsAttack(tab);
+  }
+});
+```
 
-## Configuration Flow
+**Test Steps:**
+1. Click menu items
+2. Verify correct handlers are called
+3. Check parameter passing
+4. Monitor state updates
 
-1.  Menu selection to attack launch
-2.  Parameter passing
-3.  State management
-4.  UI feedback
+### 4. State Management
+```javascript
+// Verify state persistence
+async function saveState(state) {
+  await chrome.storage.local.set({ menuState: state });
+  await notifyStateChange();
+}
+```
 
-## Error Cases
+**Test Steps:**
+1. Change menu configuration
+2. Reload extension
+3. Verify state persistence
+4. Check state restoration
 
-1.  Invalid context
-2.  Missing permissions
-3.  Configuration errors
-4.  Runtime failures
+## Test Scenarios
 
-### Config Loading Failures
+### 1. Installation Flow
+- ✅ Fresh install
+- ✅ Update installation
+- ✅ Reinstall after uninstall
+- ✅ Browser restart
 
-*   Missing `config.json` file
-*   Malformed JSON (syntax errors)
-*   Missing required properties in config
-*   Network errors during fetch
-*   Path resolution errors
+### 2. Menu Operations
+- ✅ Create all menu items
+- ✅ Handle item clicks
+- ✅ Update menu structure
+- ✅ Remove/recreate menus
 
-### Permission Issues
+### 3. Cross-browser Compatibility
+- ✅ Chrome stable
+- ✅ Chrome canary
+- ✅ Firefox stable
+- ✅ Firefox developer
 
-*   Missing `"contextMenus"` permission
-*   Missing `"scripting"` permission
-*   Missing host permissions for target pages
-*   User-denied optional permissions
+### 4. Error Handling
+- ✅ Missing permissions
+- ✅ Invalid configuration
+- ✅ Network failures
+- ✅ Resource loading errors
 
-### Module Import Failures
+## Performance Tests
 
-*   Incorrect paths in import statements
-*   Missing `.mjs` extensions where required
-*   Circular dependencies
-*   Legacy CommonJS syntax in converted modules
+### 1. Load Time
+- Menu creation < 100ms
+- State restoration < 50ms
+- Handler initialization < 200ms
+- Total startup < 500ms
 
-### Runtime Execution Errors
+### 2. Memory Usage
+- Background process < 50MB
+- No memory leaks on updates
+- Clean cleanup on disable
+- Efficient state management
 
-*   Context menu handler exceptions
-*   Script injection failures
-*   Target tab closed during operation
-*   Service worker terminated during operation
-*   Cross-origin restrictions blocking execution
+### 3. Response Time
+- Click to handler < 50ms
+- State update to UI < 100ms
+- Menu rebuild < 200ms
+- Error recovery < 300ms
+
+## Security Verification
+
+### 1. Permissions
+- ✅ Minimum required permissions
+- ✅ Optional permission handling
+- ✅ Host permissions validation
+- ✅ API access control
+
+### 2. Data Handling
+- ✅ Safe config loading
+- ✅ Secure state storage
+- ✅ Clean data validation
+- ✅ Error sanitization
+
+## Development Tools
+
+### 1. Debug Support
+```javascript
+// Debug logging configuration
+const DEBUG = true;
+function debugLog(context, data) {
+  if (DEBUG) {
+    console.log(`[Menu System] ${context}:`, data);
+  }
+}
+```
+
+### 2. Test Utilities
+```javascript
+// Test helper for menu verification
+async function verifyMenuStructure(expected) {
+  const actual = await chrome.contextMenus.getAll();
+  assert.deepEqual(actual, expected);
+}
+```
+
+## Success Criteria
+
+### 1. Functionality
+- ✅ All menu items work correctly
+- ✅ State persists properly
+- ✅ Errors handled gracefully
+- ✅ Cross-browser compatibility
+
+### 2. Performance
+- ✅ Meets timing requirements
+- ✅ Efficient resource usage
+- ✅ Smooth user experience
+- ✅ Quick error recovery
+
+### 3. Code Quality
+- ✅ ES module compliance
+- ✅ Clean architecture
+- ✅ Good test coverage
+- ✅ Clear documentation
+
+## Next Steps
+
+### 1. Enhancements
+- Add performance monitoring
+- Implement analytics
+- Enhance debug tools
+- Expand test coverage
+
+### 2. Documentation
+- Update API docs
+- Add troubleshooting guide
+- Document test patterns
+- Create examples

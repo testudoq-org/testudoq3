@@ -1,86 +1,251 @@
 # System Patterns
 
+## ES Module Architecture
+
+### Module Organization
+```plaintext
+src/
+  ├── main/          # Core ES modules
+  │   ├── background.mjs
+  │   └── options.mjs
+  ├── lib/           # Shared modules
+  │   ├── context-menu.mjs
+  │   └── gremlins-handler.mjs
+  └── content-scripts/ # Content script modules
+      └── gremlins-handler.mjs
+```
+
+### Module Patterns
+```javascript
+// Export pattern for services
+export class GremlinsHandler {
+  async initialize() { /* ... */ }
+  async launchAttack() { /* ... */ }
+}
+
+// Import pattern for dependencies
+import { BrowserInterface } from '../lib/browser-interface.mjs';
+import { ConfigManager } from '../lib/config-manager.mjs';
+```
+
 ## Architectural Patterns
 
 ### Handler Pattern
-The system uses a handler-based architecture for managing different functionalities:
-- Each feature has a dedicated handler module
-- Handlers are registered with the context menu system
-- Common interface for all handlers (browserInterface, tabId)
+```javascript
+// Handler base interface
+export class BaseHandler {
+  constructor(browserInterface) {
+    this.browser = browserInterface;
+  }
+  
+  async initialize() { /* ... */ }
+  async execute() { /* ... */ }
+}
+
+// Concrete handler implementation
+export class GremlinsHandler extends BaseHandler {
+  async execute(config) {
+    await this.injectGremlins(config);
+    await this.startAttack();
+  }
+}
+```
 
 ### Browser Interface Abstraction
-- Chrome and Firefox specific implementations
-- Common interface for cross-browser compatibility
-- Handles browser-specific API differences
+```javascript
+// Browser-agnostic interface
+export class BrowserInterface {
+  async executeScript(tabId, code) { /* ... */ }
+  async sendMessage(tabId, message) { /* ... */ }
+}
+
+// Browser-specific implementations
+export class ChromeInterface extends BrowserInterface {
+  async executeScript(tabId, code) {
+    return chrome.scripting.executeScript({ /* ... */ });
+  }
+}
+```
 
 ### Menu Builder Pattern
-- Hierarchical menu construction
-- Dynamic menu updates
-- Handler registration system
+```javascript
+// Menu construction
+export class MenuBuilder {
+  async buildMenu(config) {
+    await this.removeExisting();
+    await this.createStructure(config);
+    await this.wireHandlers();
+  }
+}
+```
 
 ## Component Relationships
 
 ```mermaid
 graph TD
-    CM[Context Menu] --> MB[Menu Builder]
-    CM --> GH[Gremlins Handler]
-    CM --> OH[Other Handlers]
+    subgraph Core
+        BG[background.mjs] --> CM[ContextMenu]
+        CM --> MB[MenuBuilder]
+        CM --> GH[GremlinsHandler]
+    end
     
-    GH --> BI[Browser Interface]
-    MB --> BI
+    subgraph Interfaces
+        MB --> BI[BrowserInterface]
+        GH --> BI
+        BI --> Chrome[ChromeAPI]
+        BI --> Firefox[FirefoxAPI]
+    end
     
-    GH --> GC[Gremlins Config]
-    GC --> UI[Options UI]
+    subgraph State
+        GH --> SM[StateManager]
+        SM --> Storage[BrowserStorage]
+        SM --> Events[EventSystem]
+    end
+    
+    subgraph UI
+        CM --> Status[StatusUI]
+        Status --> Events
+        Config[ConfigUI] --> SM
+    end
 ```
 
 ## Design Patterns
 
 ### Factory Pattern
-- Menu builder creation
-- Handler instantiation
-- Browser interface selection
+```javascript
+// Browser interface factory
+export class BrowserInterfaceFactory {
+  static create() {
+    return isChrome() 
+      ? new ChromeInterface()
+      : new FirefoxInterface();
+  }
+}
+```
 
 ### Observer Pattern
-- Storage change listeners
-- Menu update notifications
-- Configuration changes
+```javascript
+// State change notification
+export class StateManager {
+  notify(change) {
+    this.observers.forEach(observer => 
+      observer.onStateChange(change)
+    );
+  }
+}
+```
 
 ### Strategy Pattern
-- Gremlins attack strategies
-- Menu handling strategies
-- Browser-specific implementations
+```javascript
+// Attack strategies
+export class GremlinsStrategy {
+  static get strategies() {
+    return {
+      CHAOS: 'random',
+      FOCUSED: 'targeted',
+      SMART: 'intelligent'
+    };
+  }
+}
+```
 
 ## Data Flow Patterns
 
-### Configuration Flow
-1. User Input (UI) → Configuration Object
-2. Configuration Storage → Handler Configuration
-3. Handler Execution → Browser Actions
+### Message Flow
+```javascript
+// Content script communication
+async function messageHandler(message, sender) {
+  switch (message.type) {
+    case 'START_ATTACK':
+      return handleAttackStart(message.config);
+    case 'UPDATE_STATUS':
+      return updateStatusUI(message.status);
+  }
+}
+```
 
-### Menu Action Flow
-1. Context Menu Selection → Handler Identification
-2. Handler Execution → Browser Interface
-3. Browser Interface → Content Script Injection
+### State Management
+```javascript
+// Centralized state
+export class State {
+  static async update(changes) {
+    await storage.set(changes);
+    notifyListeners(changes);
+  }
+}
+```
 
 ## Extension Architecture
 
-### Components
-1. Background Script
-   - Menu management
-   - Handler coordination
-   - Browser interface
+### Service Worker (background.mjs)
+```javascript
+// Top-level initialization
+import { MenuSystem } from './menu-system.mjs';
+import { StateManager } from './state-manager.mjs';
 
-2. Content Scripts
-   - Gremlins injection
-   - DOM interaction
-   - Event handling
+const menuSystem = new MenuSystem();
+const stateManager = new StateManager();
 
-3. Options UI
-   - Configuration management
-   - User interface
-   - Settings persistence
+await Promise.all([
+  menuSystem.initialize(),
+  stateManager.initialize()
+]);
+```
 
-### Communication Patterns
-- Message passing between components
-- Event-based communication
-- Storage-based synchronization
+### Event System
+```javascript
+// Event handling
+export class EventSystem {
+  on(event, handler) {
+    this.handlers.set(event, handler);
+  }
+  
+  emit(event, data) {
+    const handler = this.handlers.get(event);
+    if (handler) handler(data);
+  }
+}
+```
+
+## Success Patterns
+
+### Error Handling
+```javascript
+// Consistent error handling
+try {
+  await operation();
+} catch (error) {
+  console.error('[System]', error);
+  notifyUser(error.message);
+  await cleanup();
+}
+```
+
+### Resource Management
+```javascript
+// Clean resource handling
+class ResourceManager {
+  async acquire() { /* ... */ }
+  async release() { /* ... */ }
+  
+  async using(resource, operation) {
+    try {
+      await this.acquire(resource);
+      return await operation(resource);
+    } finally {
+      await this.release(resource);
+    }
+  }
+}
+```
+
+### Status Updates
+```javascript
+// Real-time status propagation
+class StatusManager {
+  updateStatus(status) {
+    this.current = status;
+    this.notifyUI();
+    this.persistState();
+  }
+}
