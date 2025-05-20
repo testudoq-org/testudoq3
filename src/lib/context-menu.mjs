@@ -20,11 +20,24 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			paste: pasteRequestHandler,
 			copy: copyRequestHandler,
 			gremlinsAttack: gremlinsAttackHandler
-		};
+		},
+		// Define all possible contexts to ensure visibility across all right-click scenarios
+		ALL_CONTEXTS = ['page', 'selection', 'link', 'editable'];
 
 	let handlerType = 'injectValue',
 		isRebuilding = false,
 		isInitialized = false;
+
+	/**
+	 * Gets the appropriate contexts for menu item visibility
+	 * @param {string} menuType - Type of menu item ('standard', 'universal', 'separator')
+	 * @returns {string[]} Array of contexts where the item should be visible
+	 */
+	function getVisibleContexts(menuType) {
+		// All menu items should be visible in all contexts
+		// This fixes the issue with "Customise menus" and "Help/Support" menu items
+		return ALL_CONTEXTS;
+	}
 
 	// Define core click handler first
 	async function handleClick(tabId, value) {
@@ -98,8 +111,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			executionContext.markPhase('handlerPrep');
 			// Convert string values to proper request objects
 			const requestValue = typeof executionContext.menuValue === 'string'
-				? { '_type': 'literal', 'value': executionContext.menuValue }
-				: executionContext.menuValue,
+					? { '_type': 'literal', 'value': executionContext.menuValue }
+					: executionContext.menuValue,
 				result = await (async () => {
 					executionContext.markPhase('handlerStart');
 					console.log('[ContextMenu Flow] Handler execution:', {
@@ -291,6 +304,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 					cacheSize: menuValueCache.size
 				});
 			}			// Inline generic menus (per improve-right-click-menu.md)
+			// Explicitly use ALL_CONTEXTS to ensure visibility in all right-click scenarios
 			menuBuilder.separator(rootMenu);
 
 			// Create operational mode submenu directly under root
@@ -321,18 +335,19 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 					modeMenu,
 					turnOnCopy,
 					handlerType === 'copy',
-					handlerType
-				);
-			}
+					handlerType);
+			}			// Add "Customise menus" menu item - explicitly pass ALL_CONTEXTS to ensure it appears everywhere
+			rebuildLog('Adding Customise menus item with ALL_CONTEXTS');
+			menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings, { contexts: ALL_CONTEXTS });
 
-			menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings);
-
+			// Add "Help/Support" menu item - explicitly pass ALL_CONTEXTS to ensure it appears everywhere
+			rebuildLog('Adding Help/Support item with ALL_CONTEXTS');
 			menuBuilder.menuItem('Help/Support', rootMenu, () => {
 				if (!browserInterface) {
 					throw new TypeError('browserInterface cannot be null or undefined');
 				}
 				browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
-			});
+			}, { contexts: ALL_CONTEXTS });
 
 			rebuildLog('Generic menus added');
 
@@ -399,4 +414,15 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			throw new Error(`Context menu initialization failed: ${error.message}`);
 		}
 	};
+
+	/**
+	 * Gets the appropriate contexts for menu item visibility
+	 * @param {string} menuType - Type of menu item ('standard', 'universal', 'separator')
+	 * @returns {string[]} Array of contexts where the item should be visible
+	 */
+	function getVisibleContexts(menuType) {
+		// All menu items should be visible in all contexts
+		// This fixes the issue with "Customise menus" and "Help/Support" menu items
+		return ALL_CONTEXTS;
+	}
 }

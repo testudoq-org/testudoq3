@@ -1,8 +1,8 @@
 /**
- * Constructor function for ChromeMenuBuilder.
- * @param {Object} chrome - The Chrome browser API object.
+ * Constructor function for FirefoxMenuBuilder.
+ * @param {Object} browser - The Firefox browser API object.
  */
-export default function ChromeMenuBuilder(chrome) {
+export default function FirefoxMenuBuilder(browser) {
 	// Initialize variables to store item values and handlers
 	let itemValues = {},
 		itemHandlers = {};
@@ -11,6 +11,7 @@ export default function ChromeMenuBuilder(chrome) {
 	const self = this,
 
 		// Contexts where the menu items can appear
+		// Match Chrome implementation for consistency
 		contexts = ['page', 'selection', 'link', 'editable'];
 
 	/**
@@ -19,10 +20,10 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @returns {string} The ID of the created menu.
 	 */
 	self.rootMenu = function (title) {
-		return chrome.contextMenus.create({
+		return browser.menus.create({
 			id: title + Math.random(),
 			title,
-			contexts
+			contexts // Ensure visible in all contexts
 		});
 	};
 
@@ -33,11 +34,11 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @returns {string} The ID of the created menu.
 	 */
 	self.subMenu = function (title, parentMenu) {
-		return chrome.contextMenus.create({
+		return browser.menus.create({
 			id: parentMenu + title + Math.random(),
 			title,
 			parentId: parentMenu,
-			contexts
+			contexts // Ensure visible in all contexts
 		});
 	};
 
@@ -47,11 +48,11 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @returns {string} The ID of the created separator.
 	 */
 	self.separator = function (parentMenu) {
-		return chrome.contextMenus.create({
+		return browser.menus.create({
 			id: parentMenu + Math.random(),
 			type: 'separator',
 			parentId: parentMenu,
-			contexts
+			contexts // Ensure visible in all contexts
 		});
 	};
 
@@ -62,14 +63,26 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @param {Function} clickHandler - The function to handle click events.
 	 * @param {any} value - The value associated with the menu item.
 	 * @returns {string} The ID of the created menu item.
-	 */
-	self.menuItem = function (title, parentMenu, clickHandler, value) {
-		const id = chrome.contextMenus.create({
-			id: contexts + parentMenu + title + Math.random(),
+	 */	self.menuItem = function (title, parentMenu, clickHandler, value) {
+		// Get contexts from value parameter if provided, otherwise use default contexts
+		const useContexts = value && value.contexts ? value.contexts : contexts;
+		
+		console.log('[FirefoxMenuBuilder] Creating menu item:', {
 			title,
 			parentId: parentMenu,
-			contexts
+			contexts: useContexts
 		});
+		
+		const menuConfig = {
+				id: useContexts + parentMenu + title + Math.random(),
+				title,
+				parentId: parentMenu,
+				contexts: useContexts // Ensure visible in all contexts
+			},
+			id = browser.menus.create(menuConfig);
+		
+		console.log('[FirefoxMenuBuilder] Menu config:', menuConfig);
+		
 		itemValues[id] = value;
 		itemHandlers[id] = clickHandler;
 		return id;
@@ -84,13 +97,13 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @returns {string} The ID of the created menu item.
 	 */
 	self.choice = function (title, parentMenu, clickHandler, value) {
-		const id = chrome.contextMenus.create({
+		const id = browser.menus.create({
 			id: `value${Math.random()}`,
 			type: 'radio',
 			checked: value,
 			title,
 			parentId: parentMenu,
-			contexts
+			contexts // Ensure visible in all contexts
 		});
 		itemHandlers[id] = clickHandler;
 		return id;
@@ -103,11 +116,11 @@ export default function ChromeMenuBuilder(chrome) {
 	self.removeAll = function () {
 		itemValues = {};
 		itemHandlers = {};
-		return new Promise((resolve) => chrome.contextMenus.removeAll(resolve));
+		return new Promise((resolve) => browser.menus.removeAll(resolve));
 	};
 
 	// Event listener for menu item clicks
-	chrome.contextMenus.onClicked.addListener((info, tab) => {
+	browser.menus.onClicked.addListener((info, tab) => {
 		const itemId = info && info.menuItemId;
 		if (itemHandlers[itemId]) {
 			itemHandlers[itemId](tab.id, itemValues[itemId]);
@@ -120,6 +133,6 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @returns {Promise} A promise that resolves when the menu item is selected.
 	 */
 	self.selectChoice = function (menuId) {
-		return chrome.contextMenus.update(menuId, { checked: true });
+		return browser.menus.update(menuId, { checked: true });
 	};
 }

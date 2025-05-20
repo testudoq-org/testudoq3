@@ -21,8 +21,7 @@ const MENU_STORAGE_KEY = 'chrome_menu_state',
  *
  * @param {Object} chrome - Chrome extension API object
  */
-export default function ChromeMenuBuilder(chrome) {
-	// State management and configuration
+export default function ChromeMenuBuilder(chrome) {	// State management and configuration
 	const menuItems = new Set(),
 		itemValues = {},
 		itemHandlers = {},
@@ -39,6 +38,7 @@ export default function ChromeMenuBuilder(chrome) {
 				});
 			}
 		},
+		// Always use all available contexts to ensure menu items appear everywhere
 		contexts = DEFAULT_CONTEXTS,
 		self = this,
 		loadMenuState = async () => {
@@ -118,7 +118,7 @@ export default function ChromeMenuBuilder(chrome) {
 		return chrome.contextMenus.create({
 			id,
 			title,
-			contexts
+			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
 		});
 	};
 
@@ -136,10 +136,9 @@ export default function ChromeMenuBuilder(chrome) {
 			id: parentMenu + title + Math.random(), // new ID
 			title, // submenu title
 			parentId: parentMenu, // parent menu ID
-			contexts // contexts for the submenu
+			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
 		});
 	};
-
 	/**
 	 * Creates a separator menu item in the given parent menu.
 	 *
@@ -178,8 +177,10 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @param {*} value - Value associated with this menu item
 	 * @returns {Promise<string>} ID of the created menu item
 	 * @throws {Error} If validation fails or menu limit is exceeded
-	 */
-	self.menuItem = async function (title, parentMenu, clickHandler, value) {
+	 */	self.menuItem = async function (title, parentMenu, clickHandler, value) {
+		// Extract contexts from value if provided, otherwise use default contexts
+		const useContexts = value && value.contexts ? value.contexts : contexts;
+		
 		console.log('[MenuBuilder Flow] Creating menu item:', {
 			time: Date.now(),
 			title,
@@ -187,7 +188,8 @@ export default function ChromeMenuBuilder(chrome) {
 			hasHandler: !!clickHandler,
 			value,
 			existingItems: menuItems.size,
-			existingValues: Object.keys(itemValues)
+			existingValues: Object.keys(itemValues),
+			contexts: useContexts // Log the actual contexts being used
 		});
 		try {
 			// Check menu limit before creating
@@ -208,18 +210,19 @@ export default function ChromeMenuBuilder(chrome) {
 			}
 			if (!menuItemSchema.validateValue(value)) {
 				throw new Error('Invalid value');
-			}
-
-			// Generate and validate ID
-			const id = `menu_${contexts}_${parentMenu}_${title}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-				result = await chrome.contextMenus.create({
+			}			// Get contexts from value parameter if provided, otherwise use default ALL_CONTEXTS
+			const useContexts = value && value.contexts ? value.contexts : contexts,
+				// Generate and validate ID
+				id = `menu_${useContexts}_${parentMenu}_${title}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+				menuConfig = {
 					id,
 					title,
 					parentId: parentMenu,
-					contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
-				}),
+					contexts: useContexts // Ensure visible in all contexts
+				},
+				result = await chrome.contextMenus.create(menuConfig),
 				registrationTime = Date.now();
-
+			console.log('[MenuBuilder Flow] Menu config for item:', { title, menuConfig });
 			// Update state and track menu item
 
 			menuItems.add(id);
@@ -267,7 +270,7 @@ export default function ChromeMenuBuilder(chrome) {
 			checked: value, // checked state of the radio button menu item
 			title, // title of the radio button menu item
 			parentId: parentMenu, // parent menu ID
-			contexts // contexts for the radio button menu item
+			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
 		});
 		itemHandlers[id] = clickHandler; // store click handler
 		itemValues[id] = value; // store value
@@ -326,13 +329,13 @@ export default function ChromeMenuBuilder(chrome) {
 	chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 		handlerRegistry.registerHandler();
 		const flowTimers = {
-				start: Date.now(),
-				getElapsed: () => Date.now() - flowTimers.start,
-				markTimestamp: (stage) => {
-					flowTimers[stage] = Date.now() - flowTimers.start;
-					return flowTimers[stage];
-				}
-			},
+			start: Date.now(),
+			getElapsed: () => Date.now() - flowTimers.start,
+			markTimestamp: (stage) => {
+				flowTimers[stage] = Date.now() - flowTimers.start;
+				return flowTimers[stage];
+			}
+		},
 			itemId = info?.menuItemId,
 			metrics = {
 				timestamp: flowTimers.start,
