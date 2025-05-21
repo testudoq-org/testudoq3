@@ -3,7 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import recursiveLs from 'fs-readdir-recursive';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-import fs from 'fs';
 
 const filename = fileURLToPath(import.meta.url),
 	dirname = path.dirname(filename),
@@ -90,7 +89,8 @@ export default {
 							'**/options-gremlins-bookmarklet-handler.js',
 							'**/gremlins-handler.js',
 							'**/popup-init.js',
-							'**/popup.js'
+							'**/popup.js',
+							'**/background.mjs'  // Exclude template background.mjs to use built version
 						]
 					}
 				}

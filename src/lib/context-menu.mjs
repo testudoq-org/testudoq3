@@ -111,8 +111,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			executionContext.markPhase('handlerPrep');
 			// Convert string values to proper request objects
 			const requestValue = typeof executionContext.menuValue === 'string'
-					? { '_type': 'literal', 'value': executionContext.menuValue }
-					: executionContext.menuValue,
+				? { '_type': 'literal', 'value': executionContext.menuValue }
+				: executionContext.menuValue,
 				result = await (async () => {
 					executionContext.markPhase('handlerStart');
 					console.log('[ContextMenu Flow] Handler execution:', {
@@ -249,6 +249,119 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	// Reference: memory-bank/improve-right-click-menu.md
 	// The functionality is now inlined directly in rebuildMenu()
 
+	// Helper to log rebuild progress with timing details
+	function createRebuildLogger(startTime) {
+		return (msg, details = {}) => {
+			console.log('[ContextMenu Rebuild]', msg, {
+				timestamp: Date.now(),
+				elapsed: Date.now() - startTime,
+				...details
+			});
+		};
+	}
+
+	// Clears cache and removes all current menus
+	async function clearExistingMenus() {
+		menuValueCache.clear();
+		await menuBuilder.removeAll();
+	}
+
+	// Processes standard menu items and caches key values
+	async function buildStandardMenu(options, logger) {
+		if (options?.skipStandard) {
+			return [];
+		}
+
+		const rootMenu = menuBuilder.rootMenu('Testudoq');
+		const items = (await processMenuObject(
+			standardConfig,
+			menuBuilder,
+			rootMenu,
+			handleClick
+		)).slice(0, MAX_MENU_ITEMS);
+
+		logger('Standard root menu created');
+
+		if (items.length) {
+			logger('Processing standard menu items', {
+				itemCount: items.length,
+				items: items.map(item => ({
+					id: item.id,
+					hasValue: !!item.value
+				}))
+			});
+
+			items.forEach(item => {
+				if (item.id && item.value) {
+					cacheMenuValue(item.id, item.value);
+				}
+			});
+
+			logger('Standard menu items cached', {
+				cacheSize: menuValueCache.size
+			});
+		}
+
+		return items;
+	}
+
+	// Creates the operational submenu (for generic modes) under the given root menu
+	function addOperationalSubMenu(rootMenu) {
+		const handlerChoices = {};
+		const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+
+		// Ensure pasteSupported is truthy (using default true if undefined)
+		pasteSupported = pasteSupported || true;
+
+		if (pasteSupported) {
+			handlerChoices.injectValue = menuBuilder.choice(
+				'Inject value',
+				modeMenu,
+				turnOffPasting,
+				handlerType === 'injectValue',
+				handlerType
+			);
+			handlerChoices.paste = menuBuilder.choice(
+				'Simulate pasting',
+				modeMenu,
+				turnOnPasting,
+				handlerType === 'paste',
+				handlerType
+			);
+			handlerChoices.copy = menuBuilder.choice(
+				'Copy to clipboard',
+				modeMenu,
+				turnOnCopy,
+				handlerType === 'copy',
+				handlerType
+			);
+		}
+	}
+
+	// Adds generic menu items (e.g., "Customise menus" and "Help/Support") to the root menu
+	function addGenericMenus(rootMenu, logger) {
+		logger('Adding "Customise menus" item with ALL_CONTEXTS');
+		menuBuilder.menuItem(
+			'Customise menus',
+			rootMenu,
+			browserInterface.openSettings,
+			{ contexts: ALL_CONTEXTS }
+		);
+
+		logger('Adding "Help/Support" item with ALL_CONTEXTS');
+		menuBuilder.menuItem(
+			'Help/Support',
+			rootMenu,
+			() => {
+				browserInterface.openUrl(browserInterface.getHelpUrl());
+			},
+			{ contexts: ALL_CONTEXTS }
+		);
+
+		logger('Generic menus added');
+	}
+
+	// The main rebuildMenu function using the helpers defined above
 	async function rebuildMenu(options) {
 		if (isRebuilding) {
 			console.log('[ContextMenu] Menu rebuild already in progress, skipping');
@@ -256,113 +369,40 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		}
 
 		isRebuilding = true;
-		const rebuildStart = Date.now(),
-			rebuildLog = (msg, details = {}) => console.log('[ContextMenu Rebuild]', msg, {
-				timestamp: Date.now(),
-				elapsed: Date.now() - rebuildStart,
-				...details
-			});
+		const rebuildStart = Date.now();
+		const logger = createRebuildLogger(rebuildStart);
 
 		try {
-			// Clear menu value cache
-			menuValueCache.clear();
+			console.log('[ContextMenu] Starting menu rebuild');
 
-			// Cleanup existing menus
-			await menuBuilder.removeAll();
-			rebuildLog('Existing menus removed');
+			// Clear caches and remove existing menu items
+			await clearExistingMenus();
+			logger('Existing menus cleared');
 
-			// Create root menu and process items
-			rebuildLog('Starting menu rebuild', {
-				skipStandard: options?.skipStandard,
-				hasAdditionalMenus: !!options?.additionalMenus
-			});
+			// Build the root menu and process standard menu items
+			const rootMenu = menuBuilder.rootMenu('Testudoq');
+			const standardItems = await buildStandardMenu(options, logger);
 
-			const rootMenu = menuBuilder.rootMenu('Testudoq'),
-				menuItems = !options?.skipStandard
-					? (await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick)).slice(0, MAX_MENU_ITEMS)
-					: [];
-
-			rebuildLog('Root menu created');
-
-			// Cache menu values for standard items
-			if (menuItems.length) {
-				rebuildLog('Processing standard menu items', {
-					itemCount: menuItems.length,
-					items: menuItems.map(item => ({
-						id: item.id,
-						hasValue: !!item.value
-					}))
-				});
-
-				menuItems.forEach(item => {
-					if (item.id && item.value) {
-						cacheMenuValue(item.id, item.value);
-					}
-				});
-
-				rebuildLog('Standard menu items processed', {
-					cacheSize: menuValueCache.size
-				});
-			}			// Inline generic menus (per improve-right-click-menu.md)
-			// Explicitly use ALL_CONTEXTS to ensure visibility in all right-click scenarios
+			// Add a separator before the generic menus
 			menuBuilder.separator(rootMenu);
 
-			// Create operational mode submenu directly under root
-			const handlerChoices = {},
-				modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+			// Create operational submenu under the root
+			addOperationalSubMenu(rootMenu);
 
-			if (pasteSupported !== undefined) {
-				pasteSupported = pasteSupported || true;
-			}
+			// Add "Customise menus" and "Help/Support" items
+			addGenericMenus(rootMenu, logger);
 
-			if (pasteSupported) {
-				handlerChoices.injectValue = menuBuilder.choice(
-					'Inject value',
-					modeMenu,
-					turnOffPasting,
-					handlerType === 'injectValue',
-					handlerType
-				);
-				handlerChoices.paste = menuBuilder.choice(
-					'Simulate pasting',
-					modeMenu,
-					turnOnPasting,
-					handlerType === 'paste',
-					handlerType
-				);
-				handlerChoices.copy = menuBuilder.choice(
-					'Copy to clipboard',
-					modeMenu,
-					turnOnCopy,
-					handlerType === 'copy',
-					handlerType);
-			}			// Add "Customise menus" menu item - explicitly pass ALL_CONTEXTS to ensure it appears everywhere
-			rebuildLog('Adding Customise menus item with ALL_CONTEXTS');
-			menuBuilder.menuItem('Customise menus', rootMenu, browserInterface.openSettings, { contexts: ALL_CONTEXTS });
-
-			// Add "Help/Support" menu item - explicitly pass ALL_CONTEXTS to ensure it appears everywhere
-			rebuildLog('Adding Help/Support item with ALL_CONTEXTS');
-			menuBuilder.menuItem('Help/Support', rootMenu, () => {
-				if (!browserInterface) {
-					throw new TypeError('browserInterface cannot be null or undefined');
-				}
-				browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
-			}, { contexts: ALL_CONTEXTS });
-
-			rebuildLog('Generic menus added');
-
-			// Save state after successful rebuild
+			// Save state after a successful rebuild
 			await saveState();
-
-			rebuildLog(`Menu rebuild completed in ${Date.now() - rebuildStart}ms`);
+			logger(`Menu rebuild completed in ${Date.now() - rebuildStart}ms`);
 		} catch (error) {
 			console.error('[ContextMenu] Menu rebuild failed:', error);
-			// Attempt recovery by rebuilding with only standard items
+			// If error occurs, attempt recovery using only standard menus.
 			try {
 				menuValueCache.clear();
 				await menuBuilder.removeAll();
-				const rootMenu = menuBuilder.rootMenu('Testudoq');
-				await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick);
+				const fallbackRoot = menuBuilder.rootMenu('Testudoq');
+				await processMenuObject(standardConfig, menuBuilder, fallbackRoot, handleClick);
 				console.log('[ContextMenu] Fallback to standard menu successful');
 			} catch (recoveryError) {
 				console.error('[ContextMenu] Recovery failed:', recoveryError);
@@ -372,6 +412,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			isRebuilding = false;
 		}
 	}
+
 
 	function wireStorageListener() {
 		browserInterface.addStorageListener(async () => {
