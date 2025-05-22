@@ -30,7 +30,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 
 	/**
 	 * Gets the appropriate contexts for menu item visibility
-	 * @param {string} menuType - Type of menu item ('standard', 'universal', 'separator')
+	 * @param {string} menuType - Type of menu item ('standard', 'universal', 'separator', 'operational', 'help')
 	 * @returns {string[]} Array of contexts where the item should be visible
 	 */
 	function getVisibleContexts(menuType) {
@@ -111,8 +111,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			executionContext.markPhase('handlerPrep');
 			// Convert string values to proper request objects
 			const requestValue = typeof executionContext.menuValue === 'string'
-				? { '_type': 'literal', 'value': executionContext.menuValue }
-				: executionContext.menuValue,
+					? { '_type': 'literal', 'value': executionContext.menuValue }
+					: executionContext.menuValue,
 				result = await (async () => {
 					executionContext.markPhase('handlerStart');
 					console.log('[ContextMenu Flow] Handler execution:', {
@@ -272,13 +272,13 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			return [];
 		}
 
-		const rootMenu = menuBuilder.rootMenu('Testudoq');
-		const items = (await processMenuObject(
-			standardConfig,
-			menuBuilder,
-			rootMenu,
-			handleClick
-		)).slice(0, MAX_MENU_ITEMS);
+		const rootMenu = menuBuilder.rootMenu('Testudoq'),
+			items = (await processMenuObject(
+				standardConfig,
+				menuBuilder,
+				rootMenu,
+				handleClick
+			)).slice(0, MAX_MENU_ITEMS);
 
 		logger('Standard root menu created');
 
@@ -306,9 +306,13 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	}
 
 	// Creates the operational submenu (for generic modes) under the given root menu
-	function addOperationalSubMenu(rootMenu) {
-		const handlerChoices = {};
-		const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu);
+	function addOperationalSubMenu(rootMenu, logger) {
+		const handlerChoices = {},
+			// Use getVisibleContexts to ensure operational mode appears in all contexts
+			contexts = getVisibleContexts('operational'),
+			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu, { contexts });
+
+		logger('Adding "Operational mode" submenu with contexts:', contexts);
 
 		// Ensure pasteSupported is truthy (using default true if undefined)
 		pasteSupported = pasteSupported || true;
@@ -340,22 +344,25 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 
 	// Adds generic menu items (e.g., "Customise menus" and "Help/Support") to the root menu
 	function addGenericMenus(rootMenu, logger) {
-		logger('Adding "Customise menus" item with ALL_CONTEXTS');
+		// Use getVisibleContexts to ensure generic menus appear in all contexts
+		const customiseContexts = getVisibleContexts('help'),
+			helpContexts = getVisibleContexts('help');
+		logger('Adding "Customise menus" item with contexts:', customiseContexts);
 		menuBuilder.menuItem(
 			'Customise menus',
 			rootMenu,
 			browserInterface.openSettings,
-			{ contexts: ALL_CONTEXTS }
+			{ contexts: customiseContexts }
 		);
 
-		logger('Adding "Help/Support" item with ALL_CONTEXTS');
+		logger('Adding "Help/Support" item with contexts:', helpContexts);
 		menuBuilder.menuItem(
 			'Help/Support',
 			rootMenu,
 			() => {
 				browserInterface.openUrl(browserInterface.getHelpUrl());
 			},
-			{ contexts: ALL_CONTEXTS }
+			{ contexts: helpContexts }
 		);
 
 		logger('Generic menus added');
@@ -369,8 +376,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 		}
 
 		isRebuilding = true;
-		const rebuildStart = Date.now();
-		const logger = createRebuildLogger(rebuildStart);
+		const rebuildStart = Date.now(),
+			logger = createRebuildLogger(rebuildStart);
 
 		try {
 			console.log('[ContextMenu] Starting menu rebuild');
@@ -380,11 +387,12 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			logger('Existing menus cleared');
 
 			// Build the root menu and process standard menu items
-			const rootMenu = menuBuilder.rootMenu('Testudoq');
-			const standardItems = await buildStandardMenu(options, logger);
+			const rootMenu = menuBuilder.rootMenu('Testudoq'),
+				standardItems = await buildStandardMenu(options, logger);
 
 			// Add a separator before the generic menus
-			menuBuilder.separator(rootMenu);
+			menuBuilder.separator(rootMenu, { contexts: getVisibleContexts('separator') });
+			logger('Added separator with ALL_CONTEXTS');
 
 			// Create operational submenu under the root
 			addOperationalSubMenu(rootMenu);
@@ -412,7 +420,6 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			isRebuilding = false;
 		}
 	}
-
 
 	function wireStorageListener() {
 		browserInterface.addStorageListener(async () => {
@@ -455,15 +462,4 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			throw new Error(`Context menu initialization failed: ${error.message}`);
 		}
 	};
-
-	/**
-	 * Gets the appropriate contexts for menu item visibility
-	 * @param {string} menuType - Type of menu item ('standard', 'universal', 'separator')
-	 * @returns {string[]} Array of contexts where the item should be visible
-	 */
-	function getVisibleContexts(menuType) {
-		// All menu items should be visible in all contexts
-		// This fixes the issue with "Customise menus" and "Help/Support" menu items
-		return ALL_CONTEXTS;
-	}
 }
