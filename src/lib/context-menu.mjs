@@ -12,7 +12,7 @@ import gremlinsAttackHandler from './gremlins-attack-handler.mjs';
  * @param {boolean} pasteSupported - Whether paste operations are supported
  */
 export default function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const MAX_MENU_ITEMS = 500,
+	const MAX_MENU_ITEMS = 1500,
 		STATE_KEY = 'context_menu_state',
 		menuValueCache = new Map(),
 		handlers = {
@@ -33,6 +33,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	 * @param {string} menuType - Type of menu item ('standard', 'universal', 'separator', 'operational', 'help')
 	 * @returns {string[]} Array of contexts where the item should be visible
 	 */
+	// eslint-disable-next-line no-unused-vars
 	function getVisibleContexts(menuType) {
 		// All menu items should be visible in all contexts
 		// This fixes the issue with "Customise menus" and "Help/Support" menu items
@@ -387,7 +388,9 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			logger('Existing menus cleared');
 
 			// Build the root menu and process standard menu items
+			// rootMenu and standardItems (debug metadata about created menu items)
 			const rootMenu = menuBuilder.rootMenu('Testudoq'),
+				// eslint-disable-next-line no-unused-vars
 				standardItems = await buildStandardMenu(options, logger);
 
 			// Add a separator before the generic menus
@@ -395,7 +398,7 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			logger('Added separator with ALL_CONTEXTS');
 
 			// Create operational submenu under the root
-			addOperationalSubMenu(rootMenu);
+			addOperationalSubMenu(rootMenu, logger);
 
 			// Add "Customise menus" and "Help/Support" items
 			addGenericMenus(rootMenu, logger);
