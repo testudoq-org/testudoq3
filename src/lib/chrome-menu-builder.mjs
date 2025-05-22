@@ -21,7 +21,7 @@ const MENU_STORAGE_KEY = 'chrome_menu_state',
  *
  * @param {Object} chrome - Chrome extension API object
  */
-export default function ChromeMenuBuilder(chrome) {	// State management and configuration
+export default function ChromeMenuBuilder(chrome) {
 	const menuItems = new Set(),
 		itemValues = {},
 		itemHandlers = {},
@@ -106,6 +106,7 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 				isHandlerRegistered: handlerRegistry.isRegistered
 			});
 		};
+
 	/**
 	 * Creates a root menu with the given title.
 	 *
@@ -118,7 +119,7 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 		return chrome.contextMenus.create({
 			id,
 			title,
-			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
+			contexts: DEFAULT_CONTEXTS
 		});
 	};
 
@@ -130,44 +131,38 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 	 * @return {string} The ID of the created submenu
 	 */
 	self.subMenu = function (title, parentMenu) {
-		// Generate a unique ID for the submenu by appending a random number to the title and parentID.
-		// The contexts for the submenu are set to 'editable' and the title is set to the given title and the parentID to the given parentMenu.
 		return chrome.contextMenus.create({
-			id: parentMenu + title + Math.random(), // new ID
-			title, // submenu title
-			parentId: parentMenu, // parent menu ID
-			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
-		});
-	};
-	/**
-	 * Creates a separator menu item in the given parent menu.
-	 *
-	 * @param {string} parentMenu - The ID of the parent menu
-	 * @return {string} The ID of the created separator menu item
-	 */
-	self.separator = function (parentMenu) {
-		// Generate a unique ID for the separator by appending a random number to the parentID.
-		// The type of the separator is set to 'separator', the parentID to the given parentMenu and the contexts to 'editable'.
-		return chrome.contextMenus.create({
-			id: parentMenu + Math.random(), // new ID
-			type: 'separator', // type of the separator
-			parentId: parentMenu, // parent menu ID
-			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
+			id: parentMenu + title + Math.random(),
+			title,
+			parentId: parentMenu,
+			contexts: DEFAULT_CONTEXTS
 		});
 	};
 
 	/**
-	 * Creates a menu item with the given title, parentMenu, clickHandler and value.
+	 * Creates a separator menu item in the given parent menu.
 	 *
-	 * @param {string} title - The title of the menu item
 	 * @param {string} parentMenu - The ID of the parent menu
-	 * @param {function} clickHandler - The click handler for the menu item
-	 * @param {any} value - The value of the menu item
-	 * @return {string} The ID of the created menu item
+	 * @param {Object} [options] - Optional configuration for the separator
+	 * @param {string[]} [options.contexts] - Array of contexts where separator should appear
+	 * @return {string} The ID of the created separator menu item
 	 */
-	/**
-	 * Creates a menu item with validation and handler tracking
-	 */
+	self.separator = function (parentMenu, options = {}) {
+		const useContexts = options.contexts || DEFAULT_CONTEXTS;
+		console.log('[MenuBuilder Flow] Creating separator:', {
+			time: Date.now(),
+			parentMenu,
+			contexts: useContexts
+		});
+
+		return chrome.contextMenus.create({
+			id: parentMenu + Math.random(),
+			type: 'separator',
+			parentId: parentMenu,
+			contexts: useContexts
+		});
+	};
+
 	/**
 	 * Creates a menu item with the given properties.
 	 *
@@ -177,10 +172,9 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 	 * @param {*} value - Value associated with this menu item
 	 * @returns {Promise<string>} ID of the created menu item
 	 * @throws {Error} If validation fails or menu limit is exceeded
-	 */	self.menuItem = async function (title, parentMenu, clickHandler, value) {
-		// Extract contexts from value if provided, otherwise use default contexts
+	 */
+	self.menuItem = async function (title, parentMenu, clickHandler, value) {
 		const useContexts = value && value.contexts ? value.contexts : contexts;
-		
 		console.log('[MenuBuilder Flow] Creating menu item:', {
 			time: Date.now(),
 			title,
@@ -191,8 +185,8 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 			existingValues: Object.keys(itemValues),
 			contexts: useContexts
 		});
+
 		try {
-			// Enhanced menu limit check with detailed logging
 			if (menuItems.size >= MAX_MENU_ITEMS) {
 				const error = new Error(`Menu item limit exceeded (max: ${MAX_MENU_ITEMS})`);
 				console.error('[MenuBuilder] Menu limit reached:', {
@@ -207,7 +201,6 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 				throw error;
 			}
 
-			// Validate inputs
 			if (!menuItemSchema.validateTitle(title)) {
 				throw new Error('Invalid title');
 			}
@@ -216,30 +209,25 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 			}
 			if (!menuItemSchema.validateValue(value)) {
 				throw new Error('Invalid value');
-			}			// Get contexts from value parameter if provided, otherwise use default ALL_CONTEXTS
-			const useContexts = value && value.contexts ? value.contexts : contexts,
-				// Generate and validate ID
-				id = `menu_${useContexts}_${parentMenu}_${title}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+			}
+
+			const id = `menu_${parentMenu}_${title}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
 				menuConfig = {
 					id,
 					title,
 					parentId: parentMenu,
-					contexts: useContexts // Ensure visible in all contexts
+					contexts: useContexts
 				},
 				result = await chrome.contextMenus.create(menuConfig),
 				registrationTime = Date.now();
-			console.log('[MenuBuilder Flow] Menu config for item:', { title, menuConfig });
-			// Update state and track menu item
 
+			console.log('[MenuBuilder Flow] Menu config for item:', { title, menuConfig });
 			menuItems.add(id);
 			itemValues[id] = value;
 			itemHandlers[id] = clickHandler;
 			logMenuState('create');
-
-			// Save state
 			await saveMenuState();
 
-			// Log registration with timing
 			console.log('[MenuBuilder Flow] Handler registered:', {
 				id,
 				registeredAt: registrationTime,
@@ -269,7 +257,7 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 	};
 
 	/**
-	 * Creates a radio button menu item with the given title, parentMenu, clickHandler and value.
+	 * Creates a radio button menu item.
 	 *
 	 * @param {string} title - The title of the radio button menu item
 	 * @param {string} parentMenu - The ID of the parent menu
@@ -278,36 +266,26 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 	 * @return {string} The ID of the created radio button menu item
 	 */
 	self.choice = function (title, parentMenu, clickHandler, value) {
-		// Generate a unique ID for the radio button menu item by appending a random number to the word 'value'.
-		// The type of the radio button menu item is set to 'radio', the checked value is set to the given value,
-		// the title and parentID are set to the given values and the clickHandler and value are stored in itemHandlers and itemValues respectively.
 		const id = chrome.contextMenus.create({
-			id: `value${Math.random()}`, // new ID
-			type: 'radio', // type of the radio button menu item
-			checked: value, // checked state of the radio button menu item
-			title, // title of the radio button menu item
-			parentId: parentMenu, // parent menu ID
-			contexts: ['page', 'selection', 'link', 'editable'] // Ensure visible in all contexts
+			id: `value${Math.random()}`,
+			type: 'radio',
+			checked: value,
+			title,
+			parentId: parentMenu,
+			contexts: DEFAULT_CONTEXTS
 		});
-		itemHandlers[id] = clickHandler; // store click handler
-		itemValues[id] = value; // store value
-		// Return the ID of the created radio button menu item
+		itemHandlers[id] = clickHandler;
+		itemValues[id] = value;
 		return id;
 	};
 
 	/**
-	 * Removes all context menu items and resets itemHandlers and itemValues.
-	 *
-	 * @return {Promise} A promise that resolves when all context menu items are removed.
-	 */
-	/**
-	 * Removes all menu items with cleanup
+	 * Removes all menu items with cleanup.
+	 * @return {Promise<boolean>} A promise that resolves when all items are removed
 	 */
 	self.removeAll = async function () {
 		try {
 			console.log('[MenuBuilder Debug] Starting cleanup...');
-
-			// Remove stored state first
 			await chrome.storage.local.remove(MENU_STORAGE_KEY);
 			console.log('[MenuBuilder Debug] Cleared stored menu state');
 
@@ -317,7 +295,6 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 			Object.keys(itemHandlers).forEach(key => delete itemHandlers[key]);
 			logMenuState('after_reset');
 
-			// Remove all context menu items
 			await new Promise((resolve, reject) => {
 				chrome.contextMenus.removeAll(() => {
 					const error = chrome.runtime.lastError;
@@ -337,12 +314,22 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 		}
 	};
 
+	/**
+	 * Selects a choice by updating the checked state.
+	 *
+	 * @param {string} menuId - The ID of the menu item to update
+	 * @return {Promise} A Promise that resolves when the menu item is updated
+	 */
+	self.selectChoice = function (menuId) {
+		return chrome.contextMenus.update(menuId, { checked: true });
+	};
+
 	// Initialize by loading stored state
 	loadMenuState().catch(error => {
 		console.error('[MenuBuilder Debug] Failed to initialize:', error);
 	});
 
-	// Set up click listener with enhanced error handling and validation
+	// Set up click listener
 	chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 		handlerRegistry.registerHandler();
 		const flowTimers = {
@@ -366,6 +353,7 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 				totalValues: Object.keys(itemValues).length,
 				flowTimers
 			};
+
 		console.log('[MenuBuilder Flow] Click event received:', {
 			...metrics,
 			elapsed: flowTimers.markTimestamp('eventReceived')
@@ -409,7 +397,6 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 				elapsed: flowTimers.markTimestamp('handlerExecutionStart')
 			});
 
-			// Add handler signature validation
 			const handler = itemHandlers[itemId],
 				menuValue = {
 					menuId: itemId,
@@ -424,7 +411,6 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 				result = await itemHandlers[itemId](tab.id, menuValue);
 
 			console.log('[MenuBuilder Flow] Handler validation:', handlerValidation);
-
 			console.log('[MenuBuilder Flow] Handler completed:', {
 				...metrics,
 				success: true,
@@ -434,6 +420,7 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 					.filter(([key]) => key !== 'start' && typeof flowTimers[key] === 'number')
 					.sort((a, b) => a[1] - b[1])
 			});
+
 			return result;
 		} catch (error) {
 			console.error('[MenuBuilder Flow] Handler execution failed:', {
@@ -448,16 +435,4 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 			throw error;
 		}
 	});
-
-	/**
-	 * Selects a choice by updating the checked state of the given menu item ID.
-	 *
-	 * @param {string} menuId - The ID of the menu item to update.
-	 * @return {Promise} A Promise that resolves when the menu item is updated.
-	 */
-	self.selectChoice = function (menuId) {
-		// Update the checked state of the given menu item ID to true
-		// and return a promise that resolves when the update is complete
-		return chrome.contextMenus.update(menuId, { checked: true });
-	};
 }
