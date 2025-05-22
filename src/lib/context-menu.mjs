@@ -12,7 +12,7 @@ import gremlinsAttackHandler from './gremlins-attack-handler.mjs';
  * @param {boolean} pasteSupported - Whether paste operations are supported
  */
 export default function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const MAX_MENU_ITEMS = 1500,
+	const MAX_MENU_ITEMS = 5000,
 		STATE_KEY = 'context_menu_state',
 		menuValueCache = new Map(),
 		handlers = {
@@ -346,27 +346,29 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	// Adds generic menu items (e.g., "Customise menus" and "Help/Support") to the root menu
 	function addGenericMenus(rootMenu, logger) {
 		// Use getVisibleContexts to ensure generic menus appear in all contexts
-		const customiseContexts = getVisibleContexts('help'),
-			helpContexts = getVisibleContexts('help');
-		logger('Adding "Customise menus" item with contexts:', customiseContexts);
+		logger('Adding generic menu items with ALL_CONTEXTS');
+
 		menuBuilder.menuItem(
 			'Customise menus',
 			rootMenu,
 			browserInterface.openSettings,
-			{ contexts: customiseContexts }
+			{ contexts: ALL_CONTEXTS }
 		);
 
-		logger('Adding "Help/Support" item with contexts:', helpContexts);
+		logger('Adding "Help/Support" item with ALL_CONTEXTS');
 		menuBuilder.menuItem(
 			'Help/Support',
 			rootMenu,
 			() => {
 				browserInterface.openUrl(browserInterface.getHelpUrl());
 			},
-			{ contexts: helpContexts }
+			{ contexts: ALL_CONTEXTS }
 		);
 
-		logger('Generic menus added');
+		logger('Generic menus added', {
+			items: ['Customise menus', 'Help/Support'],
+			contexts: ALL_CONTEXTS
+		});
 	}
 
 	// The main rebuildMenu function using the helpers defined above
@@ -394,13 +396,17 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 				standardItems = await buildStandardMenu(options, logger);
 
 			// Add a separator before the generic menus
-			menuBuilder.separator(rootMenu, { contexts: getVisibleContexts('separator') });
-			logger('Added separator with ALL_CONTEXTS');
+			// Add separator with explicit ALL_CONTEXTS
+			menuBuilder.separator(rootMenu, { contexts: ALL_CONTEXTS });
+			logger('Added separator', {
+				contexts: ALL_CONTEXTS,
+				type: 'separator'
+			});
 
 			// Create operational submenu under the root
 			addOperationalSubMenu(rootMenu, logger);
 
-			// Add "Customise menus" and "Help/Support" items
+			// Add generic menu items with explicit ALL_CONTEXTS
 			addGenericMenus(rootMenu, logger);
 
 			// Save state after a successful rebuild

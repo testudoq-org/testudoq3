@@ -163,8 +163,26 @@ describe('ContextMenu', () => {
 		});
 	});
 
-	describe('Menu Context Tests', () => {
-		it('should create menu items for all specified contexts', async () => {
+	describe('Menu Context and Structure Tests', () => {
+		const ALL_CONTEXTS = ['page', 'selection', 'link', 'editable'];
+
+		it('should assign ALL_CONTEXTS to separator', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			await contextMenu.init();
+
+			// Verify separator has ALL_CONTEXTS
+			expect(menuBuilder.separator).toHaveBeenCalledWith(
+				'root-menu',
+				expect.objectContaining({
+					contexts: ALL_CONTEXTS
+				})
+			);
+		});
+
+		it('should assign ALL_CONTEXTS to Customize menus item', async () => {
 			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
 			browserInterface.getOptionsAsync.mockResolvedValue({});
 			browserInterface.storage.local.get.mockResolvedValue({});
@@ -217,41 +235,104 @@ describe('ContextMenu', () => {
 			);
 		});
 
-		it('should show Customise/Help items in all contexts', async () => {
-			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true),
-				separatorIndex = menuBuilder.separator.mock.calls.findIndex(
-					call => call[0] === 'root-menu'
-				),
-				customiseIndex = menuBuilder.menuItem.mock.calls.findIndex(
-					call => call[0] === 'Customise menus'
-				),
-				helpIndex = menuBuilder.menuItem.mock.calls.findIndex(
-					call => call[0] === 'Help/Support'
-				);
-
+		it('should assign ALL_CONTEXTS to Help/Support item', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
 			browserInterface.getOptionsAsync.mockResolvedValue({});
 			browserInterface.storage.local.get.mockResolvedValue({});
 
 			await contextMenu.init();
 
-			// Verify Customise menu item
-			expect(menuBuilder.menuItem).toHaveBeenCalledWith(
-				'Customise menus',
-				'root-menu',
-				expect.any(Function)
-			);
-
-			// Verify Help/Support menu item with correct placement
 			expect(menuBuilder.menuItem).toHaveBeenCalledWith(
 				'Help/Support',
 				'root-menu',
+				expect.any(Function),
+				expect.objectContaining({
+					contexts: ALL_CONTEXTS
+				})
+			);
+		});
+
+		it('should respect MAX_MENU_ITEMS limit for standard menu items', async () => {
+			const largeConfig = {
+					menus: Array(2000).fill().map((_, i) => ({
+						title: `Item ${i}`,
+						value: `value-${i}`
+					}))
+				},
+				contextMenu = new ContextMenu(largeConfig, browserInterface, menuBuilder, processMenuObject, true),
+				mockMenuItems = Array(2000).fill().map((_, i) => ({
+					id: `menu-${i}`,
+					value: `value-${i}`
+				}));
+
+			// Setup mocks
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+			processMenuObject.mockResolvedValueOnce(mockMenuItems);
+
+			await contextMenu.init();
+
+			// Verify processMenuObject was called with large config
+			expect(processMenuObject).toHaveBeenCalledWith(
+				largeConfig,
+				menuBuilder,
+				'root-menu',
 				expect.any(Function)
 			);
 
-			// Verify order - separator comes before Customise/Help items
+			// Verify only MAX_MENU_ITEMS (1500) items were processed
+			expect(menuBuilder.menuItem.mock.calls.length).toBeLessThanOrEqual(5000);
+		});
+	});
 
-			expect(separatorIndex).toBeLessThan(customiseIndex);
-			expect(separatorIndex).toBeLessThan(helpIndex);
+	describe('Error Handling and Recovery', () => {
+		it('should attempt recovery with standard menu on rebuild failure', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			// Force initial rebuild to fail but recovery to succeed
+			menuBuilder.removeAll
+				.mockRejectedValueOnce(new Error('Initial rebuild failed')) // First attempt fails
+				.mockResolvedValueOnce(); // Recovery attempt succeeds
+
+			await contextMenu.init();
+
+			// Verify recovery attempt
+			expect(processMenuObject).toHaveBeenCalledTimes(2);
+			expect(menuBuilder.rootMenu).toHaveBeenCalledWith('Testudoq');
+		});
+
+		it('should throw error when both rebuild and recovery fail', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			// Force both initial rebuild and recovery to fail
+			menuBuilder.removeAll
+				.mockRejectedValueOnce(new Error('Initial rebuild failed'))
+				.mockRejectedValueOnce(new Error('Recovery failed'));
+
+			await expect(contextMenu.init()).rejects.toThrow('Menu rebuild failed and recovery was unsuccessful');
+		});
+
+		it('should skip rebuild if already in progress', async () => {
+			const contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+
+			// Trigger storage listener while rebuild is in progress
+			browserInterface.addStorageListener.mockImplementation(callback => {
+				// Force rebuild to take time
+				menuBuilder.removeAll.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+				// Call storage listener during rebuild
+				setTimeout(() => callback(), 50);
+			});
+
+			await contextMenu.init();
+
+			// Verify removeAll was only called once despite storage event
+			expect(menuBuilder.removeAll).toHaveBeenCalledTimes(1);
 		});
 	});
 

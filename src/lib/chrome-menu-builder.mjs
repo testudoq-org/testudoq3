@@ -6,7 +6,7 @@
 // Storage keys and default values
 const MENU_STORAGE_KEY = 'chrome_menu_state',
 	DEFAULT_CONTEXTS = ['page', 'selection', 'link', 'editable'],
-	MAX_MENU_ITEMS = 1500, // Chrome has a limit on number of context menu items
+	MAX_MENU_ITEMS = 5000, // Increased limit while maintaining safety margin
 	menuItemSchema = {
 		validateId: (id) => typeof id === 'string' && id.length > 0,
 		validateTitle: (title) => typeof title === 'string' && title.length > 0,
@@ -189,16 +189,22 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 			value,
 			existingItems: menuItems.size,
 			existingValues: Object.keys(itemValues),
-			contexts: useContexts // Log the actual contexts being used
+			contexts: useContexts
 		});
 		try {
-			// Check menu limit before creating
+			// Enhanced menu limit check with detailed logging
 			if (menuItems.size >= MAX_MENU_ITEMS) {
+				const error = new Error(`Menu item limit exceeded (max: ${MAX_MENU_ITEMS})`);
 				console.error('[MenuBuilder] Menu limit reached:', {
 					current: menuItems.size,
-					limit: MAX_MENU_ITEMS
+					limit: MAX_MENU_ITEMS,
+					title,
+					parentMenu,
+					error: error.message,
+					stack: error.stack,
+					timestamp: Date.now()
 				});
-				throw new Error(`Menu item limit exceeded (max: ${MAX_MENU_ITEMS})`);
+				throw error;
 			}
 
 			// Validate inputs
@@ -246,8 +252,19 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 			handlerRegistry.registerHandler();
 			return result;
 		} catch (error) {
-			console.error('[MenuBuilder Debug] Failed to create menu item:', error);
-			throw new Error('Failed to create menu item: ' + error.message);
+			const enhancedError = {
+				originalError: error,
+				message: error.message,
+				stack: error.stack,
+				context: {
+					title,
+					parentMenu,
+					menuItems: menuItems.size,
+					timestamp: Date.now()
+				}
+			};
+			console.error('[MenuBuilder Debug] Failed to create menu item:', enhancedError);
+			throw new Error(`Failed to create menu item: ${error.message}\nContext: ${JSON.stringify(enhancedError.context)}`);
 		}
 	};
 
@@ -329,13 +346,13 @@ export default function ChromeMenuBuilder(chrome) {	// State management and conf
 	chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 		handlerRegistry.registerHandler();
 		const flowTimers = {
-			start: Date.now(),
-			getElapsed: () => Date.now() - flowTimers.start,
-			markTimestamp: (stage) => {
-				flowTimers[stage] = Date.now() - flowTimers.start;
-				return flowTimers[stage];
-			}
-		},
+				start: Date.now(),
+				getElapsed: () => Date.now() - flowTimers.start,
+				markTimestamp: (stage) => {
+					flowTimers[stage] = Date.now() - flowTimers.start;
+					return flowTimers[stage];
+				}
+			},
 			itemId = info?.menuItemId,
 			metrics = {
 				timestamp: flowTimers.start,
