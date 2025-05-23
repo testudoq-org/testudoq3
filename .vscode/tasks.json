@@ -9,8 +9,19 @@
         "kind": "build",
         "isDefault": true
       },
+      "dependsOn": "buildExtension"
+    },    {
+      "label": "buildExtension",
+      "type": "npm",
+      "script": "build-extension",
       "problemMatcher": [],
-      "detail": "Build the development version of the extension"
+      "detail": "Clean, copy template, build with webpack, and validate the output",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     {
       "label": "Build Extension for Firefox",

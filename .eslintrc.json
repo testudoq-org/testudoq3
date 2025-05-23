@@ -6,8 +6,11 @@
 		"es6": true
 	},
 	"parserOptions": {
-		"ecmaVersion": 8,
+		"ecmaVersion": 2022,
 		"sourceType": "module"
+	},
+	"globals": {
+		"import.meta": "readonly"
 	},
 	"rules": {
 		"semi": ["error", "always"],

@@ -1,0 +1,16 @@
+{
+  "menus": {
+    "Test": {
+      "SubMenu": {
+        "Test Item": "test_value"
+      }
+    }
+  },
+  "contexts": ["editable"],
+  "handlers": {
+    "injectValue": true,
+    "paste": true,
+    "copy": true,
+    "gremlinsAttack": true
+  }
+}

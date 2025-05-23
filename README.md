@@ -11,7 +11,10 @@ Aligned with session-based testing principles advocated by Rapid Software Testin
 Furthermore, Testudoq's compatibility with session-based testing methodologies ensures that testers can easily incorporate it into their testing sessions, enhancing collaboration and maximizing the effectiveness of their testing efforts. By streamlining the exploration process and providing instant access to critical test scenarios, Testudoq empowers testers to deliver high-quality software within tight timelines and dynamic project environments.
 
 ## Features
-
+- Modern ES-module (`.mjs`) structure with full MV3 support
+- Asynchronous menu flows for improved performance and responsiveness
+- Enhanced error handling and debugging capabilities
+- Streamlined menu structure with consistent footer constants
 - Convenient access to common boundaries and edge cases for exploratory testing
 - Easy extension with custom config files
 - Works on input fields, text areas, and content editable DIVs
