@@ -113,8 +113,8 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			executionContext.markPhase('handlerPrep');
 			// Convert string values to proper request objects
 			const requestValue = typeof executionContext.menuValue === 'string'
-					? { '_type': 'literal', 'value': executionContext.menuValue }
-					: executionContext.menuValue,
+				? { '_type': 'literal', 'value': executionContext.menuValue }
+				: executionContext.menuValue,
 				result = await (async () => {
 					executionContext.markPhase('handlerStart');
 					console.log('[ContextMenu Flow] Handler execution:', {
@@ -300,42 +300,43 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 
 	// --- Simplified standard‐menu builder ---
 	async function buildStandardMenu(options, rootMenu) {
-	 if (options?.skipStandard) {
-	 	return;
-	 }
-	 await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick);
-	 // If you need to cache any values you can still walk `standardConfig.menus` here
-	 console.debug('[ContextMenu] Standard menu built from config.json');
+		if (options?.skipStandard) {
+			return;
+		}
+		await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick);
+		// If you need to cache any values you can still walk `standardConfig.menus` here
+		console.debug('[ContextMenu] Standard menu built from config.json');
 	}
 
 	// addGenericMenus removed as part of refactor - rebuildMenu simplified, operational mode menu removed
 
 	// --- Static footer: separator + Customize + Help/Support ---
 	function addStaticFooter(rootMenu) {
-	 // separator
-	 menuBuilder.separator(
-	 	rootMenu,
-	 	{ id: FOOTER_SEPARATOR_ID, contexts: ALL_CONTEXTS }
-	 );
-	 // "Customize menus"
-	 menuBuilder.menuItem(
-	 	'Customize menus',
-	 	rootMenu,
-	 	browserInterface.openSettings,
-	 	{ id: FOOTER_CUSTOMIZE_ID, contexts: ALL_CONTEXTS }
-	 );
-	 // "Help/Support"
-	 menuBuilder.menuItem(
-	 	'Help/Support',
-	 	rootMenu,
-	 	() => browserInterface.openUrl(browserInterface.getHelpUrl()),
-	 	{ id: FOOTER_HELP_ID, contexts: ALL_CONTEXTS }
-	 );
-	 console.debug('[ContextMenu] Static footer added:', {
-	 	separator: FOOTER_SEPARATOR_ID,
-	 	customize: FOOTER_CUSTOMIZE_ID,
-	 	help: FOOTER_HELP_ID
-	 });
+		// separator
+		menuBuilder.separator(
+			rootMenu,
+			{ id: FOOTER_SEPARATOR_ID, contexts: ALL_CONTEXTS }
+		);
+		// "Customize menus"
+		menuBuilder.menuItem(
+			'Customize menus',
+			rootMenu,
+			browserInterface.openSettings,
+			{ id: FOOTER_CUSTOMIZE_ID, contexts: ALL_CONTEXTS }
+		);
+		// "Help/Support"
+		menuBuilder.menuItem(
+			'Help/Support',
+			rootMenu,
+			// hard‐code the exact help URL here:
+			() => browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html'),
+			{ id: FOOTER_HELP_ID, contexts: ALL_CONTEXTS }
+		);
+		console.debug('[ContextMenu] Static footer added:', {
+			separator: FOOTER_SEPARATOR_ID,
+			customize: FOOTER_CUSTOMIZE_ID,
+			help: FOOTER_HELP_ID
+		});
 	}
 
 
@@ -380,38 +381,38 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	 */
 	// --- Main rebuildMenu flow ---
 	async function rebuildMenu(options) {
-	 if (isRebuilding) {
-	 	return;
-	 }
-	 isRebuilding = true;
-	 try {
-	 	await menuBuilder.removeAll();
-	 	const rootMenu = menuBuilder.rootMenu('Testudoq');
+		if (isRebuilding) {
+			return;
+		}
+		isRebuilding = true;
+		try {
+			await menuBuilder.removeAll();
+			const rootMenu = menuBuilder.rootMenu('Testudoq');
 
-	 	// 1) dynamic from config.json
-	 	await buildStandardMenu(options, rootMenu);
+			// 1) dynamic from config.json
+			await buildStandardMenu(options, rootMenu);
 
-	 	// (re-enable this if you still need to load additionalMenus)
-	 	// await loadAdditionalMenus(options?.additionalMenus, rootMenu);
+			// (re-enable this if you still need to load additionalMenus)
+			// await loadAdditionalMenus(options?.additionalMenus, rootMenu);
 
-	 	// 2) static footer
-	 	addStaticFooter(rootMenu);
+			// 2) static footer
+			addStaticFooter(rootMenu);
 
-	 	await saveState();
-	 	console.log('[ContextMenu] rebuild complete');
-	 } catch (err) {
-	 	console.error('[ContextMenu] rebuild failed:', err);
-	 	// fallback to just standard
-	 	try {
-	 		await menuBuilder.removeAll();
-	 		const fallback = menuBuilder.rootMenu('Testudoq');
-	 		await processMenuObject(standardConfig, menuBuilder, fallback, handleClick);
-	 	} catch (e2) {
-	 		throw new Error('Menu rebuild & recovery both failed');
-	 	}
-	 } finally {
-	 	isRebuilding = false;
-	 }
+			await saveState();
+			console.log('[ContextMenu] rebuild complete');
+		} catch (err) {
+			console.error('[ContextMenu] rebuild failed:', err);
+			// fallback to just standard
+			try {
+				await menuBuilder.removeAll();
+				const fallback = menuBuilder.rootMenu('Testudoq');
+				await processMenuObject(standardConfig, menuBuilder, fallback, handleClick);
+			} catch (e2) {
+				throw new Error('Menu rebuild & recovery both failed');
+			}
+		} finally {
+			isRebuilding = false;
+		}
 	}
 
 	function wireStorageListener() {

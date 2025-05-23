@@ -30,7 +30,8 @@ function addStaticFooter(rootMenu) {
   menuBuilder.menuItem(
     'Help/Support',
     rootMenu,
-    () => browserInterface.openUrl(browserInterface.getHelpUrl()),
+    // hard‐code the exact help URL here:
+    () => browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html'),
     { id: FOOTER_HELP_ID, contexts: ALL_CONTEXTS }
   );
   console.debug('[ContextMenu] Static footer added:', {
