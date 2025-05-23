@@ -1,55 +1,100 @@
-# Plan to Update Markdown Files
+# Documentation Update Plan for ES Module Migration
 
-1.  **Create `memory-bank/archived` directory:** Create a new directory `memory-bank/archived` to store the outdated markdown files.
-2.  **Identify and Archive Outdated Files:**
-    *   Review the markdown files in `memory-bank/` and identify the files that are outdated or completed.
-    *   Move the outdated files to the `memory-bank/archived` directory.
-3.  **Update Relevant Markdown Files:**
-    *   Review the remaining markdown files in `memory-bank/` and update them to reflect the completed MJS migration, including right-click menu pasting and Gremlin launching functionality.
-    *   Specifically, update the following files:
-        *   [`memory-bank/activeContext.md`](memory-bank/activeContext.md): Update the current state assessment, next steps for verification, known issues, and required testing.
-        *   [`memory-bank/architectural-assessment.md`](memory-bank/architectural-assessment.md): Update the assessment based on the current architecture.
-        *   [`memory-bank/automation-improvements.md`](memory-bank/automation-improvements.md): Update the recommended improvements based on the current testing setup.
-        *   [`memory-bank/build-process.md`](memory-bank/build-process.md): Update the build process documentation based on the current build process.
-        *   [`memory-bank/changes-summary.md`](memory-bank/changes-summary.md): Update the changes summary based on the recent changes.
-        *   [`memory-bank/context-menu-test-plan.md`](memory-bank/context-menu-test-plan.md): Update the test plan based on the current context menu integration.
-        *   [`memory-bank/context-option-fix.md`](memory-bank/context-option-fix.md): Update the status of the context menu fix.
-        *   [`memory-bank/gremlins-popup-integration.md`](memory-bank/gremlins-popup-integration.md): Update the integration plan based on the current popup integration.
-        *   [`memory-bank/implementation-plan.md`](memory-bank/implementation-plan.md): Update the implementation plan based on the current implementation.
-        *   [`memory-bank/improve-gremlins-menu.md`](memory-bank/improve-gremlins-menu.md): Update the improvements to the gremlins menu.
-        *   [`memory-bank/migration-mjs.md`](memory-bank/migration-mjs.md): Update the migration plan based on the current migration status.
-        *   [`memory-bank/migration-verification.md`](memory-bank/migration-verification.md): Update the verification report based on the current migration status.
-        *   [`memory-bank/progress.md`](memory-bank/progress.md): Update the implementation progress.
-        *   [`memory-bank/projectbrief.md`](memory-bank/projectbrief.md): Update the project brief.
-        *   [`memory-bank/systemPatterns.md`](memory-bank/systemPatterns.md): Update the system patterns.
-        *   [`memory-bank/techContext.md`](memory-bank/techContext.md): Update the technical context.
-4.  **Review `src/` code:**
-    *   Analyze the source code to understand the current implementation of the features mentioned in the markdown files.
-5.  **Review `template/manifest.json`:**
-    *   Analyze the manifest file to understand the application's structure, permissions, and dependencies.
-6.  **Review `template/config.json`:**
-    *   Analyze the config file to understand the application's configuration and settings.
-7.  **Update Markdown Files (Again):**
-    *   Based on the analysis of the source code, manifest file, and config file, update the markdown files in `memory-bank/` to reflect the current state of the application.
+## Overview
+This plan outlines the necessary documentation updates to align with our ES module migration and new MV3 patterns.
 
-Here's a Mermaid diagram of the updated plan:
+## File Updates
+
+### 1. README.md Updates
+
+#### Features Section
+- Add ES modules and MV3 compatibility
+- Update technical stack description
+- Remove outdated package.json references
+
+#### Implementation
+```markdown
+## Features
+- Modern ES module architecture with MV3 compatibility
+- Asynchronous menu handling with improved performance
+- Enhanced error handling and debugging capabilities
+- Streamlined menu structure with consistent footer elements
+```
+
+### 2. CONTRIBUTING.md Updates
+
+#### Module Standards Section
+Replace existing module format section with:
+
+```markdown
+## Module Format Standards
+TestudoQ uses ES modules (ESM) throughout the codebase. When creating new files or modifying existing ones:
+
+- Use .mjs extension for all JavaScript modules
+- Use import/export statements for module interactions
+- Leverage async/await for asynchronous operations
+- Follow ES6+ conventions for modern JavaScript features
+
+Example:
+```javascript
+// menu-handler.mjs
+import { processMenu } from './process-menu.mjs';
+export default async function handleMenu(config) {
+  // Implementation
+}
+```
+
+#### Build Instructions
+Update build process documentation to reflect current webpack/ESM setup.
+
+### 3. Technical Documentation
+
+#### New File: docs/technical/current-architecture.md
+Document current architecture focusing on:
+- ES module structure and patterns
+- Menu builder factory implementations
+- Async menu flow handling
+- Static footer implementation
+- Service worker integration
+
+#### Removed Features Documentation
+Note the following removed features:
+- addGenericMenus (replaced by static footer)
+- Operational mode menu handlers (simplified workflow)
+- Menu rebuild logging (integrated into core logging)
+- Cache-related functions (revised state management)
+
+## Testing Documentation
+
+### Update test documentation to reflect:
+- Jest ESM configuration
+- Mocking patterns for ES modules
+- Browser-specific test considerations
+- Integration test updates for MV3
+
+## Implementation Plan
+
+1. Remove outdated CommonJS documentation
+2. Update core documentation files
+3. Create new technical documentation
+4. Update testing guides
+5. Review and validate changes
 
 ```mermaid
-graph TD
-    A[Create memory-bank/archived directory] --> B[Identify and Archive Outdated Files];
-    B --> C(Move outdated files to memory-bank/archived);
-    C --> D[Update Relevant Markdown Files];
-    D --> E(Update memory-bank/ markdown files);
-    F[Review src/ code] --> G(Understand source code);
-    H[Review template/manifest.json] --> I(Understand application manifest);
-    J[Review template/config.json] --> K(Understand application configuration);
-    G & I & K --> L[Update Markdown Files (Again)];
-    L --> M(Update memory-bank/ markdown files);
-    M --> N[Present Plan];
-    N --> O{User approves plan?};
-    O -- Yes --> P{Write plan to markdown?};
-    P -- Yes --> Q(Write plan to markdown file);
-    Q --> R[Switch Modes];
-    P -- No --> R;
-    O -- No --> N;
-    R --> S(Implement solution in another mode);
+flowchart TB
+    A[Documentation Update] --> B[Remove Legacy Docs]
+    A --> C[Update Core Docs]
+    A --> D[Create New Docs]
+    A --> E[Update Tests]
+    
+    B --> B1[Remove CommonJS]
+    B --> B2[Clean Old Patterns]
+    
+    C --> C1[README.md]
+    C --> C2[CONTRIBUTING.md]
+    
+    D --> D1[Architecture Guide]
+    D --> D2[Migration Notes]
+    
+    E --> E1[Test Patterns]
+    E --> E2[Integration Tests]

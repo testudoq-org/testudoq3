@@ -2,14 +2,23 @@
 
 Testudoq utilizes WebPack for packaging, Jasmine for tests (executed via Testem), and ESLint for linting. The primary scripts are defined in `package.json`.
 
-## Module Format Standards
-TestudoQ consistently uses CommonJS module format (require/module.exports) throughout the codebase. When creating new files or modifying existing ones:
+## Module Format Standards (ESM)
+TestudoQ exclusively uses ES modules (ESM). Adhere to these guidelines:
+- **File Extension**: All JavaScript modules must use the `.mjs` extension.
+- **Module Syntax**: Utilize `import` and `export` statements for all module interactions.
+- **Asynchronous Code**: Employ `async/await` for managing asynchronous operations to enhance readability and maintainability.
+- **Modern JavaScript**: Follow ES6+ conventions for all new and modified code.
 
-- Use `const module = require('../path/to/module')` for imports
-- Use `module.exports = ...` for exporting functionality
-- Avoid using ES6 module syntax (import/export)
+Example:
+```javascript
+// src/lib/example-module.mjs
+import { utilityFunction } from './utility-functions.mjs';
 
-This ensures compatibility with the existing codebase and testing infrastructure.
+export async function performAction(data) {
+  const result = await utilityFunction(data);
+  return result;
+}
+```
 
 ## Setting up a Local Development Environment
 
@@ -48,51 +57,28 @@ npm install --save ncp
 ```
 
 ## Building the Extension
+The extension is built using Webpack, configured via [`webpack.config.mjs`](webpack.config.mjs). This setup processes and bundles our ES modules (`.mjs` files) into a format suitable for Chrome (MV3) and Firefox.
 
+To build the extension:
 ```bash
-npm run build-extension
+npm run build
 ```
-Just build the extension
+This command typically executes scripts defined in [`package.json`](package.json), such as `build-extension` for a standard development build or `build-min-obs-extension` for a minimized and obfuscated production build. The Webpack configuration handles the complexities of ES module bundling, ensuring all `.mjs` files are correctly processed.
 
-```bash
-npm build-min-obs-extension
-```
-
-This command packs the extension, builds it, and also obfuscates and minimizes it.
-
-If you get the error message indicates that Node.js cannot find the module 'javascript-obfuscator'. This error typically occurs when the required module is not installed in your project's dependencies.
-
-To resolve this issue, you need to install the 'javascript-obfuscator' module. You can do this by running the following command in your terminal within the project directory:
-
-```
-npm install javascript-obfuscator
-```
-
-Also add uglify.js, you can install UglifyJS using npm, the Node.js package manager. Here's how you can install it:
-
-```bash
-npm install uglify-js --save-dev
-```
-
-This command will install UglifyJS as a development dependency in your project, and it will be available for use in your Node.js scripts. After installing UglifyJS, you can modify your script to include it, as shown in the previous example.
-
-Once the installation is complete, you should be able to run the 'post-build-min-obs.js' script without encountering the module not found error.
+Build outputs are placed in the `dist/` directory (or as configured).
 
 ## Running Development Tests
+Tests are primarily written using Jasmine and executed via Testem. Jest is utilized for its powerful assertion library and mocking capabilities, and the environment is configured to support ES Modules (`.mjs`).
 
-To run development tests, use the command:
-
+To run all tests:
 ```bash
 npm test
 ```
+This command executes the test suite. The Jest configuration ([`jest.config.js`](jest.config.js)) is set up to handle `.mjs` files, typically by enabling Node's experimental ESM features or using Babel transforms to ensure compatibility.
 
-If you encounter the warning "React version was set to "detect" in eslint-plugin-react settings, but the "react" package is not installed," address it by running the following commands:
-
+Ensure testing dependencies like `jest`, `eslint-plugin-jest`, and `cross-env` are installed:
 ```bash
-npm install react-dom
-npm install eslint-plugin-jest --save-dev  # Resolve jest/expect-expect issue
-npm install jest --save-dev
-npm install cross-env --save-dev
+npm install jest eslint-plugin-jest cross-env --save-dev
 ```
 
 ## Running a Subset of Tests
