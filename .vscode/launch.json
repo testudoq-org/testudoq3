@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Firefox Extension Pack",
+      "name": "Launch Development Firefox Extension Pack",
       "type": "firefox",
       "request": "launch",
       "reAttach": true,
@@ -16,14 +16,14 @@
       "sourceMaps": true,
       "trace": true,
       "timeout": 30000,
-      "firefoxExecutable": "D:\\Program Files\\Mozilla Firefox\\firefox.exe", // Specify the path to your Firefox executable
+      "firefoxExecutable": "D:\\Program Files\\Mozilla Firefox\\firefox.exe",
       "runtimeArgs": [
-        "--disable-extensions-except=${workspaceFolder}/pack",
-        "--load-extension=${workspaceFolder}/pack",
+        "--disable-extensions-except=${workspaceFolder}/packages/dev-pack",
+        "--load-extension=${workspaceFolder}/packages/dev-pack",
         "--user-data-dir=${env:CHROME_PROFILE_PATH}",
-        "-start-debugger-server", // Start the Firefox debugger server
-        "-jsdebugger", // Enable the JavaScript debugger
-        "-foreground" // Keep Firefox in the foreground
+        "-start-debugger-server",
+        "-jsdebugger",
+        "-foreground"
       ],
       "outFiles": [
         "${workspaceFolder}/pack/**/*.js",

@@ -1,0 +1,259 @@
+/* popup.css */
+
+/* Reset CSS */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css');
+
+/* Base styles */
+body {
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	color: #333;
+	background-color: #fff;
+	padding: 20px;
+	min-width: 300px;
+}
+
+/* Headings */
+h1 {
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+	color: #2c3e50;
+}
+
+h2 {
+	font-size: 1.2rem;
+	margin: 1rem 0;
+	color: #34495e;
+}
+
+/* Control panel */
+.control-panel {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 20px;
+	padding: 10px;
+	background-color: #f8f9fa;
+	border-radius: 6px;
+}
+
+/* Input fields */
+input[type="number"] {
+	width: 60px;
+	padding: 8px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	margin-right: 10px;
+}
+
+/* Buttons */
+button {
+	display: inline-block;
+	padding: 10px 20px;
+	background-color: #4caf50;
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: relative;
+}
+
+button:hover {
+	background-color: #3f9349;
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+button:active {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+button.stopping {
+	background-color: #e74c3c;
+}
+
+button:disabled {
+	background-color: #95a5a6;
+	cursor: not-allowed;
+}
+
+#exportLogsButton {
+	background-color: #3498db;
+}
+
+#exportLogsButton:hover {
+	background-color: #2980b9;
+}
+
+/* Form styles */
+#gremlin-form {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 20px;
+	background-color: #f8f9fa;
+	padding: 15px;
+	border-radius: 6px;
+	margin-top: 20px;
+}
+
+.config-section {
+	padding: 10px;
+	background-color: white;
+	border-radius: 4px;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Checkbox container */
+.checkbox-container {
+	display: flex;
+	align-items: center;
+	margin: 8px 0;
+	padding: 4px;
+	transition: background-color 0.2s;
+}
+
+.checkbox-container:hover {
+	background-color: #f1f3f5;
+	border-radius: 4px;
+}
+
+/* Checkbox styles */
+input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 18px;
+	height: 18px;
+	border: 2px solid #ddd;
+	border-radius: 4px;
+	margin-right: 8px;
+	position: relative;
+	cursor: pointer;
+	vertical-align: middle;
+	transition: all 0.2s;
+}
+
+input[type="checkbox"]:checked {
+	background-color: #4caf50;
+	border-color: #4caf50;
+}
+
+input[type="checkbox"]:checked::after {
+	content: '✓';
+	color: white;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	font-size: 12px;
+}
+
+/* Labels */
+label {
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+/* Error message styles */
+.error-message {
+	color: #e74c3c;
+	background-color: #fdeaea;
+	padding: 10px;
+	border-radius: 4px;
+	margin: 10px 0;
+	display: none;
+}
+
+.error-message.visible {
+	display: block;
+}
+
+/* Loading indicator */
+.loading {
+	position: relative;
+	pointer-events: none;
+}
+
+.loading::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 20px;
+	height: 20px;
+	margin: -10px 0 0 -10px;
+	border: 3px solid rgba(255,255,255,0.3);
+	border-top-color: white;
+	border-radius: 50%;
+	animation: spin 0.8s infinite linear;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Strategy section */
+.strategy-section {
+	margin-top: 15px;
+}
+
+.strategy-section label {
+	display: block;
+	margin: 8px 0;
+}
+
+/* Tooltip styles */
+.tooltip {
+	position: relative;
+	display: inline-block;
+}
+
+.tooltip::after {
+	content: attr(data-tooltip);
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 5px 10px;
+	background-color: #34495e;
+	color: white;
+	border-radius: 4px;
+	font-size: 12px;
+	white-space: nowrap;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.2s;
+}
+
+.tooltip:hover::after {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+	body {
+		padding: 10px;
+	}
+
+	#gremlin-form {
+		grid-template-columns: 1fr;
+	}
+
+	.control-panel {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	input[type="number"] {
+		width: 100%;
+		margin-right: 0;
+		margin-bottom: 10px;
+	}
+}
