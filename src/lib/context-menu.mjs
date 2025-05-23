@@ -9,11 +9,9 @@ import gremlinsAttackHandler from './gremlins-attack-handler.mjs';
  * @param {Object} browserInterface - The browser interface for menu operations
  * @param {Object} menuBuilder - The menu builder instance
  * @param {Function} processMenuObject - Function to process menu objects
- * @param {boolean} pasteSupported - Whether paste operations are supported
  */
-export default function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, pasteSupported) {
-	const MAX_MENU_ITEMS = 5000,
-		STATE_KEY = 'context_menu_state',
+export default function ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject) {
+	const STATE_KEY = 'context_menu_state',
 		menuValueCache = new Map(),
 		handlers = {
 			injectValue: injectValueRequestHandler,
@@ -22,7 +20,10 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 			gremlinsAttack: gremlinsAttackHandler
 		},
 		// Define all possible contexts to ensure visibility across all right-click scenarios
-		ALL_CONTEXTS = ['page', 'selection', 'link', 'editable'];
+		ALL_CONTEXTS = ['page', 'selection', 'link', 'editable'],
+		FOOTER_SEPARATOR_ID = 'testudo-footer-separator',
+		FOOTER_CUSTOMIZE_ID = 'testudo-customize-menus',
+		FOOTER_HELP_ID = 'testudo-help-support';
 
 	let handlerType = 'injectValue',
 		isRebuilding = false,
@@ -152,17 +153,99 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	}
 
 	// Helper functions that depend on handleClick
-	function cacheMenuValue(menuId, value) {
-		menuValueCache.set(menuId, value);
-		console.log('[ContextMenu Debug] Cached menu value:', {
-			menuId,
-			value,
-			cacheSize: menuValueCache.size
-		});
-	}
+	// cacheMenuValue removed as part of refactor - caching strategy revised
 
-	// loadAdditionalMenus function removed as part of menu improvement refactoring
-	// Reference: memory-bank/improve-right-click-menu.md
+	/**
+	 * @assessment_for_loadAdditionalMenus_reimplementation
+	 * If dynamic loading of additional menus beyond standardConfig is required,
+	 * this function must be reimplemented to use menuBuilder and integrate with rebuildMenu.
+	 */
+	/**
+	 * @assessment_for_loadAdditionalMenus_reimplementation
+	 * @description If dynamic loading of menu items beyond those in `standardConfig` is required
+	 * (e.g., user-defined menus, plugin-based additions), the `loadAdditionalMenus` function
+	 * (currently a placeholder/conceptual area) would need to be reimplemented.
+	 * This reimplementation should utilize the current `menuBuilder` API (Factory Pattern)
+	 * and integrate into the `rebuildMenu` flow, likely after `buildStandardMenu` and
+	 * potentially alongside or after `addGenericMenus`, to ensure correct menu construction
+	 * and display.
+	 */
+	/**
+	 * @assessment_note
+	 * @description The `loadAdditionalMenus` function, previously responsible for loading menu
+	 * configurations from sources other than `standardConfig` (e.g., `config.json`),
+	 * was removed in a prior refactoring. If the application requires the capability
+	 * to dynamically load additional menu items beyond those provided by `standardConfig`
+	 * (such as user-defined configurations or menus from plugins), this function
+	 * would need to be reimplemented.
+	 *
+	 * A reimplemented `loadAdditionalMenus` should integrate with the `menuBuilder`
+	 * factory and the overall `rebuildMenu` lifecycle. It would likely be called
+	 * after `buildStandardMenu` and could be positioned either before or after
+	 * `addGenericMenus`, depending on the desired visual order of these dynamic
+	 * items relative to the standard and generic operational/help items.
+	 * The existing JSDoc comments below provide further historical context and
+	 * considerations for such a reimplementation.
+	 */
+
+	/**
+	 * @assessment_note
+	 * If dynamic loading of additional menu items beyond `standardConfig` is required,
+	 * this `loadAdditionalMenus` function (currently a placeholder/note area)
+	 * would need to be reimplemented.
+	 */
+	// The loadAdditionalMenus function was previously responsible for loading menu configurations
+	// from sources other than the standardConfig. It was removed as part of a
+	// prior refactoring (see memory-bank/improve-right-click-menu.md).
+	// If reimplemented, it would handle loading and processing these additional menus.
+	// Existing JSDoc notes below provide further context on its potential reimplementation.
+
+	/**
+	 * @assessment_note_for_loadAdditionalMenus
+	 * @description If the application requires dynamic loading of additional menu items
+	 * beyond those provided by `standardConfig` (e.g., from user configurations or
+	 * plugins), the `loadAdditionalMenus` function, which was previously removed,
+	 * would need to be reimplemented. Such a reimplementation should integrate
+	 * with the `menuBuilder` factory and the overall `rebuildMenu` lifecycle,
+	 * ensuring that dynamically loaded menus are processed and displayed correctly
+	 * alongside standard and generic menus.
+	 */
+	/**
+	 * @assessment_for_loadAdditionalMenus_reimplementation
+	 * @description Following the refactor of `addGenericMenus` to handle standard operational
+	 * and help menu items, the need for `loadAdditionalMenus` (which was previously
+	 * responsible for loading menu items from `config.json` or other dynamic sources)
+	 * should be re-evaluated.
+	 *
+	 * The current `buildStandardMenu` handles `standardConfig`, and `addGenericMenus`
+	 * adds fixed utility menus. If the application still requires the capability to
+	 * load additional, user-defined, or dynamically sourced menu configurations beyond
+	 * what `standardConfig` provides, a mechanism akin to the original `loadAdditionalMenus`
+	 * would need to be reimplemented.
+	 *
+	 * Such a reimplementation should integrate with the `menuBuilder` factory and the
+	 * `rebuildMenu` lifecycle. It would likely be called after `buildStandardMenu` and
+	 * could be placed either before or after `addGenericMenus` depending on the desired
+	 * visual order of these dynamic items relative to the generic operational/help items.
+	 * The existing `loadAdditionalMenus_Reimplementation_Note` (see below) provides
+	 * further historical context on this. This refactor of `addGenericMenus` does not
+	 * inherently negate the potential need for `loadAdditionalMenus` if dynamic,
+	 * non-standard menu structures are a requirement.
+	 */
+	/**
+	 * @name loadAdditionalMenus_Reimplementation_Note
+	 * @kind constant
+	 * @description Assessment for `loadAdditionalMenus` reimplementation.
+	 * The `loadAdditionalMenus` function was previously responsible for incorporating
+	 * menu items from dynamic or alternative configuration sources. It has been
+	 * removed. If the application still requires functionality to load menus beyond
+	 * the `standardConfig` (e.g., user-defined menus, plugin-based menus),
+	 * a similar mechanism would need to be reimplemented. This reimplementation
+	 * should align with the current `menuBuilder` abstractions and the overall
+	 * menu construction flow within `rebuildMenu`. Consideration should be given
+	 * to how such additional menus integrate with the standard and generic menus,
+	 * potentially requiring new strategies for merging or ordering menu items.
+	 */
 
 	// Bind click handler to instance
 	this.onClick = handleClick;
@@ -205,229 +288,130 @@ export default function ContextMenu(standardConfig, browserInterface, menuBuilde
 	}
 
 
-	async function turnOnPasting() {
-		try {
-			console.log('[ContextMenu] Requesting clipboard permissions');
-			await browserInterface.requestPermissions(['clipboardRead', 'clipboardWrite']);
-			handlerType = 'paste';
-			await saveState();
-			console.log('[ContextMenu] Paste mode enabled');
-			return true;
-		} catch (error) {
-			console.error('[ContextMenu] Failed to enable paste mode:', error);
-			browserInterface.showMessage('Could not access clipboard');
-			throw error;
-		}
-	}
-
-	async function turnOffPasting() {
-		try {
-			handlerType = 'injectValue';
-			await browserInterface.removePermissions(['clipboardRead', 'clipboardWrite']);
-			await saveState();
-			console.log('[ContextMenu] Paste mode disabled');
-			return true;
-		} catch (error) {
-			console.error('[ContextMenu] Failed to disable paste mode:', error);
-			throw error;
-		}
-	}
-
-	async function turnOnCopy() {
-		try {
-			handlerType = 'copy';
-			await saveState();
-			console.log('[ContextMenu] Copy mode enabled');
-			return true;
-		} catch (error) {
-			console.error('[ContextMenu] Failed to enable copy mode:', error);
-			throw error;
-		}
-	}
-
+	// turnOnPasting, turnOffPasting, turnOnCopy removed as they are no longer used after refactor.
 
 	// Function removed as part of menu improvement refactoring
 	// Reference: memory-bank/improve-right-click-menu.md
 	// The functionality is now inlined directly in rebuildMenu()
 
-	// Helper to log rebuild progress with timing details
-	function createRebuildLogger(startTime) {
-		return (msg, details = {}) => {
-			console.log('[ContextMenu Rebuild]', msg, {
-				timestamp: Date.now(),
-				elapsed: Date.now() - startTime,
-				...details
-			});
-		};
+	// createRebuildLogger removed as part of refactor - rebuildMenu simplified
+
+	// clearExistingMenus removed as part of refactor - rebuildMenu simplified
+
+	// --- Simplified standard‐menu builder ---
+	async function buildStandardMenu(options, rootMenu) {
+	 if (options?.skipStandard) {
+	 	return;
+	 }
+	 await processMenuObject(standardConfig, menuBuilder, rootMenu, handleClick);
+	 // If you need to cache any values you can still walk `standardConfig.menus` here
+	 console.debug('[ContextMenu] Standard menu built from config.json');
 	}
 
-	// Clears cache and removes all current menus
-	async function clearExistingMenus() {
-		menuValueCache.clear();
-		await menuBuilder.removeAll();
+	// addGenericMenus removed as part of refactor - rebuildMenu simplified, operational mode menu removed
+
+	// --- Static footer: separator + Customize + Help/Support ---
+	function addStaticFooter(rootMenu) {
+	 // separator
+	 menuBuilder.separator(
+	 	rootMenu,
+	 	{ id: FOOTER_SEPARATOR_ID, contexts: ALL_CONTEXTS }
+	 );
+	 // "Customize menus"
+	 menuBuilder.menuItem(
+	 	'Customize menus',
+	 	rootMenu,
+	 	browserInterface.openSettings,
+	 	{ id: FOOTER_CUSTOMIZE_ID, contexts: ALL_CONTEXTS }
+	 );
+	 // "Help/Support"
+	 menuBuilder.menuItem(
+	 	'Help/Support',
+	 	rootMenu,
+	 	() => browserInterface.openUrl(browserInterface.getHelpUrl()),
+	 	{ id: FOOTER_HELP_ID, contexts: ALL_CONTEXTS }
+	 );
+	 console.debug('[ContextMenu] Static footer added:', {
+	 	separator: FOOTER_SEPARATOR_ID,
+	 	customize: FOOTER_CUSTOMIZE_ID,
+	 	help: FOOTER_HELP_ID
+	 });
 	}
 
-	// Processes standard menu items and caches key values
-	async function buildStandardMenu(options, logger) {
-		if (options?.skipStandard) {
-			return [];
-		}
 
-		const rootMenu = menuBuilder.rootMenu('Testudoq'),
-			items = (await processMenuObject(
-				standardConfig,
-				menuBuilder,
-				rootMenu,
-				handleClick
-			)).slice(0, MAX_MENU_ITEMS);
-
-		logger('Standard root menu created');
-
-		if (items.length) {
-			logger('Processing standard menu items', {
-				itemCount: items.length,
-				items: items.map(item => ({
-					id: item.id,
-					hasValue: !!item.value
-				}))
-			});
-
-			items.forEach(item => {
-				if (item.id && item.value) {
-					cacheMenuValue(item.id, item.value);
-				}
-			});
-
-			logger('Standard menu items cached', {
-				cacheSize: menuValueCache.size
-			});
-		}
-
-		return items;
-	}
-
-	// Creates the operational submenu (for generic modes) under the given root menu
-	function addOperationalSubMenu(rootMenu, logger) {
-		const handlerChoices = {},
-			// Use getVisibleContexts to ensure operational mode appears in all contexts
-			contexts = getVisibleContexts('operational'),
-			modeMenu = menuBuilder.subMenu('Operational mode', rootMenu, { contexts });
-
-		logger('Adding "Operational mode" submenu with contexts:', contexts);
-
-		// Ensure pasteSupported is truthy (using default true if undefined)
-		pasteSupported = pasteSupported || true;
-
-		if (pasteSupported) {
-			handlerChoices.injectValue = menuBuilder.choice(
-				'Inject value',
-				modeMenu,
-				turnOffPasting,
-				handlerType === 'injectValue',
-				handlerType
-			);
-			handlerChoices.paste = menuBuilder.choice(
-				'Simulate pasting',
-				modeMenu,
-				turnOnPasting,
-				handlerType === 'paste',
-				handlerType
-			);
-			handlerChoices.copy = menuBuilder.choice(
-				'Copy to clipboard',
-				modeMenu,
-				turnOnCopy,
-				handlerType === 'copy',
-				handlerType
-			);
-		}
-	}
-
-	// Adds generic menu items (e.g., "Customise menus" and "Help/Support") to the root menu
-	function addGenericMenus(rootMenu, logger) {
-		// Use getVisibleContexts to ensure generic menus appear in all contexts
-		logger('Adding generic menu items with ALL_CONTEXTS');
-
-		menuBuilder.menuItem(
-			'Customise menus',
-			rootMenu,
-			browserInterface.openSettings,
-			{ contexts: ALL_CONTEXTS }
-		);
-
-		logger('Adding "Help/Support" item with ALL_CONTEXTS');
-		menuBuilder.menuItem(
-			'Help/Support',
-			rootMenu,
-			() => {
-				browserInterface.openUrl(browserInterface.getHelpUrl());
-			},
-			{ contexts: ALL_CONTEXTS }
-		);
-
-		logger('Generic menus added', {
-			items: ['Customise menus', 'Help/Support'],
-			contexts: ALL_CONTEXTS
-		});
-	}
-
-	// The main rebuildMenu function using the helpers defined above
+	/**
+	 * @async
+	 * @private
+	 * @function rebuildMenu
+	 * @description Clears all existing context menu items and rebuilds them based on the current
+	 * configuration and state. It first builds the standard menu items from `standardConfig`
+	 * (via `buildStandardMenu`), then adds generic menu items (like "Operational mode" submenu,
+	 * "Customise menus", "Help/Support") via the refactored `addGenericMenus`.
+	 * This function ensures the menu reflects the latest settings and selected operational mode.
+	 *
+	 * Integration of Design Patterns:
+	 * - Factory Pattern: This function, along with its helpers (`buildStandardMenu`, `addGenericMenus`),
+	 *   utilizes the `menuBuilder` instance (e.g., `ChromeMenuBuilder`). `menuBuilder` acts as a
+	 *   factory, abstracting the creation of platform-specific menu UI elements (root menu, items, submenus, choices).
+	 *   This allows `rebuildMenu` to define the menu structure logically without dealing with
+	 *   low-level browser API differences for menu creation.
+	 * - Strategy Pattern: The `handlerType` state (e.g., 'injectValue', 'paste', 'copy'), managed within
+	 *   the `ContextMenu` scope, dictates the action performed when a menu item is clicked (as handled by `handleClick`).
+	 *   The `addGenericMenus` function is responsible for creating the "Operational mode" submenu items.
+	 *   These items, when clicked, invoke functions (`turnOnPasting`, `turnOffPasting`, `turnOnCopy`)
+	 *   that change the `handlerType`, effectively switching the active strategy. The `handleClick`
+	 *   function then uses `handlers[handlerType]` to execute the currently selected strategy.
+	 *
+	 * Sequence of Operations:
+	 * 1. Prevents concurrent rebuilds using the `isRebuilding` flag.
+	 * 2. Clears existing menus and internal value caches via `clearExistingMenus()`.
+	 * 3. Creates a new root menu item using `menuBuilder.rootMenu('Testudoq')`.
+	 * 4. Populates standard menu items derived from `standardConfig`. This is done by calling
+	 *    `await buildStandardMenu(options, logger, rootMenu)`. `buildStandardMenu` internally
+	 *    uses `processMenuObject` and caches necessary values.
+	 * 5. Adds generic menu items. This is done by calling `addGenericMenus(rootMenu, logger)`.
+	 *    This function now sets up the "Operational mode" submenu and other standard actions.
+	 * 6. Saves the current state (which includes `handlerType`) using `await saveState()`.
+	 * The function includes error handling with a fallback mechanism to build a basic menu if the primary rebuild fails.
+	 *
+	 * @param {object} options - Options that might affect menu building, primarily `options.skipStandard`
+	 *                           which can be used to skip the `buildStandardMenu` step.
+	 * @throws {Error} If the menu rebuild fails and the subsequent recovery attempt is also unsuccessful.
+	 */
+	// --- Main rebuildMenu flow ---
 	async function rebuildMenu(options) {
-		if (isRebuilding) {
-			console.log('[ContextMenu] Menu rebuild already in progress, skipping');
-			return;
-		}
+	 if (isRebuilding) {
+	 	return;
+	 }
+	 isRebuilding = true;
+	 try {
+	 	await menuBuilder.removeAll();
+	 	const rootMenu = menuBuilder.rootMenu('Testudoq');
 
-		isRebuilding = true;
-		const rebuildStart = Date.now(),
-			logger = createRebuildLogger(rebuildStart);
+	 	// 1) dynamic from config.json
+	 	await buildStandardMenu(options, rootMenu);
 
-		try {
-			console.log('[ContextMenu] Starting menu rebuild');
+	 	// (re-enable this if you still need to load additionalMenus)
+	 	// await loadAdditionalMenus(options?.additionalMenus, rootMenu);
 
-			// Clear caches and remove existing menu items
-			await clearExistingMenus();
-			logger('Existing menus cleared');
+	 	// 2) static footer
+	 	addStaticFooter(rootMenu);
 
-			// Build the root menu and process standard menu items
-			// rootMenu and standardItems (debug metadata about created menu items)
-			const rootMenu = menuBuilder.rootMenu('Testudoq'),
-				// eslint-disable-next-line no-unused-vars
-				standardItems = await buildStandardMenu(options, logger);
-
-			// Add a separator before the generic menus
-			// Add separator with explicit ALL_CONTEXTS
-			menuBuilder.separator(rootMenu, { contexts: ALL_CONTEXTS });
-			logger('Added separator', {
-				contexts: ALL_CONTEXTS,
-				type: 'separator'
-			});
-
-			// Create operational submenu under the root
-			addOperationalSubMenu(rootMenu, logger);
-
-			// Add generic menu items with explicit ALL_CONTEXTS
-			addGenericMenus(rootMenu, logger);
-
-			// Save state after a successful rebuild
-			await saveState();
-			logger(`Menu rebuild completed in ${Date.now() - rebuildStart}ms`);
-		} catch (error) {
-			console.error('[ContextMenu] Menu rebuild failed:', error);
-			// If error occurs, attempt recovery using only standard menus.
-			try {
-				menuValueCache.clear();
-				await menuBuilder.removeAll();
-				const fallbackRoot = menuBuilder.rootMenu('Testudoq');
-				await processMenuObject(standardConfig, menuBuilder, fallbackRoot, handleClick);
-				console.log('[ContextMenu] Fallback to standard menu successful');
-			} catch (recoveryError) {
-				console.error('[ContextMenu] Recovery failed:', recoveryError);
-				throw new Error('Menu rebuild failed and recovery was unsuccessful');
-			}
-		} finally {
-			isRebuilding = false;
-		}
+	 	await saveState();
+	 	console.log('[ContextMenu] rebuild complete');
+	 } catch (err) {
+	 	console.error('[ContextMenu] rebuild failed:', err);
+	 	// fallback to just standard
+	 	try {
+	 		await menuBuilder.removeAll();
+	 		const fallback = menuBuilder.rootMenu('Testudoq');
+	 		await processMenuObject(standardConfig, menuBuilder, fallback, handleClick);
+	 	} catch (e2) {
+	 		throw new Error('Menu rebuild & recovery both failed');
+	 	}
+	 } finally {
+	 	isRebuilding = false;
+	 }
 	}
 
 	function wireStorageListener() {

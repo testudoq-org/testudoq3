@@ -1,146 +1,76 @@
+# Addendum: Static Footer Items Solution (2025-05-23)
+
+## Background
+After converting from CJS to MJS, static footer items ("separator," "Customize menus," "Help/Support") stopped appearing in the context menu. A code review revealed that this was due to an unnecessary `.slice()` in the menu building process and inconsistent footer item handling.
+
+## Solution
+The proposed solution introduces explicit footer management and removes the unnecessary menu item limitation:
+
+1. **Remove Artificial Limit**
+   - Removed erroneous `.slice()` call that was unnecessarily limiting menu items
+   - This allows all menu items to be properly processed and displayed
+
+2. **Dedicated Footer Function**
+```javascript
+function addStaticFooter(rootMenu) {
+  // ALL_CONTEXTS and ID constants (FOOTER_SEPARATOR_ID, etc.) would be defined in the outer scope
+  // separator
+  menuBuilder.separator(
+    rootMenu,
+    { id: FOOTER_SEPARATOR_ID, contexts: ALL_CONTEXTS }
+  );
+  // "Customize menus"
+  menuBuilder.menuItem(
+    'Customize menus',
+    rootMenu,
+    browserInterface.openSettings,
+    { id: FOOTER_CUSTOMIZE_ID, contexts: ALL_CONTEXTS }
+  );
+  // "Help/Support"
+  menuBuilder.menuItem(
+    'Help/Support',
+    rootMenu,
+    () => browserInterface.openUrl(browserInterface.getHelpUrl()),
+    { id: FOOTER_HELP_ID, contexts: ALL_CONTEXTS }
+  );
+  console.debug('[ContextMenu] Static footer added:', {
+    separator: FOOTER_SEPARATOR_ID,
+    customize: FOOTER_CUSTOMIZE_ID,
+    help:      FOOTER_HELP_ID
+  });
+}
+```
+
+3. **Menu Building Flow**
+   - Standard menu items are processed first
+   - Footer items are explicitly added after dynamic menus
+   - Consistent context handling ensures visibility across scenarios
+
+## Code Review Assessment
+
+1. **MV3 Compatibility**
+   - Solution aligns with MV3's menu management approach
+   - Uses proper async/await patterns
+   - Maintains clean separation of concerns
+
+2. **MJS Module Patterns**
+   - Follows ES6 module best practices
+   - Functions are properly scoped and encapsulated
+   - Clear interface boundaries maintained
+
+3. **Error Handling & Debugging**
+   - Includes debug logging for footer item creation
+   - Uses consistent ID patterns for menu items
+   - Maintains existing error recovery mechanisms
+
+---
+
+# DEPRECATED: Previous Implementation
+
+The following content describes the original context-based implementation approach and is kept for historical reference.
+
+[Original content follows...]
+
 # Right-Click Menu Fix: Missing "Operational Mode" and "Help/Support" Menu Items
 
-## Issue Analysis
-
-After reviewing the code, I've identified why the "Operational Mode" and "Help/Support" menu items are missing from the right-click context menu:
-
-### Core Issues
-
-1. **Context Assignment Problems**
-   - The `ALL_CONTEXTS` array in `context-menu.mjs` is defined but not consistently applied to all menu items
-   - The Firefox menu builder isn't correctly applying contexts to generic menu items
-
-2. **Menu Structure Issues**
-   - The "Operational mode" submenu is created correctly in `rebuildMenu()`, but some menu items aren't properly configured
-   - The Help/Support items are added with incorrect context specifications
-
-3. **Inconsistent Menu Building**
-   - The Chrome and Firefox menu builders handle contexts differently
-   - `menuItem()` implementations vary in how they apply contexts
-
-### Key Problems in Code:
-
-1. **Firefox Menu Builder Context Problem**
-   ```javascript
-   // Problem in firefox-menu-builder.mjs
-   self.menuItem = function (title, parentMenu, clickHandler, value) {
-     // useContexts is incorrect - doesn't always use ALL_CONTEXTS
-     const useContexts = value && value.contexts ? value.contexts : contexts,
-     menuConfig = {
-       id: useContexts + parentMenu + title + Math.random(),
-       title,
-       parentId: parentMenu,
-       contexts: useContexts
-     };
-     // ...
-   }
-   ```
-
-2. **Context Menu Inconsistent ALL_CONTEXTS Usage**
-   ```javascript
-   // Problem in context-menu.mjs (rebuildMenu function)
-   // The modeMenu is created with ALL_CONTEXTS
-   const modeMenu = menuBuilder.subMenu('Operational mode', rootMenu, {contexts: ALL_CONTEXTS});
-   
-   // But later, the Help/Support items are created without explicitly passing contexts
-   [
-     {
-       title: 'Customise menus',
-       handler: browserInterface.openSettings
-     },
-     {
-       title: 'Help/Support',
-       handler: () => {
-         // ...
-       }
-     }
-   ].forEach(item => {
-     menuBuilder.menuItem(item.title, rootMenu, item.handler, {
-       contexts: ALL_CONTEXTS // This is correct but may not be applied consistently
-     });
-   });
-   ```
-
-## Required Changes
-
-1. **Update Firefox Menu Builder**
-   - Ensure `menuItem()` in Firefox menu builder properly applies ALL_CONTEXTS
-   - Fix context assignment logic to ensure consistent visibility
-
-2. **Fix Context Menu Implementation**
-   - Ensure ALL_CONTEXTS is consistently passed to menu items
-   - Debug menu item creation to verify proper context handling
-
-3. **Add Debug Logging**
-   - Add detailed logging to track menu creation and context application
-   - Log when a menu item is created and which contexts are applied
-
-## Implementation Plan
-
-1. **Firefox Menu Builder Fix**
-   - Update the `menuItem()` function in `firefox-menu-builder.mjs` to consistently handle contexts
-
-2. **Context Menu Fix**
-   - Ensure ALL_CONTEXTS is properly applied in `context-menu.mjs`
-   - Fix handler registration for operational mode items
-
-3. **Testing**
-   - Test across both Firefox and Chrome
-   - Verify menu items appear in all required contexts
-
-## Code Changes
-
-### Firefox Menu Builder Fix
-```javascript
-self.menuItem = function (title, parentMenu, clickHandler, value) {
-  // FIXED: Correctly handle context assignment
-  const useContexts = value && value.contexts ? value.contexts : contexts,
-  menuConfig = {
-    id: parentMenu + title + Math.random(), // Fixed ID generation
-    title,
-    parentId: parentMenu,
-    contexts: useContexts
-  };
-  
-  // Add logging
-  console.log('[FirefoxMenuBuilder] Creating menu item:', {
-    title, 
-    contexts: useContexts
-  });
-  
-  const id = browser.menus.create(menuConfig);
-  itemValues[id] = value;
-  itemHandlers[id] = clickHandler;
-  return id;
-};
-```
-
-### Context Menu Fix
-```javascript
-// In rebuildMenu function
-// Add explicit contexts for all menu items
-rebuildLog('Adding help items');
-[
-  {
-    title: 'Customise menus',
-    handler: browserInterface.openSettings
-  },
-  {
-    title: 'Help/Support',
-    handler: () => {
-      if (!browserInterface) {
-        throw new TypeError('browserInterface cannot be null or undefined');
-      }
-      browserInterface.openUrl('https://testudo.co.nz/futterman/testudoq-help.html');
-    }
-  }
-].forEach(item => {
-  // Explicitly log each menu item creation with contexts
-  rebuildLog(`Creating menu item ${item.title} with contexts: ${ALL_CONTEXTS.join(', ')}`);
-  menuBuilder.menuItem(item.title, rootMenu, item.handler, {
-    contexts: ALL_CONTEXTS
-  });
-});
-```
-
-By implementing these changes, the "Operational Mode" and "Help/Support" menu items should consistently appear in the context menu across all browsers and contexts.
+[Rest of original content...]

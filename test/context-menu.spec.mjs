@@ -1,4 +1,4 @@
-/* global describe, it, expect, jest, beforeEach */
+/* global describe, it, expect, jest, beforeEach, afterEach */
 import ContextMenu from '../src/lib/context-menu.mjs';
 
 describe('ContextMenu', () => {
@@ -387,6 +387,83 @@ describe('ContextMenu', () => {
 					handlerType: 'injectValue'
 				})
 			});
+		});
+	});
+
+	describe('Static Footer Items', () => {
+		const ALL_CONTEXTS = ['page', 'selection', 'link', 'editable'];
+		let contextMenu, consoleDebugSpy;
+
+		beforeEach(async () => {
+			// Reset mocks for menuBuilder to ensure clean call history for order checks
+			menuBuilder.rootMenu.mockClear();
+			menuBuilder.separator.mockClear();
+			menuBuilder.menuItem.mockClear();
+
+			consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
+
+			contextMenu = new ContextMenu(standardConfig, browserInterface, menuBuilder, processMenuObject, true);
+			browserInterface.getOptionsAsync.mockResolvedValue({});
+			browserInterface.storage.local.get.mockResolvedValue({});
+			await contextMenu.init(); // This triggers rebuildMenu
+		});
+
+		afterEach(() => {
+			consoleDebugSpy.mockRestore();
+		});
+
+		it('should create static footer items (separator, Customize, Help) in order, with ALL_CONTEXTS, and log them', () => {
+			expect(menuBuilder.rootMenu).toHaveBeenCalledWith('Testudoq');
+			const rootMenuId = menuBuilder.rootMenu.mock.results[0].value, // Should be 'root-menu'
+				// Find the specific calls for the static footer items
+				// These calls should all have rootMenuId as their parent
+				separatorCall = menuBuilder.separator.mock.calls.find(
+					call => call[0] === rootMenuId && call[1] && call[1].id === 'testudo-footer-separator'
+				),
+				customizeCall = menuBuilder.menuItem.mock.calls.find(
+					call => call[0] === 'Customize menus' && call[1] === rootMenuId && call[3] && call[3].id === 'testudo-customize-menus'
+				),
+				helpCall = menuBuilder.menuItem.mock.calls.find(
+					call => call[0] === 'Help/Support' && call[1] === rootMenuId && call[3] && call[3].id === 'testudo-help-support'
+				),
+				// Assert call order: rootMenu -> separator -> customize -> help
+				rootMenuInvocationOrder = menuBuilder.rootMenu.mock.invocationCallOrder[0],
+				separatorCallIndex = menuBuilder.separator.mock.calls.indexOf(separatorCall),
+				separatorInvocationOrder = menuBuilder.separator.mock.invocationCallOrder[separatorCallIndex],
+				customizeCallIndex = menuBuilder.menuItem.mock.calls.indexOf(customizeCall),
+				customizeInvocationOrder = menuBuilder.menuItem.mock.invocationCallOrder[customizeCallIndex],
+				helpCallIndex = menuBuilder.menuItem.mock.calls.indexOf(helpCall),
+				helpInvocationOrder = menuBuilder.menuItem.mock.invocationCallOrder[helpCallIndex];
+
+			expect(separatorCall).toBeDefined("Static separator ('testudo-footer-separator') not created or not found as expected.");
+			expect(customizeCall).toBeDefined("'Customize menus' item ('testudo-customize-menus') not created or not found as expected.");
+			expect(helpCall).toBeDefined("'Help/Support' item ('testudo-help-support') not created or not found as expected.");
+
+			// Assert contexts for these specific items
+			expect(separatorCall[1].contexts).toEqual(ALL_CONTEXTS);
+			expect(customizeCall[3].contexts).toEqual(ALL_CONTEXTS);
+			expect(helpCall[3].contexts).toEqual(ALL_CONTEXTS);
+
+			expect(separatorInvocationOrder).toBeGreaterThan(rootMenuInvocationOrder);
+			expect(customizeInvocationOrder).toBeGreaterThan(separatorInvocationOrder);
+			expect(helpInvocationOrder).toBeGreaterThan(customizeInvocationOrder);
+
+			// Assert logging for "Customize menus" and "Help/Support"
+			// Assuming a log format like: "Static item: [TITLE]", { details including contexts and id }
+			expect(consoleDebugSpy).toHaveBeenCalledWith(
+				expect.stringMatching(/customize menus/i),
+				expect.objectContaining({
+					id: 'testudo-customize-menus',
+					contexts: ALL_CONTEXTS
+				})
+			);
+			expect(consoleDebugSpy).toHaveBeenCalledWith(
+				expect.stringMatching(/help\/support/i),
+				expect.objectContaining({
+					id: 'testudo-help-support',
+					contexts: ALL_CONTEXTS
+				})
+			);
 		});
 	});
 });

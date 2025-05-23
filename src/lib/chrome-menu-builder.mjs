@@ -6,7 +6,7 @@
 // Storage keys and default values
 const MENU_STORAGE_KEY = 'chrome_menu_state',
 	DEFAULT_CONTEXTS = ['page', 'selection', 'link', 'editable'],
-	MAX_MENU_ITEMS = 5000, // Increased limit while maintaining safety margin
+	MAX_MENU_ITEMS = 5000,
 	menuItemSchema = {
 		validateId: (id) => typeof id === 'string' && id.length > 0,
 		validateTitle: (title) => typeof title === 'string' && title.length > 0,
@@ -148,7 +148,11 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @return {string} The ID of the created separator menu item
 	 */
 	self.separator = function (parentMenu, options = {}) {
-		const useContexts = options.contexts || DEFAULT_CONTEXTS;
+		const useContexts = Array.isArray(options?.contexts) ? options.contexts : DEFAULT_CONTEXTS;
+		console.debug('[MenuBuilder Debug] Separator details:', {
+			parentMenu,
+			useContexts
+		});
 		console.log('[MenuBuilder Flow] Creating separator:', {
 			time: Date.now(),
 			parentMenu,

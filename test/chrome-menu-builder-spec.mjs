@@ -113,6 +113,37 @@ describe('ChromeMenuBuilder', function () {
 				id2 = underTest.separator('root');
 			expect(id1).not.toEqual(id2);
 		});
+
+		it('creates a separator with custom contexts when options are provided', function () {
+			const customContexts = ['link', 'editable'];
+			underTest.separator('root', { contexts: customContexts });
+			// eslint-disable-next-line one-var
+			const result = lastMenu();
+			expect(chrome.contextMenus.create.calls.count()).toBe(1);
+			expect(result.contexts).toEqual(customContexts);
+			expect(result.parentId).toBe('root');
+			expect(result.type).toBe('separator');
+		});
+
+		it('creates a separator with default contexts when options.contexts is omitted', function () {
+			underTest.separator('root'); // No options object or options.contexts
+			expect(chrome.contextMenus.create.calls.count()).toBe(1);
+			// eslint-disable-next-line one-var
+			const result = lastMenu();
+			expect(result.contexts).toEqual(['editable']); // Default context
+			expect(result.parentId).toBe('root');
+			expect(result.type).toBe('separator');
+		});
+
+		it('creates a separator with default contexts when options is provided but options.contexts is omitted', function () {
+			underTest.separator('root', {}); // Empty options object
+			expect(chrome.contextMenus.create.calls.count()).toBe(1);
+			// eslint-disable-next-line one-var
+			const result = lastMenu();
+			expect(result.contexts).toEqual(['editable']); // Default context
+			expect(result.parentId).toBe('root');
+			expect(result.type).toBe('separator');
+		});
 	});
 
 	describe('menuItem', function () {
@@ -215,6 +246,84 @@ describe('ChromeMenuBuilder', function () {
 			const menuId = 'choice1';
 			await underTest.selectChoice(menuId);
 			expect(chrome.contextMenus.update).toHaveBeenCalledWith(menuId, {checked: true});
+		});
+	});
+
+	describe('Context-specific standard menu items', function () {
+		const contextsToTest = ['page', 'selection', 'link', 'editable'],
+			FOOTER_SEPARATOR_ID = 'testudo-footer-separator',
+			CUSTOMIZE_MENUS_ID = 'testudo-customize-menus',
+			CUSTOMIZE_MENUS_TITLE = 'Customize menus',
+			HELP_SUPPORT_ID = 'testudo-help-support',
+			HELP_SUPPORT_TITLE = 'Help/Support',
+			NORMAL_TYPE = 'normal',
+			SEPARATOR_TYPE = 'separator';
+
+		contextsToTest.forEach(currentContext => {
+			describe(`for '${currentContext}' context`, function () {
+				let createdItems, mockParentId;
+
+				beforeEach(async function () {
+					chrome.contextMenus.create.calls.reset();
+					mockParentId = `test-parent-for-${currentContext}-${Date.now()}`;
+
+					// Simulate creation of the separator.
+					// The test asserts that chrome.contextMenus.create is called with FOOTER_SEPARATOR_ID.
+					await underTest.separator(mockParentId, { contexts: [currentContext] });
+
+					// Simulate creation of "Customize menus" item.
+					// The test asserts that chrome.contextMenus.create is called with CUSTOMIZE_MENUS_ID.
+					await underTest.menuItem(
+						CUSTOMIZE_MENUS_TITLE,
+						mockParentId,
+						jasmine.any(Function), // Dummy click handler
+						{ testValue: 'customize', contexts: [currentContext] } // Value must be an object with contexts
+					);
+
+					// Simulate creation of "Help/Support" item.
+					// The test asserts that chrome.contextMenus.create is called with HELP_SUPPORT_ID.
+					await underTest.menuItem(
+						HELP_SUPPORT_TITLE,
+						mockParentId,
+						jasmine.any(Function), // Dummy click handler
+						{ testValue: 'help', contexts: [currentContext] } // Value must be an object with contexts
+					);
+
+					createdItems = chrome.contextMenus.create.calls.allArgs().map(args => args[0]);
+				});
+
+				it('should create a separator item with the correct ID, type, and context', function () {
+					const separator = createdItems.find(item => item.id === FOOTER_SEPARATOR_ID);
+					expect(separator).toBeDefined(`Separator with ID ${FOOTER_SEPARATOR_ID} not found for context '${currentContext}'. Created items: ${JSON.stringify(createdItems)}`);
+					if (separator) {
+						expect(separator.type).toBe(SEPARATOR_TYPE);
+						expect(separator.contexts).toEqual([currentContext]);
+						expect(separator.parentId).toBe(mockParentId);
+					}
+				});
+
+				it('should create a "Customize menus" item with the correct ID, title, type, and context', function () {
+					const customizeItem = createdItems.find(item => item.id === CUSTOMIZE_MENUS_ID);
+					expect(customizeItem).toBeDefined(`"${CUSTOMIZE_MENUS_TITLE}" item with ID ${CUSTOMIZE_MENUS_ID} not found for context '${currentContext}'. Created items: ${JSON.stringify(createdItems)}`);
+					if (customizeItem) {
+						expect(customizeItem.title).toBe(CUSTOMIZE_MENUS_TITLE);
+						expect(customizeItem.type).toBe(NORMAL_TYPE);
+						expect(customizeItem.contexts).toEqual([currentContext]);
+						expect(customizeItem.parentId).toBe(mockParentId);
+					}
+				});
+
+				it('should create a "Help/Support" item with the correct ID, title, type, and context', function () {
+					const helpItem = createdItems.find(item => item.id === HELP_SUPPORT_ID);
+					expect(helpItem).toBeDefined(`"${HELP_SUPPORT_TITLE}" item with ID ${HELP_SUPPORT_ID} not found for context '${currentContext}'. Created items: ${JSON.stringify(createdItems)}`);
+					if (helpItem) {
+						expect(helpItem.title).toBe(HELP_SUPPORT_TITLE);
+						expect(helpItem.type).toBe(NORMAL_TYPE);
+						expect(helpItem.contexts).toEqual([currentContext]);
+						expect(helpItem.parentId).toBe(mockParentId);
+					}
+				});
+			});
 		});
 	});
 });
