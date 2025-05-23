@@ -78,8 +78,8 @@ export function toggleGremlins() {
 
 // Listen for state updates from content script
 chrome.runtime.onMessage.addListener((message) => {
-	if (message.command === 'updateGremlinsState') {
-		attacking = message.attacking;
+	if (message.command === 'gremlinStateUpdate') {
+		attacking = message.payload.attacking;
 		updateButtonText();
 		console.log('Gremlins state updated:', attacking);
 	}

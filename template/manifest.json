@@ -1,7 +1,7 @@
 {
 	"name": "Testudoq",
 	"description": "Testudoq emergent testing with a right-click menu for exploratory tests. Create, manage, and execute missions easily.",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"permissions": [
 		"contextMenus",
 		"storage",
@@ -74,11 +74,16 @@
 				"content-scripts/paste.mjs",
 				"content-scripts/options.mjs",
 				"content-scripts/options-gremlins-bookmarklet-handler.mjs",
-				"content-scripts/gremlins-handler.mjs",
 				"content-scripts/prompt.mjs"
 			],
 			"type": "module",
 			"run_at": "document_end"
+		},
+		{
+			"matches": ["<all_urls>"],
+			"js": ["content-scripts/gremlins-handler.mjs"],
+			"run_at": "document_idle",
+			"type": "module"
 		}
 	]
 }
