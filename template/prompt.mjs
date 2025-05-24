@@ -64,7 +64,7 @@ if (window !== window.top) {
 					recordedResult: result,
 					frameLocation: frameLocation
 				},
-				'*'
+				window.top.location.origin
 			);
 			return result;
 		}
@@ -84,7 +84,7 @@ if (window !== window.top) {
 					recordedResult: result,
 					frameLocation: frameLocation
 				},
-				'*'
+				window.top.location.origin
 			);
 			return result;
 		}
@@ -100,7 +100,7 @@ if (window !== window.top) {
 					response: 'alert',
 					value: recordedAlert
 				},
-				'*'
+				window.top.location.origin
 			);
 			return;
 		} else {
@@ -114,7 +114,7 @@ if (window !== window.top) {
 					recordedResult: result,
 					frameLocation: frameLocation
 				},
-				'*'
+				window.top.location.origin
 			);
 			return result;
 		}
@@ -129,7 +129,7 @@ if (window !== window.top) {
 		} else {
 			const result = originalPrompt(text, defaultText),
 				frameLocation = getFrameLocation();
-			window.top.postMessage(
+			window.top.postMessage( // In top window, window.top is window
 				{
 					direction: 'from-page-script',
 					recordedType: 'prompt',
@@ -137,7 +137,7 @@ if (window !== window.top) {
 					recordedResult: result,
 					frameLocation: frameLocation
 				},
-				'*'
+				window.location.origin
 			);
 			return result;
 		}
@@ -151,7 +151,7 @@ if (window !== window.top) {
 		} else {
 			const result = originalConfirmation(text),
 				frameLocation = getFrameLocation();
-			window.top.postMessage(
+			window.top.postMessage( // In top window, window.top is window
 				{
 					direction: 'from-page-script',
 					recordedType: 'confirm',
@@ -159,7 +159,7 @@ if (window !== window.top) {
 					recordedResult: result,
 					frameLocation: frameLocation
 				},
-				'*'
+				window.location.origin
 			);
 			return result;
 		}
@@ -169,19 +169,19 @@ if (window !== window.top) {
 		recordedAlert = text;
 		if (document.body.hasAttribute('SideeXPlayingFlag')) {
 			// Response directly
-			window.top.postMessage(
+			window.top.postMessage( // In top window, window.top is window
 				{
 					direction: 'from-page-script',
 					response: 'alert',
 					value: recordedAlert
 				},
-				'*'
+				window.location.origin
 			);
 			return;
 		} else {
 			const result = originalAlert(text),
 				frameLocation = getFrameLocation();
-			window.top.postMessage(
+			window.top.postMessage( // In top window, window.top is window
 				{
 					direction: 'from-page-script',
 					recordedType: 'alert',
@@ -189,7 +189,7 @@ if (window !== window.top) {
 					recordedResult: result,
 					frameLocation: frameLocation
 				},
-				'*'
+				window.location.origin
 			);
 			return result;
 		}
@@ -204,7 +204,8 @@ export function handler(event) {
 	if (
 		event.source === window &&
 		event.data &&
-		event.data.direction === 'from-content-script'
+		event.data.direction === 'from-content-script' &&
+		event.origin === window.location.origin // Ensure message is from same origin
 	) {
 		if (event.data.detach) {
 			window.removeEventListener('message', handler);
@@ -224,7 +225,7 @@ export function handler(event) {
 					direction: 'from-page-script',
 					response: 'prompt'
 				},
-				'*'
+				window.location.origin
 			);
 			break;
 		case 'getPromptMessage':
@@ -236,7 +237,7 @@ export function handler(event) {
 					response: 'prompt',
 					value: result
 				},
-				'*'
+				window.location.origin
 			);
 			break;
 		case 'setNextConfirmationResult':
@@ -247,7 +248,7 @@ export function handler(event) {
 					direction: 'from-page-script',
 					response: 'confirm'
 				},
-				'*'
+				window.location.origin
 			);
 			break;
 		case 'getConfirmationMessage':
@@ -260,7 +261,7 @@ export function handler(event) {
 						response: 'confirm',
 						value: result
 					},
-					'*'
+					window.location.origin
 				);
 			} catch (e) { } // eslint-disable-line no-empty
 			break;
@@ -271,7 +272,7 @@ export function handler(event) {
 					direction: 'from-page-script',
 					response: 'alert'
 				},
-				'*'
+				window.location.origin
 			);
 			break;
 		}
