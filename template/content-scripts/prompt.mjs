@@ -56,7 +56,7 @@ const promptHandler = {
 				window.postMessage({
 					direction: 'from-page-script',
 					response: 'prompt'
-				}, '*');
+				}, window.origin); // MODIFIED
 				break;
 
 			case 'getPromptMessage':
@@ -66,7 +66,7 @@ const promptHandler = {
 					direction: 'from-page-script',
 					response: 'prompt',
 					value: result
-				}, '*');
+				}, window.origin); // MODIFIED
 				break;
 
 			case 'setNextConfirmationResult':
@@ -75,7 +75,7 @@ const promptHandler = {
 				window.postMessage({
 					direction: 'from-page-script',
 					response: 'confirm'
-				}, '*');
+				}, window.origin); // MODIFIED
 				break;
 
 			case 'getConfirmationMessage':
@@ -85,7 +85,7 @@ const promptHandler = {
 					direction: 'from-page-script',
 					response: 'confirm',
 					value: result
-				}, '*');
+				}, window.origin); // MODIFIED
 				break;
 
 			case 'setNextAlertResult':
@@ -93,7 +93,7 @@ const promptHandler = {
 				window.postMessage({
 					direction: 'from-page-script',
 					response: 'alert'
-				}, '*');
+				}, window.origin); // MODIFIED
 				break;
 			}
 		}

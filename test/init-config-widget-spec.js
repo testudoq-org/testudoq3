@@ -135,14 +135,16 @@ describe('initConfigWidget', function () {
 			resolveLoadOptions({skipStandard: true});
 			asyncResult
 				.then(() => expect(skipStandardCheckbox.checked).toBeTruthy())
-				.then(done, done.fail);
+				.then(done)
+				.catch(done.fail);
 		});
 		it('unchecks the option-skipStandard box if the option is not set', done => {
 			skipStandardCheckbox.checked = true;
 			resolveLoadOptions({});
 			asyncResult
 				.then(() => expect(skipStandardCheckbox.checked).toBeFalsy())
-				.then(done, done.fail);
+				.then(done)
+				.catch(done.fail);
 		});
 		it('saves the options if changed', done => {
 			browserInterface.saveOptions.and.callFake(options => {
@@ -153,7 +155,11 @@ describe('initConfigWidget', function () {
 			asyncResult
 				.then(() => clickOn(skipStandardCheckbox))
 				.then(() => expect(browserInterface.saveOptions).toHaveBeenCalledWith({additionalMenus: [], skipStandard: true}))
-				.then(done, done.fail);
+				// The actual save and done() call is in the callFake above for this specific test.
+				// If we need to ensure the asyncResult promise chain completes, we'd add .then(done).catch(done.fail)
+				// but the test is structured to complete within saveOptions.and.callFake.
+				// For consistency with other tests and to ensure this promise chain is handled:
+				.catch(done.fail);
 		});
 		it('preserves other options when saving', done => {
 			resolveLoadOptions({
@@ -162,13 +168,14 @@ describe('initConfigWidget', function () {
 			asyncResult
 				.then(() => clickOn(skipStandardCheckbox))
 				.then(() => expect(browserInterface.saveOptions).toHaveBeenCalledWith({additionalMenus: [1, 2, 3], skipStandard: true}))
-				.then(done, done.fail);
+				.then(done)
+				.catch(done.fail);
 		});
 	});
 	describe('without any additional config sections', () => {
 		beforeEach(done => {
 			resolveLoadOptions({});
-			asyncResult.then(done, done.fail);
+			asyncResult.then(done).catch(done.fail);
 		});
 		it('hides the custom section', () => {
 			expect(sectionWithoutCustom.style.display).not.toBe('none');
@@ -196,7 +203,7 @@ describe('initConfigWidget', function () {
 				],
 				skipStandard: false
 			});
-			asyncResult.then(done, done.fail);
+			asyncResult.then(done).catch(done.fail);
 		});
 		it('shows the custom section', () => {
 			expect(sectionWithoutCustom.style.display).toBe('none');
@@ -231,7 +238,7 @@ describe('initConfigWidget', function () {
 				additionalMenus: [
 					{name: 'first', source: 'fi.json'}
 				]});
-			asyncResult.then(done, done.fail);
+			asyncResult.then(done).catch(done.fail);
 		});
 
 		describe('when content is added via the custom config box', () => {

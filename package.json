@@ -9,14 +9,14 @@
     "lint": "eslint \"src/**/*.{js,mjs}\" \"test/**/*.{js,mjs}\"",
     "test:unit": "cross-env NODE_ENV=test jest",
     "test:e2e": "cross-env NODE_ENV=test jest test/e2e --runInBand",
-    "pretest": "npm run lint && rimraf testem/compiled",
+    "pretest": "npm run lint && node -e \"require('fs-extra').removeSync('./testem/compiled')\"",
     "test": "npm run test:unit && npm run test:e2e && testem ci -R dot",
     "pretest-browser": "npm run pretest",
     "test-browser": "testem",
     "pretest-chrome": "npm run pretest",
     "test-chrome": "testem -l Chrome",
     "sourcemap": "sourcemap-lookup",
-    "clean": "rimraf pack",
+    "clean": "node -e \"require('fs-extra').removeSync('./pack')\"",
     "prepack-extension": "npm run clean && copyfiles -u 1 template/**/* pack",
     "pack-extension": "webpack --config webpack.config.mjs",
     "postpack-extension": "node --experimental-modules clean-duplicates.mjs",
@@ -65,9 +65,9 @@
     "gremlins.js": "github:marmelab/gremlins.js#master",
     "javascript-obfuscator": "^4.1.0",
     "ncp": "^2.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "rimraf": "^5.0.5",
     "testudoq": "file:"
+  },
+  "overrides": {
+    "cross-spawn": "^7.0.5"
   }
 }

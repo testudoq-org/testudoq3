@@ -36,7 +36,7 @@ files.forEach(file => {
 			minimizedCode = minify(obfuscatedCode).code;
 
 		// Write the minimized and obfuscated code to a new file in the 'dist' directory with the same name
-		fs.writeFileSync(`dist/${file.replace('.js', '.min.js')}`, minimizedCode);
+		fs.writeFileSync(`dist/${file.replace(/\.js$/, '.min.js')}`, minimizedCode);
 	}
 });
 

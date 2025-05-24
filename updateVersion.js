@@ -3,7 +3,7 @@ const fs = require('fs-extra'),
 	env = process.argv.includes('--prod') ? 'prod' : 'dev',
 	isProduction = env === 'prod',
 	versionFile = path.join(__dirname, 'config', `version.${env}.json`),
-	config = JSON.parse(fs.readFileSync(versionFile, 'utf-8')),
+	config = JSON.parse(fs.readFileSync(versionFile, 'utf8')),
 	currentVersion = config.version,
 	[major, minor, patch] = currentVersion.split('-')[0].split('.').map(Number),
 	newVersion = isProduction
@@ -16,7 +16,7 @@ const fs = require('fs-extra'),
 	],
 	updateVersionInFile = (filePath, key) => {
 		try {
-			let fileContent = fs.readFileSync(filePath, 'utf-8');
+			let fileContent = fs.readFileSync(filePath, 'utf8');
 
 			if (key === 'version') {
 				fileContent = fileContent.replace(/"version":\s*"(.*?)"/, `"version": "${newVersion}"`);
@@ -27,7 +27,7 @@ const fs = require('fs-extra'),
 				);
 			}
 
-			fs.writeFileSync(filePath, fileContent, 'utf-8');
+			fs.writeFileSync(filePath, fileContent, 'utf8');
 			console.log(`Successfully updated ${key} in ${filePath} to ${newVersion}`);
 		} catch (error) {
 			console.error(`Error updating ${filePath}:`, error.message);
@@ -36,7 +36,7 @@ const fs = require('fs-extra'),
 
 // Update the config file with the new version
 config.version = newVersion;
-fs.writeFileSync(versionFile, JSON.stringify(config, null, 2), 'utf-8');
+fs.writeFileSync(versionFile, JSON.stringify(config, null, 2), 'utf8');
 
 // Update version in each file
 filesToUpdate.forEach(file => {

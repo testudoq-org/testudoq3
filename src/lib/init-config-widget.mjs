@@ -135,10 +135,12 @@ export default function initConfigWidget(domElement, browserInterface) {
 					customConfigText = domElement.querySelector('[role=custom-config-text]').value;
 				if (!submenuName) {
 					submenuField.value = '';
-					return showErrorMsg('Please provide submenu name!');
+					showErrorMsg('Please provide submenu name!');
+					return;
 				}
 				if (!customConfigText) {
-					return showErrorMsg('Please provide the configuration');
+					showErrorMsg('Please provide the configuration');
+					return;
 				}
 				try {
 					addSubMenu(customConfigText, { name: submenuName });
@@ -153,15 +155,18 @@ export default function initConfigWidget(domElement, browserInterface) {
 				if (!submenuName) {
 					showErrorMsg('Please provide submenu name!');
 					submenuField.value = '';
-				} else if (!url) {
-					return showErrorMsg('Please provide the url');
-				} else {
-					browserInterface.getRemoteFile(url).then(result => {
-						addSubMenu(result, { name: submenuName, source: url, remote: true });
-						submenuField.value = '';
-						urlField.value = '';
-					}).catch(showErrorMsg);
+					return;
 				}
+				if (!url) {
+					showErrorMsg('Please provide the url');
+					return;
+				}
+				// If both submenuName and url are provided, proceed
+				browserInterface.getRemoteFile(url).then(result => {
+					addSubMenu(result, { name: submenuName, source: url, remote: true });
+					submenuField.value = '';
+					urlField.value = '';
+				}).catch(showErrorMsg);
 			});
 
 			// Remove the template from the DOM if it exists
