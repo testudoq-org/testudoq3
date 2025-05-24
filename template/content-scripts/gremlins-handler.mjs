@@ -80,7 +80,12 @@ const gremlinsHandler = {
 			console.log('[Gremlins] Received message:', message);
 
 			if (message.command === 'startGremlins') {
-				this.startGremlins(message.config).then(sendResponse);
+				this.startGremlins(message.config)
+					.then(sendResponse)
+					.catch(error => {
+						console.error('[Gremlins] Error starting gremlins from message listener:', error);
+						sendResponse({ success: false, error: error.message || 'Unknown error' });
+					});
 				return true;
 			}
 

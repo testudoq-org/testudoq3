@@ -166,6 +166,8 @@ analyzeMenuConfigurations().then(result => {
 	if (result) {
 		console.log(`\n${result}`);
 	}
+}).catch(error => {
+	console.error(`\n❌ Error during menu configuration analysis: ${error.message}`);
 });
 
 // Summary
