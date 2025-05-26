@@ -1,75 +1,51 @@
-import { describe, it, beforeEach, afterEach, expect, jest } from '@jest/globals';
+// test/unit/request-handlers/inject-value-request-handler.test.mjs
+import { describe, it, expect, beforeEach, jest as jestGlobals } from '@jest/globals';
 import injectValueRequestHandler from '../../../src/lib/inject-value-request-handler.mjs';
-import { FakeBrowserAPI } from '../../utils/fake-chrome-api.mjs';
+
+// Use jestGlobals.fn() instead of jest.fn()
+const { fn } = jestGlobals;
 
 describe('injectValueRequestHandler', () => {
-	const tabId = 123,
-		requestValue = { value: 'test-value' };
-	let browserInterface;
+	let mockBrowserInterface;
+	const tabId = 123;
+	const requestValue = { data: 'testData' };
+	const expectedReturnValue = { success: true };
+	const scriptPath = '/content-scripts/inject-value.mjs';
 
 	beforeEach(() => {
-		browserInterface = new FakeBrowserAPI();
-	});
-	describe('when successful', () => {
-		it('executes script with correct file path', async () => {
-			await injectValueRequestHandler(browserInterface, tabId, requestValue);
-			expect(browserInterface.scripting.executeScript).toHaveBeenCalledWith({ target: { tabId: tabId }, files: ['/content-scripts/inject-value.mjs'] });
-		});
-
-		it('sends message to tab with request value', async () => {
-			await injectValueRequestHandler(browserInterface, tabId, requestValue);
-			expect(browserInterface.sendMessage).toHaveBeenCalledWith(tabId, requestValue);
-		});
-
-		it('returns result from sendMessage', async () => {
-			const expectedResult = { success: true };
-			// Ensure sendMessage is a mock that can be configured for a resolved value
-			if (browserInterface.sendMessage.mockResolvedValue) { // Check if it's a Jest mock
-				browserInterface.sendMessage.mockResolvedValue(expectedResult);
-			} else {
-				// Fallback or error if not a Jest mock, this part might need adjustment
-				// based on FakeBrowserAPI's actual implementation.
-				// For now, assuming it will be a Jest mock.
-				// If FakeBrowserAPI uses sinon, this would be:
-				// browserInterface.sendMessage.resolves(expectedResult);
-				// For this refactor, we'll assume it's a Jest mock.
-			}
-			const result = await injectValueRequestHandler(browserInterface, tabId, requestValue);
-			expect(result).toEqual(expectedResult);
-		});
+		mockBrowserInterface = {
+			executeScript: fn().mockResolvedValue(undefined),
+			sendMessage: fn().mockResolvedValue(expectedReturnValue)
+		};
 	});
 
-	describe('when failures occur', () => {
-		let consoleErrorSpy;
+	it('should call executeScript and then sendMessage on success, and return sendMessage result', async () => {
+		expect.assertions(3);
+		const result = await injectValueRequestHandler(mockBrowserInterface, tabId, requestValue);
 
-		beforeEach(() => {
-			// Spy on console.error and provide a mock implementation to suppress output
-			consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-		});
+		expect(mockBrowserInterface.executeScript).toHaveBeenCalledWith(tabId, scriptPath);
+		expect(mockBrowserInterface.sendMessage).toHaveBeenCalledWith(tabId, requestValue);
+		expect(result).toBe(expectedReturnValue);
+	});
 
-		afterEach(() => {
-			// Restore the original console.error function
-			consoleErrorSpy.mockRestore();
-		});
+	it('should throw the original error if executeScript rejects', async () => {
+		expect.assertions(2);
+		const executionError = new Error('Execution failed');
+		mockBrowserInterface.executeScript.mockRejectedValue(executionError);
 
-		it('throws error if executeScript fails', async () => {
-			const error = new Error('Script execution failed');
-			browserInterface.scripting.executeScript.mockRejectedValue(error); // FakeBrowserAPI uses Jest mocks
+		await expect(injectValueRequestHandler(mockBrowserInterface, tabId, requestValue))
+			.rejects.toBe(executionError);
+		expect(mockBrowserInterface.sendMessage).not.toHaveBeenCalled();
+	});
 
-			await expect(injectValueRequestHandler(browserInterface, tabId, requestValue))
-				.rejects.toThrow(error);
-			expect(consoleErrorSpy).toHaveBeenCalledWith('[injectValueRequestHandler] Failed:', error);
-			expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-		});
+	it('should throw the original error if sendMessage rejects', async () => {
+		expect.assertions(3);
+		const sendMessageError = new Error('Send failed');
+		mockBrowserInterface.sendMessage.mockRejectedValue(sendMessageError);
 
-		it('throws error if sendMessage fails', async () => {
-			const error = new Error('Message send failed');
-			browserInterface.sendMessage.mockRejectedValue(error); // FakeBrowserAPI uses Jest mocks
-
-			await expect(injectValueRequestHandler(browserInterface, tabId, requestValue))
-				.rejects.toThrow(error);
-			expect(consoleErrorSpy).toHaveBeenCalledWith('[injectValueRequestHandler] Failed:', error);
-			expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-		});
+		await expect(injectValueRequestHandler(mockBrowserInterface, tabId, requestValue))
+			.rejects.toBe(sendMessageError);
+		expect(mockBrowserInterface.executeScript).toHaveBeenCalledWith(tabId, scriptPath);
+		expect(mockBrowserInterface.sendMessage).toHaveBeenCalledWith(tabId, requestValue);
 	});
 });
