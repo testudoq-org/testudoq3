@@ -266,20 +266,37 @@ export default function ChromeMenuBuilder(chrome) {
 	 * @param {string} title - The title of the radio button menu item
 	 * @param {string} parentMenu - The ID of the parent menu
 	 * @param {function} clickHandler - The click handler for the radio button menu item
-	 * @param {any} value - The value of the radio button menu item
-	 * @return {string} The ID of the created radio button menu item
+	 * @param {any} value - The value of the radio button menu item (used for 'checked' state)
+	 * @return {Promise<string>} The ID of the created radio button menu item
 	 */
-	self.choice = function (title, parentMenu, clickHandler, value) {
-		const id = chrome.contextMenus.create({
-			id: `value${Math.random()}`,
+	self.choice = async function (title, parentMenu, clickHandler, value) {
+		const generatedId = `value${Math.random()}`;
+		// console.log('[CMB self.choice] Generated ID for create:', generatedId); // Removed
+		
+		const id = await chrome.contextMenus.create({
+			id: generatedId, 
 			type: 'radio',
-			checked: value,
+			checked: value, 
 			title,
 			parentId: parentMenu,
 			contexts: DEFAULT_CONTEXTS
 		});
+		// console.log('[CMB self.choice] ID returned by chrome.contextMenus.create:', id); // Removed
+		// console.log('[CMB self.choice] Setting itemHandlers[', id, '] = ', String(clickHandler)); // Removed
 		itemHandlers[id] = clickHandler;
-		itemValues[id] = value;
+		itemValues[id] = value; 
+		// console.log('[CMB self.choice] itemHandlers after set:', JSON.stringify(Object.keys(itemHandlers))); // Removed
+		
+		try {
+			logMenuState('create_choice'); 
+			await saveMenuState(); 
+		} catch (error) {
+			console.error('[CMB self.choice] Error during saveMenuState:', error);
+			if (error.message.startsWith('Failed to save menu state:')) { 
+				throw error;
+			}
+		}
+		
 		return id;
 	};
 
@@ -351,13 +368,17 @@ export default function ChromeMenuBuilder(chrome) {
 				tabId: tab?.id,
 				eventId: `click_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
 				hasHandler: itemId ? !!itemHandlers[itemId] : false,
-				hasValue: itemId ? !!itemValues[itemId] : false,
+				hasValue: itemId ? !!itemValues[itemId] : false, 
 				registeredHandlers: Object.keys(itemHandlers),
 				totalHandlers: Object.keys(itemHandlers).length,
 				totalValues: Object.keys(itemValues).length,
 				flowTimers
 			};
 
+		// console.log('[CMB onClicked] Received click for itemId:', itemId); // Removed
+		// console.log('[CMB onClicked] Current itemHandlers:', JSON.stringify(Object.keys(itemHandlers))); // Removed
+		// console.log('[CMB onClicked] Current itemValues:', JSON.stringify(itemValues)); // Removed
+		
 		console.log('[MenuBuilder Flow] Click event received:', {
 			...metrics,
 			elapsed: flowTimers.markTimestamp('eventReceived')
@@ -371,10 +392,15 @@ export default function ChromeMenuBuilder(chrome) {
 			return;
 		}
 
+		const handler = itemHandlers[itemId]; 
+		const valueFromStore = itemValues[itemId]; 
+		// console.log('[CMB onClicked] Looked up handler:', String(handler), 'and value:', valueFromStore, 'for itemId:', itemId); // Removed
+
+
 		try {
 			console.log('[MenuBuilder Flow] Processing click:', {
 				...metrics,
-				value: itemValues[itemId],
+				value: valueFromStore, 
 				elapsed: flowTimers.markTimestamp('processingStart')
 			});
 
@@ -387,8 +413,8 @@ export default function ChromeMenuBuilder(chrome) {
 				throw new Error('Invalid tab ID');
 			}
 
-			if (!itemHandlers[itemId]) {
-				console.warn('[MenuBuilder Flow] Handler lookup failed:', {
+			if (!handler) { 
+				console.warn('[MenuBuilder Flow] Handler lookup failed (handler is falsy):', {
 					...metrics,
 					elapsed: flowTimers.markTimestamp('handlerLookupFailed')
 				});
@@ -397,14 +423,13 @@ export default function ChromeMenuBuilder(chrome) {
 
 			console.log('[MenuBuilder Flow] Executing handler:', {
 				...metrics,
-				handlerType: typeof itemHandlers[itemId],
+				handlerType: typeof handler,
 				elapsed: flowTimers.markTimestamp('handlerExecutionStart')
 			});
 
-			const handler = itemHandlers[itemId],
-				menuValue = {
+			const menuValue = { 
 					menuId: itemId,
-					value: itemValues[itemId]
+					value: valueFromStore 
 				},
 				handlerValidation = {
 					handlerName: handler.name,
@@ -412,7 +437,7 @@ export default function ChromeMenuBuilder(chrome) {
 					expectedArgs: ['tabId', 'value'],
 					providedArgs: [tab.id, menuValue]
 				},
-				result = await itemHandlers[itemId](tab.id, menuValue);
+				result = await handler(tab.id, menuValue); 
 
 			console.log('[MenuBuilder Flow] Handler validation:', handlerValidation);
 			console.log('[MenuBuilder Flow] Handler completed:', {

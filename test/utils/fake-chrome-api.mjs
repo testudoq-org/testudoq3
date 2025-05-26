@@ -1,49 +1,73 @@
-import sinon from 'sinon';
+import { jest } from '@jest/globals';
 
 export class FakeBrowserAPI {
 	constructor() {
 		const createEvent = () => ({
-			addListener: sinon.stub(),
-			removeListener: sinon.stub()
+			addListener: jest.fn(),
+			removeListener: jest.fn()
 		});
 
-		this.executeScript = sinon.stub().resolves([{ result: true }]);
-		this.sendMessage = sinon.stub().resolves({ success: true });
+		// Top-level sendMessage, used by inject-value-request-handler.test.mjs
+		// Consider if this should be namespaced under runtime or tabs eventually.
+		this.sendMessage = jest.fn().mockResolvedValue({ success: true });
 
-		// Keep other APIs for potential future use
 		this.runtime = {
-			onMessage: createEvent()
+			onMessage: createEvent(),
+			sendMessage: jest.fn().mockResolvedValue({ success: true }), // Added for chrome.runtime.sendMessage
+			lastError: undefined // Ensure lastError can be checked
+		};
+
+		this.scripting = {
+			executeScript: jest.fn().mockResolvedValue([{ result: true }])
 		};
 
 		this.contextMenus = {
-			create: sinon.stub(),
-			removeAll: sinon.stub().resolves(undefined),
+			create: jest.fn((options, callback) => {
+				// The real API calls the callback with no arguments if successful,
+				// or sets runtime.lastError.
+				// When used with await, it resolves (often to undefined, or the id if specified).
+				// For testing, returning the ID is most useful if the SUT expects it.
+				// The SUT's ChromeMenuBuilder expects the ID to be returned from the awaited call.
+				if (callback) {
+					callback(); // Simulate callback invocation
+				}
+				return Promise.resolve(options.id); // Resolve with the ID provided in options
+			}),
+			removeAll: jest.fn((callback) => {
+				// Simulate async behavior and callback for removeAll
+				if (typeof callback === 'function') {
+					Promise.resolve().then(callback); // Call callback asynchronously
+				}
+				return Promise.resolve(undefined);
+			}),
 			onClicked: createEvent(),
-			update: sinon.stub().resolves(undefined),
-			getAll: sinon.stub().resolves([])
+			update: jest.fn().mockResolvedValue(undefined),
+			getAll: jest.fn().mockResolvedValue([])
 		};
 
 		this.tabs = {
-			query: sinon.stub().resolves([{ id: 1 }])
+			query: jest.fn().mockResolvedValue([{ id: 1 }])
+			// chrome.tabs.sendMessage could be added here if needed
 		};
 
 		this.storage = {
 			local: {
-				get: sinon.stub().resolves({}),
-				set: sinon.stub().resolves(undefined),
-				clear: sinon.stub().resolves(undefined)
+				get: jest.fn().mockResolvedValue({}),
+				set: jest.fn().mockResolvedValue(undefined),
+				remove: jest.fn().mockResolvedValue(undefined), // Added missing 'remove'
+				clear: jest.fn().mockResolvedValue(undefined)
 			},
 			sync: {
-				get: sinon.stub().resolves({}),
-				set: sinon.stub().resolves(undefined)
+				get: jest.fn().mockResolvedValue({}),
+				set: jest.fn().mockResolvedValue(undefined)
 			},
 			onChanged: createEvent()
 		};
 
 		this.permissions = {
-			request: sinon.stub().resolves(true),
-			remove: sinon.stub().resolves(true),
-			contains: sinon.stub().resolves(true)
+			request: jest.fn().mockResolvedValue(true),
+			remove: jest.fn().mockResolvedValue(true),
+			contains: jest.fn().mockResolvedValue(true)
 		};
 	}
 }

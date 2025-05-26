@@ -4,7 +4,7 @@
  * @param {Object} browserInterface - The browser interface object.
  * @returns {Promise} A promise that resolves when the initialization is complete.
  */
-export default function initConfigWidget(domElement, browserInterface) {
+export default function initConfigWidget(widgetElement, browserInterface) { // Renamed domElement to widgetElement
 	// Variables
 	let template,
 		list,
@@ -13,7 +13,7 @@ export default function initConfigWidget(domElement, browserInterface) {
 
 	// Function definitions
 	const showErrorMsg = function (text) {
-			const status = domElement.querySelector('[role=status]');
+			const status = widgetElement.querySelector('[role=status]'); // Use widgetElement
 			status.textContent = text;
 			setTimeout(function () {
 				status.textContent = '';
@@ -58,17 +58,17 @@ export default function initConfigWidget(domElement, browserInterface) {
 						saveOptions();
 					});
 				});
-				domElement.querySelector('[role=no-custom]').style.display = 'none';
-				domElement.querySelector('[role=yes-custom]').style.display = '';
+				widgetElement.querySelector('[role=no-custom]').style.display = 'none'; // Use widgetElement
+				widgetElement.querySelector('[role=yes-custom]').style.display = ''; // Use widgetElement
 			} else {
-				domElement.querySelector('[role=yes-custom]').style.display = 'none';
-				domElement.querySelector('[role=no-custom]').style.display = '';
+				widgetElement.querySelector('[role=yes-custom]').style.display = 'none'; // Use widgetElement
+				widgetElement.querySelector('[role=no-custom]').style.display = ''; // Use widgetElement
 			}
-			domElement.querySelector('[role=option-skipStandard]').checked = (!!skipStandard);
+			widgetElement.querySelector('[role=option-skipStandard]').checked = (!!skipStandard); // Use widgetElement
 		},
 		showMainScreen = function () {
-			domElement.querySelector('[role=main-screen]').style.display = '';
-			domElement.querySelector('[role=file-loader]').style.display = 'none';
+			widgetElement.querySelector('[role=main-screen]').style.display = ''; // Use widgetElement
+			widgetElement.querySelector('[role=file-loader]').style.display = 'none'; // Use widgetElement
 		},
 		addSubMenu = function (textContent, props) {
 			const parsed = JSON.parse(textContent);
@@ -85,37 +85,38 @@ export default function initConfigWidget(domElement, browserInterface) {
 			});
 		},
 		showFileSelector = function () {
-			const submenuField = domElement.querySelector('[role=submenu-name]'),
-				configTextArea = domElement.querySelector('[role=custom-config-text]');
+			const submenuField = widgetElement.querySelector('[role=submenu-name]'), // Use widgetElement
+				configTextArea = widgetElement.querySelector('[role=custom-config-text]'); // Use widgetElement
 			submenuField.value = '';
 			configTextArea.value = '';
-			domElement.querySelector('[role=main-screen]').style.display = 'none';
-			domElement.querySelector('[role=file-loader]').style.display = '';
+			widgetElement.querySelector('[role=main-screen]').style.display = 'none'; // Use widgetElement
+			widgetElement.querySelector('[role=file-loader]').style.display = ''; // Use widgetElement
 		},
-		initScreen = function () {
-			const submenuField = domElement.querySelector('[role=submenu-name]'),
-				skipStandardCheckbox = domElement.querySelector('[role=option-skipStandard]');
+		// Pass widgetElement to initScreen
+		initScreen = function (currentDomElement) {
+			const submenuField = currentDomElement.querySelector('[role=submenu-name]'),
+				skipStandardCheckbox = currentDomElement.querySelector('[role=option-skipStandard]');
 
 			// Prevent form submission
-			Array.from(domElement.querySelectorAll('form')).map(el => el.addEventListener('submit', e => e.preventDefault()));
+			Array.from(currentDomElement.querySelectorAll('form')).map(el => el.addEventListener('submit', e => e.preventDefault()));
 
 			// Event listeners
-			domElement.querySelector('[role=close]').addEventListener('click', browserInterface.closeWindow);
-			domElement.querySelector('[role=add]').addEventListener('click', showFileSelector);
-			Array.from(domElement.querySelectorAll('[role=back]')).map(el => el.addEventListener('click', showMainScreen));
-			domElement.querySelector('[role=select-file-cover]').addEventListener('click', () => {
+			currentDomElement.querySelector('[role=close]').addEventListener('click', browserInterface.closeWindow);
+			currentDomElement.querySelector('[role=add]').addEventListener('click', showFileSelector);
+			Array.from(currentDomElement.querySelectorAll('[role=back]')).map(el => el.addEventListener('click', showMainScreen));
+			currentDomElement.querySelector('[role=select-file-cover]').addEventListener('click', () => {
 				const event = new MouseEvent('click', {
 					view: window,
 					bubbles: true,
 					cancelable: true
 				});
-				domElement.querySelector('[role=file-selector]').dispatchEvent(event);
+				currentDomElement.querySelector('[role=file-selector]').dispatchEvent(event);
 			});
 			skipStandardCheckbox.addEventListener('change', function () {
 				skipStandard = !!skipStandardCheckbox.checked;
 				saveOptions();
 			});
-			domElement.querySelector('[role=file-selector]').addEventListener('change', function () {
+			currentDomElement.querySelector('[role=file-selector]').addEventListener('change', function () {
 				const element = this,
 					fileInfo = this.files[0],
 					fileName = fileInfo.name,
@@ -130,9 +131,9 @@ export default function initConfigWidget(domElement, browserInterface) {
 				}
 				element.value = '';
 			});
-			domElement.querySelector('[role=add-custom-config]').addEventListener('click', () => {
+			currentDomElement.querySelector('[role=add-custom-config]').addEventListener('click', () => {
 				const submenuName = submenuField.value && submenuField.value.trim(),
-					customConfigText = domElement.querySelector('[role=custom-config-text]').value;
+					customConfigText = currentDomElement.querySelector('[role=custom-config-text]').value;
 				if (!submenuName) {
 					submenuField.value = '';
 					showErrorMsg('Please provide submenu name!');
@@ -148,9 +149,9 @@ export default function initConfigWidget(domElement, browserInterface) {
 					showErrorMsg(e);
 				}
 			});
-			domElement.querySelector('[role=add-remote-config]').addEventListener('click', () => {
+			currentDomElement.querySelector('[role=add-remote-config]').addEventListener('click', () => {
 				const submenuName = submenuField.value && submenuField.value.trim(),
-					urlField = domElement.querySelector('[role="remote-config-url"]'),
+					urlField = currentDomElement.querySelector('[role="remote-config-url"]'),
 					url = urlField.value;
 				if (!submenuName) {
 					showErrorMsg('Please provide submenu name!');
@@ -170,7 +171,7 @@ export default function initConfigWidget(domElement, browserInterface) {
 			});
 
 			// Remove the template from the DOM if it exists
-			template = domElement.querySelector('[role=template]');
+			template = currentDomElement.querySelector('[role=template]');
 			if (template && template.parentElement) {
 				list = template.parentElement;
 				list.removeChild(template);
@@ -182,5 +183,5 @@ export default function initConfigWidget(domElement, browserInterface) {
 		};
 
 	// Call the initialization function and return its result
-	return initScreen();
+	return initScreen(widgetElement); // Pass widgetElement to initScreen
 }

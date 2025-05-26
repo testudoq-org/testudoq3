@@ -1,28 +1,41 @@
 {
-	"extends": "crockford",
-	"env": {
-		"browser": true,
-		"node": true,
-		"es6": true
-	},
-	"parserOptions": {
-		"ecmaVersion": 2022,
-		"sourceType": "module"
-	},
-	"globals": {
-		"import.meta": "readonly"
-	},
-	"rules": {
-		"semi": ["error", "always"],
-		"strict": ["error", "function"],
-		"no-unused-vars": "error",
-		"indent": ["error", "tab", { "MemberExpression": 1 }],
-		"no-const-assign": "error",
-		"one-var": "error",
-		"prefer-const": "error",
-		"no-var": "error",
-		"no-plusplus": "off",
-		"quotes": ["error", "single", {"avoidEscape": true, "allowTemplateLiterals": true}],
-		"arrow-spacing": "warn"
-	}
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    // "jest" // The plugin will be specified in the override
+  ],
+  "rules": {
+    "indent": ["error", "tab"],
+    "linebreak-style": ["error", "windows"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "curly": ["error", "all"],
+    "comma-dangle": ["error", "never"] // To match the fixes made in jest.config.mjs
+    // Add other project-specific rules here
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.{js,mjs}", "**/*.spec.{js,mjs}", "test/setupTests.js"],
+      "env": {
+        "jest": true,
+        "node": true // Keep node true for test setup files if they use node features
+      },
+      "plugins": ["jest"],
+      "extends": ["plugin:jest/recommended"],
+      "rules": {
+        // You can override or add rules specific to Jest tests here
+        // e.g., "jest/no-disabled-tests": "warn"
+      }
+    }
+  ]
 }
